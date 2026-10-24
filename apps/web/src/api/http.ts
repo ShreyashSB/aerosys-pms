@@ -7,6 +7,37 @@ import { ApiError } from "./mockDb";
 export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? "";
 export const USE_API = API_BASE_URL !== "";
 
+/**
+ * The sign-in token. It lives in localStorage so a refresh keeps you signed
+ * in, and is sent as `Authorization: Bearer …` (not a cookie: Safari blocks
+ * cookies between the Vercel and Render domains).
+ */
+const TOKEN_KEY = "aerosys.token";
+
+export const authToken = {
+  get(): string | null {
+    try {
+      return localStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  },
+  set(token: string | null) {
+    try {
+      if (token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch {
+      // Private mode without storage: the session lasts until the tab closes.
+    }
+  },
+};
+
+/** Called when the server says the token is missing, expired or switched off (401). */
+let onUnauthorized: () => void = () => {};
+export function setUnauthorizedHandler(fn: () => void) {
+  onUnauthorized = fn;
+}
+
 /** The API answers errors as { message, errors?: [{ field, message }] }. */
 async function errorFrom(res: Response): Promise<ApiError> {
   try {
@@ -21,16 +52,21 @@ async function errorFrom(res: Response): Promise<ApiError> {
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
+    const headers: Record<string, string> = {};
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    const token = authToken.get();
+    if (token) headers.Authorization = `Bearer ${token}`;
     res = await fetch(`${API_BASE_URL}${path}`, {
       method,
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
-      credentials: "include",
     });
   } catch {
     // The free API host sleeps when idle; the first request can take a minute.
     throw new ApiError("Can't reach the server. Check your connection and try again.", 0);
   }
+  // A wrong password on the login form is also a 401, but there is no session to end.
+  if (res.status === 401 && path !== "/api/auth/login") onUnauthorized();
   if (!res.ok) throw await errorFrom(res);
   // 204 No Content (deletes) has no body.
   return (res.status === 204 ? undefined : await res.json()) as T;

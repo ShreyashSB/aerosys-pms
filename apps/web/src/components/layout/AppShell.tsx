@@ -9,11 +9,12 @@ import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { Topbar } from "./Topbar";
+import { FirstPasswordScreen } from "@/features/auth/FirstPasswordScreen";
 
 const COLLAPSE_KEY = "aerosys.sidebar.collapsed";
 
 export function AppShell() {
-  const { user, employee, loading } = useAuth();
+  const { user, employee, loading, mustChangePassword } = useAuth();
   const location = useLocation();
   const qc = useQueryClient();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
@@ -29,6 +30,7 @@ export function AppShell() {
     notificationService.runScheduledChecks().then(() => qc.invalidateQueries({ queryKey: ["notifications"] }));
   }, [qc]);
 
+  if (mustChangePassword) return <FirstPasswordScreen />;
   if (loading) {
     return (
       <div className="p-8">

@@ -15,6 +15,10 @@ export interface User {
   employeeId: ID;
   role: Role;
   email: string;
+  /** Live database only: a switched-off login stays listed so it can be switched back on. */
+  active?: boolean;
+  /** Live database only: set on a new or reset login until its owner picks their own password. */
+  mustChangePassword?: boolean;
 }
 
 export type Department = "Management" | "Projects" | "Engineering" | "Accounts" | "Admin" | "Service";
