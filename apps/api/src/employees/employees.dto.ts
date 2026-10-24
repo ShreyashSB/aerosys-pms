@@ -1,6 +1,5 @@
 import { z } from 'zod';
-
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+import { isoDate } from '../common/dates.js';
 
 export const DEPARTMENTS = ['Management', 'Projects', 'Engineering', 'Accounts', 'Admin', 'Service'] as const;
 export const EMPLOYEE_STATUSES = ['active', 'on_leave', 'inactive'] as const;

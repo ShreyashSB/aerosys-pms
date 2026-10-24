@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { isoDate } from '../common/dates.js';
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const money = z.number().nonnegative();
 
 export const PROJECT_STATUSES = ['planning', 'active', 'on_hold', 'completed', 'archived'] as const;
