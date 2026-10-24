@@ -13,8 +13,8 @@ const buttonVariants = cva(
         outline: "border border-input bg-surface hover:bg-muted text-foreground",
         secondary: "bg-muted text-foreground hover:bg-border",
         ghost: "hover:bg-muted text-foreground",
-        destructive: "bg-danger text-white hover:bg-danger/90 shadow-sm",
-        success: "bg-success text-white hover:bg-success/90 shadow-sm",
+        destructive: "bg-danger text-danger-foreground hover:bg-danger/90 shadow-sm",
+        success: "bg-success text-success-foreground hover:bg-success/90 shadow-sm",
         link: "text-primary underline-offset-4 hover:underline px-0 h-auto",
       },
       size: {

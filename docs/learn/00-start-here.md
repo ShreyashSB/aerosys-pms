@@ -10,6 +10,7 @@ Each guide maps the new tool to something you already know from Angular, Java, S
 | 03 | [NestJS](03-nestjs.md) | Spring Boot, Angular DI | Modules, controllers, providers, pipes |
 | 04 | [Drizzle and PostgreSQL](04-drizzle-and-postgres.md) | JPA / Hibernate, Flyway | Schema as code, typed queries, migrations |
 | 05 | [Docker and free deployment](05-docker-and-deploy.md) | AWS, building a JAR | Images, containers, Compose, Neon / Render / Vercel |
+| 06 | [Views and themes](06-views-and-themes.md) | Angular services holding shared state, SCSS variables | React Context, CSS design tokens, switching layouts |
 
 ## The big picture
 

@@ -117,7 +117,7 @@ export function BoqTab({
         </Card>
       ) : (
         <div className="overflow-hidden rounded-lg border bg-surface">
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[1200px] text-sm">
               <thead className="bg-muted/60 text-xs text-muted-foreground">
                 <tr className="border-b">
