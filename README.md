@@ -46,7 +46,7 @@ Stop the codespace when you finish (**Codespaces -> Stop**) so it does not use y
 | --- | --- | --- |
 | Database | [Neon](https://neon.tech) Postgres | 0.5 GB; pick the Singapore region |
 | API | [Render](https://render.com) web service from `render.yaml` | Docker build; sleeps after 15 min idle, ~1 min to wake |
-| Web | [Vercel](https://vercel.com) Hobby, configured by the root `vercel.json` | Fine for development; Hobby is not for commercial production use |
+| Web | [Vercel](https://vercel.com) Hobby, Root Directory `apps/web`, configured by `apps/web/vercel.json` | Fine for development; Hobby is not for commercial production use |
 
 Step-by-step setup: [docs/learn/05-docker-and-deploy.md](docs/learn/05-docker-and-deploy.md).
 Production later moves to AWS Mumbai (see the build plan).

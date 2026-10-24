@@ -55,7 +55,7 @@ Free plan: the service sleeps after 15 minutes without requests; the first reque
 ### 3. Web: Vercel
 
 1. [vercel.com](https://vercel.com) -> **Add New -> Project** -> import this repository.
-2. Leave **Root Directory** empty. The root `vercel.json` tells Vercel to install the whole workspace with pnpm, build only `@aerosys/web`, and publish `apps/web/dist`.
+2. Set **Root Directory** to `apps/web` and leave the build settings on Vercel's defaults (Framework Preset: Vite). Vercel notices the pnpm workspace one level up and installs it, runs the web app's `build` script, and publishes `apps/web/dist`. `apps/web/vercel.json` adds the rest: every unknown path serves `index.html`, so a refresh on `/projects/…` doesn't 404 (React Router handles the URL in the browser), and the hashed files in `/assets` are cached for a year, because a new build gives them new names.
 3. Deploy. Every push to a branch gets its own preview URL.
 4. To use the real API instead of the in-browser demo, add the environment variable `VITE_API_BASE_URL` = your Render URL (Settings -> Environment Variables) and redeploy. Then put the Vercel URL in Render's `WEB_ORIGIN`, so the API accepts requests from it.
 
