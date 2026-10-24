@@ -17,9 +17,8 @@ export const ExpenseInputSchema = z.object({
 });
 export type ExpenseInput = z.infer<typeof ExpenseInputSchema>;
 
-/** Body for PATCH /api/expenses/:id/approve and /reject. reviewerId goes away once login exists. */
+/** Body for PATCH /api/expenses/:id/approve and /reject. The reviewer is the signed-in person. */
 export const ReviewInputSchema = z.object({
-  reviewerId: z.uuid(),
   note: z.string().trim().max(500).default(''),
 });
 export type ReviewInput = z.infer<typeof ReviewInputSchema>;

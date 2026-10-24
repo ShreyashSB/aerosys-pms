@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module.js';
 import { AssignmentsModule } from './assignments/assignments.module.js';
 import { BillsModule } from './bills/bills.module.js';
 import { BoqModule } from './boq/boq.module.js';
@@ -16,12 +17,15 @@ import { ProjectCostsModule } from './project-costs/project-costs.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
 import { SettingsModule } from './settings/settings.module.js';
+import { UsersModule } from './users/users.module.js';
 
 /** The root module: Nest starts here and wires every imported module together. */
 @Module({
   imports: [
     ConfigModule,
     DbModule,
+    AuthModule,
+    UsersModule,
     HealthModule,
     SettingsModule,
     ClientsModule,

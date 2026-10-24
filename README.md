@@ -36,7 +36,8 @@ Stop the codespace when you finish (**Codespaces -> Stop**) so it does not use y
 | `pnpm build` / `pnpm typecheck` / `pnpm test` | Runs that script in every app |
 | `pnpm db:generate` | Writes a SQL migration after you change `apps/api/src/db/schema.ts` |
 | `pnpm db:migrate` | Applies pending migrations to `DATABASE_URL` |
-| `pnpm db:seed -- --yes` | **Wipes** `DATABASE_URL` and loads the demo data (the same data the web app shows offline) |
+| `pnpm db:create-user -- --name … --email … --role management --password …` | Gives someone a login (the first admin on an empty database) |
+| `pnpm db:seed -- --yes` | **Wipes** `DATABASE_URL` and loads the demo data (the same data the web app shows offline); every demo login's password is `demo1234` |
 | `docker compose up --build` | Runs the API + Postgres in containers |
 
 ## Free hosting (development and demos)

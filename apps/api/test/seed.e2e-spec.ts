@@ -3,8 +3,9 @@ import { Test } from '@nestjs/testing';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import request from 'supertest';
-import { seedDemo } from '../scripts/seed-demo.js';
+import { DEMO_PASSWORD, seedDemo } from '../scripts/seed-demo.js';
 import { AppModule } from '../src/app.module.js';
+import type { Api } from './helpers.js';
 import * as schema from '../src/db/schema.js';
 
 /**
@@ -14,7 +15,7 @@ import * as schema from '../src/db/schema.js';
  */
 describe('Demo seed (e2e)', () => {
   let app: INestApplication;
-  const api = () => request(app.getHttpServer());
+  let api: Api;
   let counts: Awaited<ReturnType<typeof seedDemo>>;
 
   beforeAll(async () => {
@@ -28,13 +29,18 @@ describe('Demo seed (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
+    // Sign in as a demo Management user: proves the seeded logins work.
+    const login = await request(app.getHttpServer()).post('/api/auth/login').send({ email: 'rajesh.kulkarni@aerosyshvac.in', password: DEMO_PASSWORD }).expect(200);
+    expect(login.body.user).toMatchObject({ role: 'management', name: 'Rajesh Kulkarni', mustChangePassword: false });
+    api = () => request.agent(app.getHttpServer()).set('Authorization', `Bearer ${login.body.token}`);
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  it('loads every employee, project and instrument', async () => {
+  it('loads every employee, login, project and instrument', async () => {
+    expect((await api().get('/api/users').expect(200)).body).toHaveLength(counts.users);
     expect((await api().get('/api/employees').expect(200)).body).toHaveLength(counts.employees);
     const projects = (await api().get('/api/projects').expect(200)).body;
     expect(projects).toHaveLength(counts.projects);

@@ -4,6 +4,8 @@ import { todayIST } from '../common/dates.js';
 import { isUniqueViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { employees, instrumentDeployments, instruments, type InstrumentDeployment } from '../db/schema.js';
+import type { CurrentUser } from '../auth/current-user.js';
+import { assertProjectAccess } from '../auth/project-access.js';
 import { findProject, isClosed } from '../projects/find-project.js';
 import type { DeploymentQuery, InstrumentDto, InstrumentInput, IssueInput, StatusInput } from './instruments.dto.js';
 
@@ -82,7 +84,9 @@ export class InstrumentsService {
   }
 
   /** Issue the instrument to an engineer on a project. Any earlier deployment is returned today. */
-  async assign(id: string, { engineerId, projectId }: IssueInput): Promise<InstrumentDto> {
+  async assign(id: string, { engineerId, projectId }: IssueInput, user: CurrentUser): Promise<InstrumentDto> {
+    // A project manager can issue instruments only to their own projects.
+    await assertProjectAccess(this.db, user, projectId);
     return this.db.transaction(async (tx) => {
       const current = await this.get(id, tx);
       if (current.status === 'retired') throw new BadRequestException('Retired instruments cannot be assigned');

@@ -13,7 +13,5 @@ export const BillInputSchema = z.object({
   date: isoDate,
   attachment: AttachmentSchema.nullable().default(null),
   notes: z.string().trim().max(1000).default(''),
-  /** Who recorded it. Goes away once login exists. */
-  createdById: z.uuid(),
 });
 export type BillInput = z.infer<typeof BillInputSchema>;

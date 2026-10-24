@@ -2,8 +2,6 @@ import { z } from 'zod';
 
 /** Body for PUT /api/projects/:projectId/reviews: the PM's ratings for the project's engineers. */
 export const ReviewsInputSchema = z.object({
-  /** The PM giving the ratings. Goes away once login exists. */
-  reviewerId: z.uuid(),
   reviews: z
     .array(
       z.object({

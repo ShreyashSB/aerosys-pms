@@ -1,12 +1,12 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { signIn, type Api } from './helpers.js';
 
 /** Employees, projects and lookups against a real Postgres (see api.e2e-spec.ts). */
 describe('Employees and projects (e2e)', () => {
   let app: INestApplication;
-  const api = () => request(app.getHttpServer());
+  let api: Api;
   // Unique per run, so the suite can run again on the same database.
   const run = Date.now().toString(36);
   let managerId: string;
@@ -31,6 +31,7 @@ describe('Employees and projects (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
+    ({ api } = await signIn(app));
 
     const res = await api()
       .post('/api/employees')

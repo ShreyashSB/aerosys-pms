@@ -13,6 +13,7 @@
     "test": "pnpm -r test",
     "db:generate": "pnpm --filter @aerosys/api db:generate",
     "db:migrate": "pnpm --filter @aerosys/api db:migrate",
-    "db:seed": "pnpm --filter @aerosys/api db:seed"
+    "db:seed": "pnpm --filter @aerosys/api db:seed",
+    "db:create-user": "pnpm --filter @aerosys/api db:create-user"
   }
 }

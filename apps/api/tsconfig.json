@@ -20,5 +20,5 @@
     "types": ["vitest/globals", "node"]
   },
   // These load the web app's demo generator; tsconfig.scripts.json checks them.
-  "exclude": ["node_modules", "dist", "scripts", "test/seed.e2e-spec.ts"]
+  "exclude": ["node_modules", "dist", "scripts", "test/seed.e2e-spec.ts", "src/auth/permissions.spec.ts"]
 }

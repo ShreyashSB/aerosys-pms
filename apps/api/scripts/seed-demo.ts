@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { buildSeed } from '@/api/seed';
+import { hashPassword } from '../src/auth/password.js';
 import type { Database } from '../src/db/db.module.js';
 import * as s from '../src/db/schema.js';
 
@@ -15,6 +16,9 @@ import * as s from '../src/db/schema.js';
  * Everything runs in one transaction: the database ends up fully seeded or
  * exactly as it was.
  */
+/** Every demo login uses this password. Change it (or don't seed) anywhere real people sign in. */
+export const DEMO_PASSWORD = 'demo1234';
+
 export async function seedDemo(db: Database) {
   const demo = buildSeed();
   const ids = new Map<string, string>();
@@ -53,6 +57,12 @@ export async function seedDemo(db: Database) {
       s.employees,
       demo.employees.map((e) => ({ ...e, id: id(e.id) })),
     );
+
+    // Logins: the demo's users, all with DEMO_PASSWORD. Hashing is slow on purpose, so do it before the inserts.
+    const loginRows = await Promise.all(
+      demo.users.map(async (u) => ({ employeeId: id(u.employeeId), role: u.role, passwordHash: await hashPassword(DEMO_PASSWORD), mustChangePassword: false })),
+    );
+    await insert(s.users, loginRows);
 
     await insert(
       s.projects,
@@ -196,6 +206,7 @@ export async function seedDemo(db: Database) {
 
   return {
     employees: demo.employees.length,
+    users: demo.users.length,
     projects: demo.projects.length,
     dailyLogs: demo.dailyLogs.length,
     expenses: demo.expenses.length,

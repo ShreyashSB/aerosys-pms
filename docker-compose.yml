@@ -23,6 +23,8 @@ services:
       DATABASE_URL: postgresql://aerosys:aerosys@db:5432/aerosys
       WEB_ORIGIN: http://localhost:5173
       MIGRATE_ON_START: "true"
+      # Local only. Production gets a random secret from Render.
+      JWT_SECRET: local-compose-secret-not-for-production-use
     ports: ["3000:3000"]
     depends_on:
       db:

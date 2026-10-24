@@ -1,12 +1,14 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { signIn, type Api } from './helpers.js';
 
 /** Expenses, bills & invoices and other project costs against a real Postgres. */
 describe('Money (e2e)', () => {
   let app: INestApplication;
-  const api = () => request(app.getHttpServer());
+  let api: Api;
+  /** The signed-in Management user: recorded as reviewer, author and uploader. */
+  let adminId: string;
   const run = Date.now().toString(36);
   let pmId: string;
   let engineerId: string;
@@ -36,6 +38,7 @@ describe('Money (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
+    ({ api, employeeId: adminId } = await signIn(app));
     pmId = await employee('Farhan Shaikh');
     engineerId = await employee('Karan Mehta');
     projectId = (
@@ -69,18 +72,18 @@ describe('Money (e2e)', () => {
 
   it('approves once, and refuses a second review', async () => {
     const { body } = await api().post('/api/expenses').send(expense()).expect(201);
-    const ok = await api().patch(`/api/expenses/${body.id}/approve`).send({ reviewerId: pmId }).expect(200);
-    expect(ok.body).toMatchObject({ status: 'approved', reviewedById: pmId });
+    const ok = await api().patch(`/api/expenses/${body.id}/approve`).send({}).expect(200);
+    expect(ok.body).toMatchObject({ status: 'approved', reviewedById: adminId });
     expect(ok.body.reviewedAt).toBeTruthy();
-    const again = await api().patch(`/api/expenses/${body.id}/reject`).send({ reviewerId: pmId, note: 'No' }).expect(400);
+    const again = await api().patch(`/api/expenses/${body.id}/reject`).send({ note: 'No' }).expect(400);
     expect(again.body.message).toBe('Expense has already been approved');
     await api().delete(`/api/expenses/${body.id}`).expect(400);
   });
 
   it('needs a reason to reject, and lets a pending one be withdrawn', async () => {
     const { body } = await api().post('/api/expenses').send(expense()).expect(201);
-    await api().patch(`/api/expenses/${body.id}/reject`).send({ reviewerId: pmId }).expect(400);
-    await api().patch(`/api/expenses/${body.id}/reject`).send({ reviewerId: pmId, note: 'No receipt' }).expect(200);
+    await api().patch(`/api/expenses/${body.id}/reject`).send({}).expect(400);
+    await api().patch(`/api/expenses/${body.id}/reject`).send({ note: 'No receipt' }).expect(200);
     const pending = await api().post('/api/expenses').send(expense()).expect(201);
     await api().delete(`/api/expenses/${pending.body.id}`).expect(204);
     await api().delete(`/api/expenses/${pending.body.id}`).expect(404);
@@ -94,7 +97,7 @@ describe('Money (e2e)', () => {
   });
 
   it('records bills and invoices, refusing a repeated number', async () => {
-    const bill = { kind: 'client_invoice', number: 'INV-7', party: 'Phoenix Mills', amount: 250000, date: '2026-03-31', notes: 'RA bill 1', createdById: pmId };
+    const bill = { kind: 'client_invoice', number: 'INV-7', party: 'Phoenix Mills', amount: 250000, date: '2026-03-31', notes: 'RA bill 1' };
     const { body } = await api().post(`/api/projects/${projectId}/bills`).send(bill).expect(201);
     expect(body).toMatchObject({ kind: 'client_invoice', amount: 250000, attachment: null });
     // Same number with different case on the same project and kind.
