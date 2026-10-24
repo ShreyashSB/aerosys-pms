@@ -5,5 +5,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['test/**/*.e2e-spec.ts'],
+    // Migrate once, then run the files one after another: they share one database.
+    globalSetup: ['test/global-setup.ts'],
+    fileParallelism: false,
   },
 });

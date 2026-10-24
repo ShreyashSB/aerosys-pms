@@ -60,6 +60,24 @@ The pipe runs before the controller method and answers 400 with field errors if 
 
 **Global modules.** `ConfigModule` and `DbModule` are marked `@Global()`, so any service can inject `ENV` or `DB` without importing them, like a bean available everywhere.
 
+**Sharing a service between modules.** `LookupsModule` lists `LookupsService` under `exports`. `ProjectsModule` lists `LookupsModule` under `imports`, and can then inject `LookupsService` in its constructor. A module's providers stay private unless exported, much like package-private classes in Java.
+
+**Errors become status codes.** Throwing `NotFoundException` answers 404, `ConflictException` 409 and `BadRequestException` 400. `ProjectsService.run()` catches Postgres constraint errors (a duplicate project ID, for example) and rethrows them as 409, so the web app gets a clear message instead of a 500. `ParseUUIDPipe` on `@Param('id', ParseUUIDPipe)` answers 400 for an id that isn't a UUID before any query runs.
+
+## The API so far
+
+| Method and path | What it does |
+| --- | --- |
+| `GET /api/health` | Is the API up, and can it reach the database |
+| `GET /api/lookups` | Client, site and project type names for the form dropdowns |
+| `GET /api/clients`, `POST /api/clients` | List or add a client |
+| `GET /api/employees`, `GET /api/employees/:id` | List or read employees |
+| `POST /api/employees`, `PUT /api/employees/:id` | Add or edit an employee (next `EMP-NNN` if no code is given) |
+| `GET /api/projects`, `GET /api/projects/:id` | List or read projects, with client, site and type names |
+| `POST /api/projects`, `PUT /api/projects/:id` | Create or edit a project; new client, site or type names are added to their lists |
+| `PATCH /api/projects/:id/status` | Change only the status |
+| `DELETE /api/projects/:id` | Delete a project (204) |
+
 ## Async in TypeScript (vs Java)
 
 Database calls return a `Promise`, the TypeScript version of `CompletableFuture`. `await` waits for it without blocking the server, so one Node process can serve many requests at once. Methods that await are marked `async`.

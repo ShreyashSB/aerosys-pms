@@ -2,17 +2,16 @@ import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { runMigrations } from '../src/db/migrate.js';
 
 /**
  * End-to-end tests: the real app against a real Postgres.
- * Needs DATABASE_URL pointing at a throwaway database (CI starts one).
+ * Needs DATABASE_URL pointing at a throwaway database (CI starts one);
+ * test/global-setup.ts applies the migrations first.
  */
 describe('API (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    await runMigrations(process.env.DATABASE_URL!);
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
