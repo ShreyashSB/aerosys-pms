@@ -99,7 +99,7 @@ export function AssignEngineerDialog({
                 const l = activeLoad(e.id);
                 return (
                   <option key={e.id} value={e.id}>
-                    {e.name} — {e.designation} · {l === 0 ? "Available" : `${l}% allocated`}
+                    {e.name} — {e.designation} · {l === 0 ? "Idle" : `${l}% allocated`}
                     {e.status === "on_leave" ? " (on leave)" : ""}
                   </option>
                 );

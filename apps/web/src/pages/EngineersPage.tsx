@@ -127,14 +127,14 @@ export function EngineersPage() {
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Engineers & technicians" value={all.length} loading={data.isLoading} />
         <StatCard label="Deployed" value={deployed} loading={data.isLoading} />
-        <StatCard label="Available" value={all.filter((e) => e.status === "active" && engineerLoad(e.id, data.assignments).allocation === 0).length} loading={data.isLoading} />
+        <StatCard label="Idle" value={all.filter((e) => e.status === "active" && engineerLoad(e.id, data.assignments).allocation === 0).length} loading={data.isLoading} />
         <StatCard label="On leave" value={all.filter((e) => e.status === "on_leave").length} loading={data.isLoading} />
       </div>
       <FilterBar onReset={filters.reset} showReset={filters.active}>
         <SearchInput value={q} onChange={(v) => filters.set("q", v)} placeholder="Search name, ID, designation…" />
         <Select value={availability} onChange={(e) => filters.set("availability", e.target.value)} className="w-auto" aria-label="Filter by availability">
           <option value="">All availability</option>
-          <option value="available">Available</option>
+          <option value="idle">Idle</option>
           <option value="partial">Partially free</option>
           <option value="deployed">Fully deployed</option>
           <option value="on_leave">On leave</option>

@@ -11,6 +11,7 @@ import {
   documentService,
   projectService,
   settingsService,
+  reviewService,
 } from "@/services";
 import type { User } from "@/types/models";
 
@@ -29,6 +30,7 @@ export const qk = {
   boqExecutions: ["boqExecutions"] as const,
   dailyLogs: ["dailyLogs"] as const,
   documents: ["documents"] as const,
+  reviews: ["reviews"] as const,
   notifications: (userId?: string) => ["notifications", userId] as const,
 };
 
@@ -44,6 +46,7 @@ export const useBoqItems = () => useQuery({ queryKey: qk.boqItems, queryFn: boqS
 export const useBoqExecutions = () => useQuery({ queryKey: qk.boqExecutions, queryFn: boqService.listExecutions });
 export const useDailyLogs = () => useQuery({ queryKey: qk.dailyLogs, queryFn: dailyLogService.list });
 export const useDocuments = () => useQuery({ queryKey: qk.documents, queryFn: documentService.list });
+export const useReviews = () => useQuery({ queryKey: qk.reviews, queryFn: reviewService.list });
 export const useSettings = () => useQuery({ queryKey: qk.settings, queryFn: settingsService.get });
 
 export const useNotifications = (user: User | null) =>

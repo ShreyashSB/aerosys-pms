@@ -9,3 +9,4 @@ export { settingsService } from "./settingsService";
 export { boqService } from "./boqService";
 export { dailyLogService } from "./dailyLogService";
 export { documentService } from "./documentService";
+export { reviewService } from "./reviewService";

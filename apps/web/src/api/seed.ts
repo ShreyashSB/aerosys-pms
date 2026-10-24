@@ -19,6 +19,7 @@ import type {
   BoqItem,
   DailyLog,
   Employee,
+  EngineerReview,
   Expense,
   ExpenseCategory,
   IdleReason,
@@ -48,11 +49,12 @@ export interface Database {
   boqExecutions: BoqExecution[];
   dailyLogs: DailyLog[];
   documents: ProjectDocument[];
+  engineerReviews: EngineerReview[];
   notifications: AppNotification[];
   settings: AppSettings;
 }
 
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 /** Deterministic PRNG so the seed is identical on every fresh load. */
 function mulberry32(seed: number) {
@@ -612,6 +614,32 @@ export function buildSeed(): Database {
     { id: "pc_3", projectId: "prj_1", type: "hire", description: "Crane & rigging for chiller shifting", amount: 45000, date: d(-100) },
   ];
 
+  // -------------------------------------------------------- engineer reviews
+  // Horizon Logistics (closed earliest) is reviewed; Blue Ridge is left unreviewed
+  // so the "review your team" prompt shows on it in the demo.
+  const engineerReviews: EngineerReview[] = [];
+  const reviewNotes = [
+    "Owned the commissioning and kept documentation up to date. Ready to lead a TAB project.",
+    "Solid technical work and good with the client. Should flag idle time to the PM earlier.",
+  ];
+  for (const p of projects.filter((x) => x.name.startsWith("Horizon"))) {
+    assignments
+      .filter((a) => a.projectId === p.id)
+      .forEach((a, k) => {
+        const at = `${p.endDate}T17:30:00.000Z`;
+        engineerReviews.push({
+          id: `rev_${engineerReviews.length + 1}`,
+          projectId: p.id,
+          employeeId: a.employeeId,
+          reviewerId: p.managerId,
+          rating: k === 0 ? 5 : 4,
+          comments: reviewNotes[k % reviewNotes.length]!,
+          createdAt: at,
+          updatedAt: at,
+        });
+      });
+  }
+
   // ----------------------------------------------------------- notifications
   const notifications: AppNotification[] = [];
   const pending = expenses.filter((e) => e.status === "pending").sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
@@ -640,6 +668,7 @@ export function buildSeed(): Database {
     expenses,
     instruments,
     projectInstruments,
+    engineerReviews,
     projectCosts,
     boqItems,
     boqExecutions,
