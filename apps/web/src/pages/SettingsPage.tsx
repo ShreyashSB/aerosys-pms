@@ -34,7 +34,6 @@ export function SettingsPage() {
         hoursPerManDay: String(settings.hoursPerManDay),
         overheadPctOfWages: String(settings.overheadPctOfWages),
         managementPctOfEarnedValue: String(settings.managementPctOfEarnedValue),
-        instrumentMonthlyRatePct: String(settings.instrumentMonthlyRatePct),
         projectionMethod: settings.projectionMethod,
         targetMarginPct: String(settings.targetMarginPct),
         deadlineAlertDays: String(settings.deadlineAlertDays),
@@ -52,7 +51,6 @@ export function SettingsPage() {
         hoursPerManDay: range(form.hoursPerManDay, 1, 24),
         overheadPctOfWages: range(form.overheadPctOfWages, 0, 100),
         managementPctOfEarnedValue: range(form.managementPctOfEarnedValue, 0, 50),
-        instrumentMonthlyRatePct: range(form.instrumentMonthlyRatePct, 0, 20),
         targetMarginPct: range(form.targetMarginPct, 0, 100),
         deadlineAlertDays: range(form.deadlineAlertDays, 1, 90),
       }
@@ -103,7 +101,6 @@ export function SettingsPage() {
                       hoursPerManDay: Number(form.hoursPerManDay),
                       overheadPctOfWages: Number(form.overheadPctOfWages),
                       managementPctOfEarnedValue: Number(form.managementPctOfEarnedValue),
-                      instrumentMonthlyRatePct: Number(form.instrumentMonthlyRatePct),
                       projectionMethod: form.projectionMethod,
                       targetMarginPct: Number(form.targetMarginPct),
                       deadlineAlertDays: Number(form.deadlineAlertDays),
@@ -123,9 +120,6 @@ export function SettingsPage() {
                 </Field>
                 <Field label="Management charges (% of earned value)" htmlFor="s-mg" error={errs.managementPctOfEarnedValue} hint="Demo assumption for management cost">
                   <Input id="s-mg" type="number" min={0} max={50} step={0.5} value={form.managementPctOfEarnedValue} disabled={!editable} onChange={(e) => setF("managementPctOfEarnedValue", e.target.value)} />
-                </Field>
-                <Field label="Instrument usage rate (% of value / month)" htmlFor="s-rate" error={errs.instrumentMonthlyRatePct} hint="Charged to projects while deployed">
-                  <Input id="s-rate" type="number" step={0.5} min={0} max={20} value={form.instrumentMonthlyRatePct} disabled={!editable} onChange={(e) => setF("instrumentMonthlyRatePct", e.target.value)} />
                 </Field>
                 <Field label="Projected cost method" htmlFor="s-proj" hint={PROJECTION_LABEL[form.projectionMethod]}>
                   <Select id="s-proj" value={form.projectionMethod} disabled={!editable} onChange={(e) => setF("projectionMethod", e.target.value as ProjectionMethod)}>

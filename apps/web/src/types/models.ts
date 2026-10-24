@@ -128,12 +128,27 @@ export interface Instrument {
   name: string;
   serialNumber: string;
   category: InstrumentCategory;
-  purchaseValue: number;
+  /** Asset value in ₹ (what the instrument is worth to the company). */
+  assetValue: number;
   purchaseDate: ISODate;
+  /** Date the instrument is expected to be retired; with the purchase date it gives the per-day value. */
+  endOfLifeDate: ISODate;
+  /** Where the instrument is kept while not on a project (store, office…). */
+  currentLocation: string;
+  calibration: CalibrationCertificate | null;
   status: InstrumentStatus;
   assignedEngineerId: ID | null;
   assignedProjectId: ID | null;
   notes: string;
+}
+
+/** Latest calibration certificate (optional PDF). */
+export interface CalibrationCertificate {
+  fileName: string;
+  size: number;
+  mimeType: string;
+  dataUrl?: string; // small files kept locally to simulate upload
+  validUntil: ISODate | null;
 }
 
 /** History of instrument deployments. Drives instrument/equipment cost. */
@@ -260,8 +275,6 @@ export type ProjectionMethod = "performance" | "budget";
 
 export interface AppSettings {
   companyName: string;
-  /** Monthly instrument usage charge as a % of purchase value. */
-  instrumentMonthlyRatePct: number;
   /** Days before expected completion that triggers a deadline alert. */
   deadlineAlertDays: number;
   /** Working hours in one man-day – converts idle man-hours to idle man-days. */

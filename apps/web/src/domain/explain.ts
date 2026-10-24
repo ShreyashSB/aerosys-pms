@@ -153,15 +153,17 @@ export function explainManagement(p: ProjectPerformance, s: AppSettings): Explan
   };
 }
 
-export function explainInstruments(p: ProjectPerformance, s: AppSettings): Explanation {
+export function explainInstruments(p: ProjectPerformance): Explanation {
   return {
     title: "Instrument charges",
     steps: [
-      { label: "Σ purchase value × days deployed ÷ 30.4", value: "" },
-      { op: "×", label: "Monthly usage rate", value: formatPct(s.instrumentMonthlyRatePct) },
+      { label: "Σ per-day value × days deployed", value: "" },
       { op: "=", label: "Instrument charges", value: formatINR(p.costs.instruments), strong: true },
     ],
-    notes: ["Demo assumption. See the Instruments tab for each deployment and its charge."],
+    notes: [
+      "Per-day value = asset value ÷ days from purchase date to end-of-life date.",
+      "See the Instruments tab for each deployment and its charge.",
+    ],
   };
 }
 

@@ -92,7 +92,7 @@ and explanations from `src/domain/explain.ts`, so the calculation drawers can ne
 | Wages | Consumed MD × employee **Daily Cost** (current rate; not derived from salary or CTC) | Demo assumption |
 | Expenses | Approved expenses only (pending ones are shown separately) | |
 | Overhead | *x*% of wages (Settings, default 20%) | Demo assumption |
-| Instrument charges | Purchase value × monthly rate × months deployed (Settings, default 3%) | Demo assumption |
+| Instrument charges | Per-day value × days deployed; per-day value = asset value ÷ days from purchase to end of life | From Aerosys costing sheet |
 | Management charges | *x*% of earned value (Settings, default 3%) | Demo assumption |
 | Projected final cost | *Performance:* cost to date ÷ progress, or *budget:* cost to date + budget × (1 − progress) (Settings). Uses the budget method below 10% progress. | Estimate |
 | Plan to date | Linear between start and expected completion (drives expected progress and planned MD/expenses) | Demo assumption |

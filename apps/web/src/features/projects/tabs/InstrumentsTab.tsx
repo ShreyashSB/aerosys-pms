@@ -8,10 +8,10 @@ import { EmptyState } from "@/components/common/States";
 import { InstrumentStatusBadge } from "@/components/common/StatusBadges";
 import { AssignInstrumentDialog } from "@/features/instruments/InstrumentDialogs";
 import { useReturnInstrument } from "@/hooks/mutations";
-import { instrumentCharge } from "@/domain/assumptions";
+import { instrumentCharge, instrumentPerDayValue } from "@/domain/assumptions";
 import { daysBetween, minDate, todayISO } from "@/lib/dates";
 import { formatDate, formatINR } from "@/lib/format";
-import type { AppSettings, Employee, Instrument, Project, ProjectInstrument } from "@/types/models";
+import type { Employee, Instrument, Project, ProjectInstrument } from "@/types/models";
 
 export function InstrumentsTab({
   project,
@@ -21,7 +21,6 @@ export function InstrumentsTab({
   instrumentById,
   canManage,
   showCost,
-  settings,
 }: {
   project: Project;
   instruments: Instrument[];
@@ -30,12 +29,10 @@ export function InstrumentsTab({
   instrumentById: Map<string, Instrument>;
   canManage: boolean;
   showCost: boolean;
-  settings: AppSettings;
 }) {
-  const monthlyRatePct = settings.instrumentMonthlyRatePct;
-  const chargeFor = (d: ProjectInstrument, value: number) => {
+  const chargeFor = (d: ProjectInstrument, ins: Instrument) => {
     const end = minDate(d.returnedAt ?? todayISO(), todayISO());
-    return end < d.assignedAt ? 0 : instrumentCharge(value, daysBetween(d.assignedAt, end) + 1, settings);
+    return end < d.assignedAt ? 0 : instrumentCharge(instrumentPerDayValue(ins), daysBetween(d.assignedAt, end) + 1);
   };
   const [picking, setPicking] = useState(false);
   const [assigning, setAssigning] = useState<Instrument | null>(null);
@@ -98,7 +95,7 @@ export function InstrumentsTab({
 
       {history.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Deployment history {showCost && <span className="font-normal text-muted-foreground">· usage charged at {monthlyRatePct}% of value / month</span>}</h3>
+          <h3 className="mb-2 text-sm font-semibold">Deployment history {showCost && <span className="font-normal text-muted-foreground">· charged at each instrument's per-day value</span>}</h3>
           <Card className="divide-y">
             {history.map((d) => {
               const ins = instrumentById.get(d.instrumentId);
@@ -109,7 +106,7 @@ export function InstrumentsTab({
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatDate(d.assignedAt)} – {d.returnedAt ? formatDate(d.returnedAt) : "present"}
-                    {showCost && ins && ` · ${formatINR(chargeFor(d, ins.purchaseValue))}`}
+                    {showCost && ins && ` · ${formatINR(chargeFor(d, ins))}`}
                   </span>
                 </div>
               );

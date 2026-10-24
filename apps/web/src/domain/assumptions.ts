@@ -8,7 +8,8 @@
  * `DEMO ASSUMPTION`. Components never re-implement these formulas; they read
  * results from `performance.ts` and explanations from `explain.ts`.
  */
-import type { AppSettings, AttendanceStatus, IdleReason, ProjectionMethod } from "@/types/models";
+import { daysBetween } from "@/lib/dates";
+import type { AppSettings, AttendanceStatus, IdleReason, Instrument, ProjectionMethod } from "@/types/models";
 
 // ---------------------------------------------------------------- man-days
 
@@ -118,10 +119,17 @@ export function managementCost(earned: number, s: Pick<AppSettings, "managementP
   return (earned * s.managementPctOfEarnedValue) / 100;
 }
 
-/** DEMO ASSUMPTION: Instrument charge = purchase value × monthly rate × months deployed. */
-export const DAYS_PER_MONTH = 30.4;
-export function instrumentCharge(purchaseValue: number, days: number, s: Pick<AppSettings, "instrumentMonthlyRatePct">) {
-  return (purchaseValue * (s.instrumentMonthlyRatePct / 100) * days) / DAYS_PER_MONTH;
+/**
+ * Instrument per-day value = asset value ÷ days from purchase to end of life
+ * (as in Aerosys's costing sheet, where a ₹80,000 instrument over 730 days costs ₹110/day).
+ */
+export function instrumentPerDayValue(i: Pick<Instrument, "assetValue" | "purchaseDate" | "endOfLifeDate">) {
+  return i.assetValue / Math.max(1, daysBetween(i.purchaseDate, i.endOfLifeDate));
+}
+
+/** Instrument charge to a project = per-day value × days deployed on it. */
+export function instrumentCharge(perDayValue: number, days: number) {
+  return perDayValue * days;
 }
 
 // ---------------------------------------------------------------- projection
@@ -185,7 +193,6 @@ export const HEALTH_THRESHOLDS = {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   companyName: "Aerosys HVAC Solutions Pvt Ltd",
-  instrumentMonthlyRatePct: 3,
   deadlineAlertDays: 14,
   hoursPerManDay: 8,
   overheadPctOfWages: 20,

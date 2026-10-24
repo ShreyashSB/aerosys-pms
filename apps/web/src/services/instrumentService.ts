@@ -7,8 +7,23 @@ import { pushNotification } from "./notificationService";
 
 export type InstrumentInput = Pick<
   Instrument,
-  "name" | "serialNumber" | "category" | "purchaseValue" | "purchaseDate" | "notes"
+  | "name"
+  | "serialNumber"
+  | "category"
+  | "assetValue"
+  | "purchaseDate"
+  | "endOfLifeDate"
+  | "currentLocation"
+  | "calibration"
+  | "notes"
 > & { code?: string };
+
+function validateInput(input: InstrumentInput) {
+  if (!input.name.trim()) throw new ApiError("Instrument name is required");
+  if (!(input.assetValue > 0)) throw new ApiError("Asset value must be more than zero");
+  if (input.endOfLifeDate <= input.purchaseDate) throw new ApiError("End-of-life date must be after the purchase date");
+  if (input.calibration && input.calibration.size > 10 * 1024 * 1024) throw new ApiError("Calibration certificate must be smaller than 10 MB");
+}
 
 function closeOpenDeployment(data: Database, instrumentId: string) {
   const today = todayISO();
@@ -32,7 +47,7 @@ export const instrumentService = {
 
   async create(input: InstrumentInput): Promise<Instrument> {
     await simulateLatency();
-    if (!input.name.trim()) throw new ApiError("Instrument name is required");
+    validateInput(input);
     return db.write((data) => {
       if (data.instruments.some((i) => i.serialNumber.toLowerCase() === input.serialNumber.trim().toLowerCase()))
         throw new ApiError("An instrument with this serial number already exists");
@@ -53,6 +68,7 @@ export const instrumentService = {
 
   async update(id: string, input: InstrumentInput): Promise<Instrument> {
     await simulateLatency();
+    validateInput(input);
     return db.write((data) => {
       const ins = data.instruments.find((i) => i.id === id);
       if (!ins) throw new ApiError("Instrument not found", 404);

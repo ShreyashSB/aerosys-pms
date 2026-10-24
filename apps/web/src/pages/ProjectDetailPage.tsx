@@ -219,7 +219,6 @@ export function ProjectDetailPage() {
             instrumentById={data.instrumentById}
             canManage={can(user.role, "instrument.manage") && isManager}
             showCost={showFinance}
-            settings={data.settings}
           />
         </TabsContent>
         <TabsContent value="documents">
