@@ -37,6 +37,8 @@ You need three free accounts. Sign in to each with GitHub.
 
 Free plan: 0.5 GB storage, the database sleeps when idle and wakes on the next query in about a second.
 
+To fill a new Neon database with the demo, run `pnpm db:migrate` and then `pnpm db:seed -- --yes` with `DATABASE_URL` set to the Neon string. In a Codespace that is `export DATABASE_URL='postgresql://…'` first.
+
 ### 2. API: Render
 
 1. [render.com](https://render.com) -> **New -> Blueprint** -> pick this repository. Render reads `render.yaml` and proposes the `aerosys-api` service (Docker, Singapore, free).

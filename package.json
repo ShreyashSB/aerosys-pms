@@ -12,6 +12,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "db:generate": "pnpm --filter @aerosys/api db:generate",
-    "db:migrate": "pnpm --filter @aerosys/api db:migrate"
+    "db:migrate": "pnpm --filter @aerosys/api db:migrate",
+    "db:seed": "pnpm --filter @aerosys/api db:seed"
   }
 }
