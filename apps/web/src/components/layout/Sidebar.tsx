@@ -10,11 +10,14 @@ export function Sidebar({
   onToggle,
   mobileOpen,
   onCloseMobile,
+  hideOnDesktop,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  /** Hide on laptops (the "Top bar" view shows the menu across the top instead). */
+  hideOnDesktop?: boolean;
 }) {
   const { user, can } = useAuth();
   const items = NAV_ITEMS.filter((i) => !i.permission || can(i.permission));
@@ -28,6 +31,7 @@ export function Sidebar({
           collapsed ? "lg:w-[68px]" : "lg:w-60",
           "w-60",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
+          hideOnDesktop && "lg:hidden",
         )}
       >
         <div className={cn("flex h-16 items-center border-b border-white/10", collapsed ? "justify-center px-2" : "px-4")}>

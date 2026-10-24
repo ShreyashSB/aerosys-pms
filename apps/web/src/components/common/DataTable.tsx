@@ -69,7 +69,8 @@ export function DataTable<T>({
 
   return (
     <div className={cn("overflow-hidden rounded-lg border bg-surface", className)}>
-      <div className="overflow-x-auto">
+      {/* "relative" keeps visually hidden (sr-only) header text inside the scroll area; without it the page scrolls sideways on phones. */}
+      <div className="relative overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>

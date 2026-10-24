@@ -14,7 +14,14 @@ export function Progress({ value, className, tone }: { value: number; className?
   );
 }
 
-const AVATAR_TONES = ["bg-sky-100 text-sky-800", "bg-amber-100 text-amber-800", "bg-emerald-100 text-emerald-800", "bg-violet-100 text-violet-800", "bg-rose-100 text-rose-800", "bg-slate-200 text-slate-700"];
+const AVATAR_TONES = [
+  "bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-200",
+  "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200",
+  "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200",
+  "bg-violet-100 text-violet-800 dark:bg-violet-900/60 dark:text-violet-200",
+  "bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200",
+  "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+];
 
 export function Avatar({ name, className }: { name: string; className?: string }) {
   const tone = AVATAR_TONES[name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_TONES.length];

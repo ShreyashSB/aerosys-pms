@@ -3,7 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Apply the saved theme/view/density before React loads so the page never flashes the wrong theme.
+         Mirrors src/appearance/AppearanceContext.tsx (same storage key and defaults). -->
+    <script>
+      (function () {
+        var a = {};
+        try { a = JSON.parse(localStorage.getItem("aerosys.appearance") || "{}"); } catch (e) {}
+        var theme = a.theme || "light";
+        if (theme === "system") theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        var root = document.documentElement;
+        root.dataset.theme = theme;
+        root.dataset.view = a.view || "classic";
+        root.dataset.density = a.density || "default";
+      })();
+    </script>
     <title>Aerosys HVAC · Project & Operations</title>
   </head>
   <body>

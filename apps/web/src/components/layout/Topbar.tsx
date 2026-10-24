@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, LogOut, Menu, RefreshCcw, Settings, UserRound } from "lucide-react";
 import { useAuth, useCurrentUser } from "@/auth/AuthContext";
 import { ROLE_LABELS } from "@/auth/permissions";
@@ -15,11 +15,14 @@ import {
 } from "@/components/ui/dropdown";
 import type { Role } from "@/types/models";
 import { GlobalSearch } from "./GlobalSearch";
+import type { View } from "@/appearance/AppearanceContext";
+import { AppearanceMenu } from "./AppearanceMenu";
+import { LogoMark } from "./Logo";
 import { NotificationCenter } from "./NotificationCenter";
 
 const ROLES: Role[] = ["management", "project_manager", "site_engineer", "accounts"];
 
-export function Topbar({ onOpenMobile }: { onOpenMobile: () => void }) {
+export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view: View }) {
   const { user, employee } = useCurrentUser();
   const { users, login, logout, switchRole } = useAuth();
   const { data: employees = [] } = useEmployees();
@@ -29,9 +32,24 @@ export function Topbar({ onOpenMobile }: { onOpenMobile: () => void }) {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-surface/95 px-4 backdrop-blur lg:px-6">
-      <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMobile} aria-label="Open menu">
-        <Menu className="size-5" />
-      </Button>
+      {/* In Field view the bottom tab bar has a "More" button, so the hamburger is not needed. */}
+      {view !== "field" && (
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMobile} aria-label="Open menu">
+          <Menu className="size-5" />
+        </Button>
+      )}
+      {/* Without a visible sidebar, show the logo in the header so the app keeps its identity. */}
+      {view === "topnav" && (
+        <Link to="/" className="hidden items-center gap-2 lg:flex" aria-label="Aerosys HVAC home">
+          <LogoMark />
+          <span className="text-sm font-bold tracking-wide">AEROSYS HVAC</span>
+        </Link>
+      )}
+      {view === "field" && (
+        <Link to="/" className="lg:hidden" aria-label="Aerosys HVAC home">
+          <LogoMark />
+        </Link>
+      )}
       <div className="min-w-0 flex-1">
         <GlobalSearch />
       </div>
@@ -56,6 +74,7 @@ export function Topbar({ onOpenMobile }: { onOpenMobile: () => void }) {
         </select>
       </div>
 
+      <AppearanceMenu />
       <NotificationCenter />
 
       <DropdownMenu>
