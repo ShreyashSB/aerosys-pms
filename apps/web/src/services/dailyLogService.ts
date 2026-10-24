@@ -3,7 +3,7 @@ import { MAN_DAY_WEIGHT, idleManDays } from "@/domain/assumptions";
 import { todayISO } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
 import { uid } from "@/lib/utils";
-import type { AttendanceEntry, DailyLog, ExpenseCategory } from "@/types/models";
+import type { AttendanceEntry, DailyLog } from "@/types/models";
 import { pushNotification } from "./notificationService";
 import { notifyProgressMilestones, projectProgress } from "./progressEvents";
 
@@ -14,8 +14,6 @@ export interface DailyLogInput {
   activities: string;
   remarks: string;
   work: Array<{ boqItemId: string; qty: number; remarks: string }>;
-  /** New expenses raised with this log (created as Pending). */
-  expenses: Array<{ employeeId: string; category: ExpenseCategory; amount: number; description: string }>;
 }
 
 export const dailyLogService = {
@@ -39,7 +37,6 @@ export const dailyLogService = {
       if (a.idleHours < 0) throw new ApiError("Idle hours cannot be negative");
     }
     for (const w of input.work) if (!w.boqItemId || !(w.qty > 0)) throw new ApiError("Each work line needs a BOQ item and a quantity above zero");
-    for (const x of input.expenses) if (!(x.amount > 0) || !x.employeeId) throw new ApiError("Each expense needs an employee and an amount");
 
     return db.write((data) => {
       const project = data.projects.find((p) => p.id === input.projectId);
@@ -83,24 +80,6 @@ export const dailyLogService = {
       for (const w of input.work) {
         data.boqExecutions.push({ id: uid("exe"), projectId: input.projectId, boqItemId: w.boqItemId, date: input.date, qty: w.qty, remarks: w.remarks, dailyLogId: log.id });
       }
-      let seq = Math.max(1000, ...data.expenses.map((e) => Number(e.code.split("-")[1]) || 0));
-      for (const x of input.expenses) {
-        data.expenses.unshift({
-          id: uid("exp"), code: `EXP-${++seq}`, employeeId: x.employeeId, projectId: input.projectId, category: x.category, amount: x.amount,
-          date: input.date, description: x.description || `${x.category} – daily log`, receipt: null, dailyLogId: log.id, status: "pending",
-          submittedAt: stamp, reviewedById: null, reviewedAt: null, reviewNote: "",
-        });
-      }
-      if (input.expenses.length) {
-        pushNotification(data, {
-          type: "expense_submitted",
-          title: "Expenses submitted with daily log",
-          message: `${input.expenses.length} expense(s) totalling ₹${formatNumber(input.expenses.reduce((s, x) => s + x.amount, 0))} raised on ${project.name} (${input.date}).`,
-          link: `/expenses?status=pending&project=${project.id}`,
-          audienceRoles: ["management", "accounts"],
-          audienceEmployeeIds: [project.managerId],
-        });
-      }
       const idle = attendance.reduce((s, a) => s + idleManDays(a.status, a.idleHours, hours), 0);
       if (idle >= 2) {
         const reasons = [...new Set(attendance.filter((a) => a.idleReason).map((a) => a.idleReason))].join(", ");
@@ -119,13 +98,12 @@ export const dailyLogService = {
     });
   },
 
-  // DELETE /api/daily-logs/:id – removes its BOQ quantities; linked expenses are kept
+  // DELETE /api/daily-logs/:id – removes its BOQ quantities
   async remove(id: string): Promise<void> {
     await simulateLatency();
     db.write((data) => {
       data.dailyLogs = data.dailyLogs.filter((l) => l.id !== id);
       data.boqExecutions = data.boqExecutions.filter((x) => x.dailyLogId !== id);
-      for (const e of data.expenses) if (e.dailyLogId === id) e.dailyLogId = null;
     });
   },
 };

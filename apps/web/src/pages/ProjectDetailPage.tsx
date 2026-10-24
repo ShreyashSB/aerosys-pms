@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
-  Activity, BarChart3, Building2, Calculator, ChevronRight, ClipboardList, FileSpreadsheet, FolderOpen, LayoutGrid, MapPin, Pencil, Plus, Receipt, Star, Users, Wrench,
+  Activity, BarChart3, Building2, Calculator, ChevronRight, ClipboardList, FileSpreadsheet, FileText, FolderOpen, LayoutGrid, MapPin, Pencil, Plus, Receipt, Star, Users, Wrench,
 } from "lucide-react";
 import { useCurrentUser } from "@/auth/AuthContext";
 import { can, canManageProject } from "@/auth/permissions";
@@ -23,6 +23,7 @@ import { TeamTab } from "@/features/projects/tabs/TeamTab";
 import { InstrumentsTab } from "@/features/projects/tabs/InstrumentsTab";
 import { CostsTab } from "@/features/projects/tabs/CostsTab";
 import { DocumentsTab } from "@/features/projects/tabs/DocumentsTab";
+import { BillsTab } from "@/features/projects/tabs/BillsTab";
 import { PnlDrawer } from "@/features/projects/PnlDrawer";
 import { ReviewTeamDialog, projectTeam } from "@/features/projects/ReviewTeamDialog";
 import { DailyLogFormDialog } from "@/features/projects/dailylog/DailyLogFormDialog";
@@ -85,10 +86,13 @@ export function ProjectDetailPage() {
   const editingLog = logForm.logId ? data.dailyLogs.find((l) => l.id === logForm.logId) : null;
 
   const facts: Array<[string, React.ReactNode]> = [
-    ["Project code", project.code],
+    ["Project ID", project.code],
+    ["Project type", project.projectType],
     ["Client", <span className="flex items-center gap-1"><Building2 className="size-3.5 text-muted-foreground" />{project.clientName}</span>],
     ["Site", <span className="flex items-center gap-1"><MapPin className="size-3.5 text-muted-foreground" />{project.site}</span>],
     ["Project manager", manager?.name ?? "—"],
+    ["Work order no.", project.workOrderNo || "—"],
+    ["PO no.", project.poNo || "—"],
     ...(showFinance ? ([["Work order value", <span title={formatINR(project.contractValue)}>{formatINRShort(project.contractValue)}</span>]] as Array<[string, React.ReactNode]>) : []),
     ["Start date", formatDate(project.startDate)],
     ["Expected completion", formatDate(project.endDate)],
@@ -161,6 +165,7 @@ export function ProjectDetailPage() {
           <TabsTrigger value="expenses">
             <Receipt /> Expenses {pending.length > 0 && <span className="rounded-full bg-warning-soft px-1.5 text-xs text-warning">{pending.length}</span>}
           </TabsTrigger>
+          {showFinance && <TabsTrigger value="bills"><FileText /> Bills & invoices</TabsTrigger>}
           {showFinance && <TabsTrigger value="costs"><Calculator /> Costs</TabsTrigger>}
           <TabsTrigger value="instruments"><Wrench /> Instruments</TabsTrigger>
           <TabsTrigger value="documents"><FolderOpen /> Documents</TabsTrigger>
@@ -226,6 +231,11 @@ export function ProjectDetailPage() {
             emptyAction={canAddExpense ? <Button variant="outline" onClick={() => setExpenseOpen(true)}><Plus /> Add expense</Button> : undefined}
           />
         </TabsContent>
+        {showFinance && (
+          <TabsContent value="bills">
+            <BillsTab project={project} perf={p} canManage={can(user.role, "bill.manage")} />
+          </TabsContent>
+        )}
         {showFinance && (
           <TabsContent value="costs">
             <CostsTab project={project} perf={p} settings={data.settings} costs={data.projectCosts.filter((c) => c.projectId === id)} canEdit={canEditCosts} onExplain={explain} />

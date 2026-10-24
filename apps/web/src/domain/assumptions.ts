@@ -114,9 +114,16 @@ export function overheadCost(wages: number, s: Pick<AppSettings, "overheadPctOfW
   return (wages * s.overheadPctOfWages) / 100;
 }
 
-/** DEMO ASSUMPTION: Management charges = x% of earned value (x from Settings). */
-export function managementCost(earned: number, s: Pick<AppSettings, "managementPctOfEarnedValue">) {
-  return (earned * s.managementPctOfEarnedValue) / 100;
+/**
+ * Operational charges = calendar days the project has run × the project's operational cost per day.
+ * Days count from the start date up to today, or up to the completion date once the project is completed.
+ */
+export function operationalDays(start: string, end: string) {
+  return end < start ? 0 : daysBetween(start, end) + 1;
+}
+
+export function operationalCost(days: number, perDay: number) {
+  return days * perDay;
 }
 
 /**
@@ -196,7 +203,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   deadlineAlertDays: 14,
   hoursPerManDay: 8,
   overheadPctOfWages: 20,
-  managementPctOfEarnedValue: 3,
   projectionMethod: "performance",
   targetMarginPct: 15,
 };

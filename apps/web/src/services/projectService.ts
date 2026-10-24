@@ -1,4 +1,5 @@
 import { ApiError, clone, db, simulateLatency } from "@/api/mockDb";
+import type { Database } from "@/api/seed";
 import { todayISO } from "@/lib/dates";
 import { uid } from "@/lib/utils";
 import type { Project, ProjectStatus } from "@/types/models";
@@ -6,9 +7,9 @@ import { pushNotification } from "./notificationService";
 
 export type ProjectInput = Pick<
   Project,
-  | "name" | "clientName" | "site" | "managerId" | "contractValue" | "estimatedCost" | "allottedManDays" | "allottedExpenses"
-  | "startDate" | "endDate" | "description" | "status"
->;
+  | "name" | "clientName" | "site" | "projectType" | "workOrderNo" | "poNo" | "managerId" | "contractValue" | "estimatedCost"
+  | "allottedManDays" | "allottedExpenses" | "operationalCostPerDay" | "startDate" | "endDate" | "description" | "status"
+> & { /** Project ID; generated when left blank. */ code?: string };
 
 function validate(input: ProjectInput) {
   if (!input.name.trim()) throw new ApiError("Project name is required");
@@ -16,9 +17,36 @@ function validate(input: ProjectInput) {
   if (input.endDate < input.startDate) throw new ApiError("Expected completion must be after start date");
   if (!(input.allottedManDays > 0)) throw new ApiError("Allotted man-days must be greater than zero");
   if (input.allottedExpenses < 0) throw new ApiError("Allotted expenses cannot be negative");
+  if (input.operationalCostPerDay < 0) throw new ApiError("Operational cost cannot be negative");
+  if (!input.projectType.trim()) throw new ApiError("Project type is required");
+}
+
+/** Adds a value typed with "Add new" to its dropdown list, ignoring case-only duplicates. */
+function remember(list: string[], value: string) {
+  const v = value.trim();
+  if (v && !list.some((x) => x.toLowerCase() === v.toLowerCase())) {
+    list.push(v);
+    list.sort((a, b) => a.localeCompare(b));
+  }
+}
+
+function rememberLookups(data: Database, input: ProjectInput) {
+  remember(data.lookups.clients, input.clientName);
+  remember(data.lookups.sites, input.site);
+  if (!data.lookups.projectTypes.some((t) => t.toLowerCase() === input.projectType.trim().toLowerCase())) data.lookups.projectTypes.push(input.projectType.trim());
+}
+
+function checkCode(data: Database, code: string, selfId?: string) {
+  if (data.projects.some((p) => p.id !== selfId && p.code.toLowerCase() === code.toLowerCase())) throw new ApiError(`Project ID ${code} is already in use`);
 }
 
 export const projectService = {
+  // GET /api/lookups – clients, sites and project types for the form dropdowns
+  async lookups(): Promise<Database["lookups"]> {
+    await simulateLatency();
+    return clone(db.read().lookups);
+  },
+
   // GET /api/projects
   async list(): Promise<Project[]> {
     await simulateLatency();
@@ -40,10 +68,14 @@ export const projectService = {
     return db.write((data) => {
       const seq = Math.max(0, ...data.projects.map((p) => Number(p.code.split("-").pop()) || 0)) + 1;
       const now = new Date().toISOString();
+      const { code: wanted, ...rest } = input;
+      const code = wanted?.trim() || `PRJ-${new Date().getFullYear()}-${String(seq).padStart(3, "0")}`;
+      checkCode(data, code);
+      rememberLookups(data, input);
       const project: Project = {
-        ...input,
+        ...rest,
         id: uid("prj"),
-        code: `PRJ-${new Date().getFullYear()}-${String(seq).padStart(3, "0")}`,
+        code,
         periodStart: input.startDate,
         createdAt: now,
         updatedAt: now,
@@ -69,7 +101,13 @@ export const projectService = {
       const p = data.projects.find((x) => x.id === id);
       if (!p) throw new ApiError("Project not found", 404);
       const managerChanged = p.managerId !== input.managerId;
-      Object.assign(p, input, { updatedAt: new Date().toISOString() });
+      const { code, ...rest } = input;
+      if (code?.trim()) {
+        checkCode(data, code.trim(), p.id);
+        p.code = code.trim();
+      }
+      rememberLookups(data, input);
+      Object.assign(p, rest, { updatedAt: new Date().toISOString() });
       if (input.status === "completed") {
         for (const a of data.assignments) if (a.projectId === p.id && !a.endDate) a.endDate = todayISO();
       }
@@ -111,6 +149,8 @@ export const projectService = {
       data.boqExecutions = data.boqExecutions.filter((x) => x.projectId !== id);
       data.dailyLogs = data.dailyLogs.filter((l) => l.projectId !== id);
       data.documents = data.documents.filter((d) => d.projectId !== id);
+      data.bills = data.bills.filter((b) => b.projectId !== id);
+      data.engineerReviews = data.engineerReviews.filter((r) => r.projectId !== id);
       for (const ins of data.instruments) {
         if (ins.assignedProjectId === id) {
           ins.assignedProjectId = null;

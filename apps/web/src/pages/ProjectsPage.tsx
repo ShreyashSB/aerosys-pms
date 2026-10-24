@@ -29,8 +29,8 @@ export function ProjectsPage() {
   const { user } = useCurrentUser();
   const data = useScopedData();
   const navigate = useNavigate();
-  const filters = useUrlState(["q", "status", "manager", "client"] as const);
-  const { q, status, manager, client } = filters.values;
+  const filters = useUrlState(["q", "status", "manager", "client", "type"] as const);
+  const { q, status, manager, client, type } = filters.values;
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Project | undefined>();
   const [deleting, setDeleting] = useState<Project | null>(null);
@@ -42,6 +42,7 @@ export function ProjectsPage() {
   const projects = data.scopedProjects;
   const managers = useMemo(() => [...new Set(projects.map((p) => p.managerId))].map((id) => data.employeeById.get(id)!).filter(Boolean), [projects, data.employeeById]);
   const clients = useMemo(() => [...new Set(projects.map((p) => p.clientName))].sort(), [projects]);
+  const types = useMemo(() => [...new Set(projects.map((p) => p.projectType))].sort(), [projects]);
 
   const rows = useMemo(
     () =>
@@ -50,9 +51,10 @@ export function ProjectsPage() {
           (status ? p.status === status : p.status !== "archived") &&
           (!manager || p.managerId === manager) &&
           (!client || p.clientName === client) &&
-          includesText([p.name, p.clientName, p.site, p.code], q),
+          (!type || p.projectType === type) &&
+          includesText([p.name, p.clientName, p.site, p.code, p.workOrderNo, p.poNo], q),
       ),
-    [projects, status, manager, client, q],
+    [projects, status, manager, client, type, q],
   );
 
   const columns: Column<Project>[] = [
@@ -63,7 +65,7 @@ export function ProjectsPage() {
       cell: (p) => (
         <div className="min-w-48">
           <p className="font-medium text-foreground">{p.name}</p>
-          <p className="text-xs text-muted-foreground">{p.code}</p>
+          <p className="text-xs text-muted-foreground">{p.code} · {p.projectType}</p>
         </div>
       ),
     },
@@ -173,7 +175,7 @@ export function ProjectsPage() {
       />
 
       <FilterBar onReset={filters.reset} showReset={filters.active}>
-        <SearchInput value={q} onChange={(v) => filters.set("q", v)} placeholder="Search project, client, site…" />
+        <SearchInput value={q} onChange={(v) => filters.set("q", v)} placeholder="Search project, ID, WO no., client…" />
         <Select value={status} onChange={(e) => filters.set("status", e.target.value)} className="w-auto min-w-36" aria-label="Filter by status">
           <option value="">All statuses</option>
           {(Object.keys(PROJECT_STATUS) as ProjectStatus[]).map((s) => (
@@ -192,6 +194,12 @@ export function ProjectsPage() {
           <option value="">All clients</option>
           {clients.map((c) => (
             <option key={c}>{c}</option>
+          ))}
+        </Select>
+        <Select value={type} onChange={(e) => filters.set("type", e.target.value)} className="w-auto min-w-36 max-w-60" aria-label="Filter by project type">
+          <option value="">All types</option>
+          {types.map((t) => (
+            <option key={t}>{t}</option>
           ))}
         </Select>
       </FilterBar>

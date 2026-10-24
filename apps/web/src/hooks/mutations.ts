@@ -13,6 +13,7 @@ import {
   dailyLogService,
   documentService,
   reviewService,
+  billService,
 } from "@/services";
 import type { DailyLogInput } from "@/services/dailyLogService";
 import { qk } from "./queries";
@@ -35,11 +36,11 @@ function useServiceMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult
 
 // Projects -------------------------------------------------------------------
 export const useCreateProject = () =>
-  useServiceMutation(projectService.create, [qk.projects, NOTIFS]);
+  useServiceMutation(projectService.create, [qk.projects, qk.lookups, NOTIFS]);
 export const useUpdateProject = () =>
   useServiceMutation(
     ({ id, input }: { id: string; input: Parameters<typeof projectService.update>[1] }) => projectService.update(id, input),
-    [qk.projects, qk.assignments, NOTIFS],
+    [qk.projects, qk.assignments, qk.lookups, NOTIFS],
   );
 export const useSetProjectStatus = () =>
   useServiceMutation(
@@ -49,7 +50,7 @@ export const useSetProjectStatus = () =>
 export const useDeleteProject = () =>
   useServiceMutation(projectService.remove, [
     qk.projects, qk.assignments, qk.expenses, qk.projectCosts, qk.deployments, qk.instruments,
-    qk.boqItems, qk.boqExecutions, qk.dailyLogs, qk.documents,
+    qk.boqItems, qk.boqExecutions, qk.dailyLogs, qk.documents, qk.bills,
   ]);
 
 // Engineer reviews at project close -----------------------------------------
@@ -74,9 +75,9 @@ export const useClosePeriod = () => useServiceMutation(boqService.closePeriod, [
 export const useSaveDailyLog = () =>
   useServiceMutation(
     ({ input, actorId, logId }: { input: DailyLogInput; actorId: string; logId?: string }) => dailyLogService.save(input, actorId, logId),
-    [qk.dailyLogs, qk.boqExecutions, qk.expenses, NOTIFS],
+    [qk.dailyLogs, qk.boqExecutions, NOTIFS],
   );
-export const useDeleteDailyLog = () => useServiceMutation(dailyLogService.remove, [qk.dailyLogs, qk.boqExecutions, qk.expenses]);
+export const useDeleteDailyLog = () => useServiceMutation(dailyLogService.remove, [qk.dailyLogs, qk.boqExecutions]);
 
 // Documents ------------------------------------------------------------------
 export const useUploadDocument = () =>
@@ -135,6 +136,14 @@ export const useUpdateEmployee = () =>
   );
 
 // Project costs --------------------------------------------------------------
+// Bills & invoices (Accounts) -------------------------------------------------
+export const useCreateBill = () =>
+  useServiceMutation(
+    ({ input, actorId }: { input: Parameters<typeof billService.create>[0]; actorId: string }) => billService.create(input, actorId),
+    [qk.bills],
+  );
+export const useDeleteBill = () => useServiceMutation(billService.remove, [qk.bills]);
+
 export const useCreateProjectCost = () => useServiceMutation(projectCostService.create, [qk.projectCosts]);
 export const useDeleteProjectCost = () => useServiceMutation(projectCostService.remove, [qk.projectCosts]);
 

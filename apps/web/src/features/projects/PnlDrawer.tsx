@@ -41,8 +41,9 @@ export function PnlStatement({ data, settings }: { data: PnlData; settings: AppS
     ["Expenses", c.expenses],
     ["Overhead", c.overhead],
     ["Instrument charges", c.instruments],
-    ["Management charges", c.management],
+    ["Operational charges", c.operational],
   ];
+  if (c.bills > 0) lines.push(["Vendor bills", c.bills]);
   if (c.other > 0) lines.push(["Other direct costs", c.other]);
   const health = profitHealth(data.finalMarginPct, settings);
 
@@ -84,8 +85,8 @@ export function PnlStatement({ data, settings }: { data: PnlData; settings: AppS
         <Info className="mt-0.5 size-3.5 shrink-0" />
         <span>
           Projected values are estimates, not actual profit.{" "}
-          {data.projectionMethod && data.projectionMethod !== "mixed" ? `Method: ${PROJECTION_LABEL[data.projectionMethod]}.` : "Each project uses its own projection (see project pages)."} Overhead and management
-          charges use demo rates from Settings ({formatPct(settings.overheadPctOfWages)} of wages, {formatPct(settings.managementPctOfEarnedValue)} of earned value).
+          {data.projectionMethod && data.projectionMethod !== "mixed" ? `Method: ${PROJECTION_LABEL[data.projectionMethod]}.` : "Each project uses its own projection (see project pages)."} Overhead uses a demo rate from Settings
+          ({formatPct(settings.overheadPctOfWages)} of wages); operational charges use each project's cost per day.
         </span>
       </p>
     </div>

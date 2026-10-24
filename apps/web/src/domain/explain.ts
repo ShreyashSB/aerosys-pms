@@ -141,15 +141,15 @@ export function explainOverhead(p: ProjectPerformance, s: AppSettings): Explanat
   };
 }
 
-export function explainManagement(p: ProjectPerformance, s: AppSettings): Explanation {
+export function explainOperational(p: ProjectPerformance, perDay: number): Explanation {
   return {
-    title: "Management charges",
+    title: "Operational charges",
     steps: [
-      { label: "Earned value", value: formatINR(p.earnedValue) },
-      { op: "×", label: "Management rate", value: formatPct(s.managementPctOfEarnedValue) },
-      { op: "=", label: "Management charges", value: formatINR(p.costs.management), strong: true },
+      { label: "Project days to date", value: formatNumber(p.operationalDays, 0) },
+      { op: "×", label: "Operational cost per day", value: formatINR(perDay) },
+      { op: "=", label: "Operational charges", value: formatINR(p.costs.operational), strong: true },
     ],
-    notes: ["Demo assumption: management charges accrue as a % of earned value. Rate is set in Settings."],
+    notes: ["Charged for every calendar day from the start date to today (or to completion). The rate is set on the project."],
   };
 }
 

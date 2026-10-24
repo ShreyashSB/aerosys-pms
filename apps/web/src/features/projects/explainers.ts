@@ -3,7 +3,7 @@ import {
   explainIdle,
   explainInstruments,
   explainManDays,
-  explainManagement,
+  explainOperational,
   explainOverhead,
   explainPpi,
   explainProgress,
@@ -17,7 +17,7 @@ import type { AppSettings, Employee } from "@/types/models";
 
 export type MetricKey =
   | "ppi" | "runningPpi" | "progress" | "manDays" | "idle" | "expenses"
-  | "wages" | "overhead" | "instruments" | "management" | "projectedProfit" | "other";
+  | "wages" | "overhead" | "instruments" | "operational" | "bills" | "projectedProfit" | "other";
 
 export function explainMetric(key: MetricKey, p: ProjectPerformance, s: AppSettings, employeeById: Map<string, Employee>): Explanation {
   switch (key) {
@@ -30,8 +30,9 @@ export function explainMetric(key: MetricKey, p: ProjectPerformance, s: AppSetti
     case "wages": return explainWages(p, employeeById);
     case "overhead": return explainOverhead(p, s);
     case "instruments": return explainInstruments(p);
-    case "management": return explainManagement(p, s);
+    case "operational": return explainOperational(p, p.operationalCostPerDay);
     case "projectedProfit": return explainProjectedProfit(p);
+    case "bills": return { title: "Vendor bills", steps: [{ label: "Σ vendor bills entered by Accounts (Bills & invoices tab)", value: "", strong: true }] };
     case "other": return { title: "Other direct costs", steps: [{ label: "Σ direct cost entries (Costs tab)", value: "", strong: true }] };
   }
 }

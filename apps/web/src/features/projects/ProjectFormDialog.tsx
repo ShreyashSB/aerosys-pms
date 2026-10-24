@@ -7,17 +7,24 @@ import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { useForm, type Errors } from "@/hooks/useForm";
 import { useCreateProject, useUpdateProject } from "@/hooks/mutations";
 import { useAppData } from "@/hooks/useAppData";
+import { useLookups } from "@/hooks/queries";
+import { CreatableSelect } from "@/components/common/CreatableSelect";
 import { useAuth } from "@/auth/AuthContext";
 import { PROJECT_STATUS } from "@/components/common/StatusBadges";
 import { addDays, todayISO } from "@/lib/dates";
-import { formatINRShort, formatPerMd } from "@/lib/format";
+import { formatINR, formatINRShort, formatPerMd } from "@/lib/format";
 import { ppi } from "@/domain/assumptions";
 import type { Project, ProjectStatus } from "@/types/models";
 
 type Values = {
+  code: string;
   name: string;
   clientName: string;
   site: string;
+  projectType: string;
+  workOrderNo: string;
+  poNo: string;
+  operationalCostPerDay: string;
   managerId: string;
   contractValue: string;
   estimatedCost: string;
@@ -31,9 +38,14 @@ type Values = {
 
 function toValues(p?: Project): Values {
   return {
+    code: p?.code ?? "",
     name: p?.name ?? "",
     clientName: p?.clientName ?? "",
     site: p?.site ?? "",
+    projectType: p?.projectType ?? "",
+    workOrderNo: p?.workOrderNo ?? "",
+    poNo: p?.poNo ?? "",
+    operationalCostPerDay: p ? String(p.operationalCostPerDay) : "150",
     managerId: p?.managerId ?? "",
     contractValue: p ? String(p.contractValue) : "",
     estimatedCost: p ? String(p.estimatedCost) : "",
@@ -52,6 +64,9 @@ function validate(v: Values): Errors<Values> {
   else if (v.name.trim().length < 4) e.name = "Name must be at least 4 characters";
   if (!v.clientName.trim()) e.clientName = "Client is required";
   if (!v.site.trim()) e.site = "Site / location is required";
+  if (!v.projectType.trim()) e.projectType = "Select a project type";
+  if (v.code.trim() && !/^[A-Za-z0-9/_-]+$/.test(v.code.trim())) e.code = "Use letters, numbers, - / or _ only";
+  if (v.operationalCostPerDay !== "" && !(Number(v.operationalCostPerDay) >= 0)) e.operationalCostPerDay = "Enter a valid amount";
   if (!v.managerId) e.managerId = "Select a project manager";
   const cv = Number(v.contractValue);
   if (!v.contractValue || !(cv > 0)) e.contractValue = "Enter a contract value greater than 0";
@@ -80,14 +95,23 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
   }, [open, project?.id]);
 
   const managers = employees.filter((e) => e.department === "Projects" || e.department === "Management");
-  const clients = Array.from(new Set(projects.map((p) => p.clientName))).sort();
+  const lookups = useLookups().data;
+  const clients = lookups?.clients ?? [];
+  const sites = lookups?.sites ?? [];
+  const types = lookups?.projectTypes ?? [];
+  const nextCode = `PRJ-${new Date().getFullYear()}-${String(Math.max(0, ...projects.map((p) => Number(p.code.split("-").pop()) || 0)) + 1).padStart(3, "0")}`;
   const lockManager = user?.role === "project_manager";
 
   const submit = form.handleSubmit((vals) => {
     const input = {
+      code: vals.code.trim() || undefined,
       name: vals.name.trim(),
       clientName: vals.clientName.trim(),
       site: vals.site.trim(),
+      projectType: vals.projectType.trim(),
+      workOrderNo: vals.workOrderNo.trim(),
+      poNo: vals.poNo.trim(),
+      operationalCostPerDay: vals.operationalCostPerDay ? Number(vals.operationalCostPerDay) : 0,
       managerId: vals.managerId,
       contractValue: Number(vals.contractValue),
       estimatedCost: vals.estimatedCost ? Number(vals.estimatedCost) : Math.round(Number(vals.contractValue) * 0.78),
@@ -148,16 +172,23 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
           <Field label="Project name" htmlFor="p-name" required error={errors.name} className="sm:col-span-2">
             <Input id="p-name" value={v.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Phoenix Mall HVAC Retrofit" aria-invalid={!!errors.name} autoFocus />
           </Field>
+          <Field label="Project ID" htmlFor="p-code" error={errors.code} hint={project ? undefined : `Leave blank for ${nextCode}`}>
+            <Input id="p-code" value={v.code} onChange={(e) => set("code", e.target.value)} placeholder={nextCode} aria-invalid={!!errors.code} />
+          </Field>
+          <Field label="Project type" htmlFor="p-type" required error={errors.projectType}>
+            <CreatableSelect id="p-type" value={v.projectType} onChange={(x) => set("projectType", x)} options={types} placeholder="Select type…" addLabel="Add new type…" newPlaceholder="e.g. Retro-commissioning" invalid={!!errors.projectType} />
+          </Field>
           <Field label="Client" htmlFor="p-client" required error={errors.clientName}>
-            <Input id="p-client" list="client-list" value={v.clientName} onChange={(e) => set("clientName", e.target.value)} placeholder="Client company" aria-invalid={!!errors.clientName} />
-            <datalist id="client-list">
-              {clients.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
+            <CreatableSelect id="p-client" value={v.clientName} onChange={(x) => set("clientName", x)} options={clients} placeholder="Select client…" addLabel="Add new client…" newPlaceholder="Client company name" invalid={!!errors.clientName} />
           </Field>
           <Field label="Site / location" htmlFor="p-site" required error={errors.site}>
-            <Input id="p-site" value={v.site} onChange={(e) => set("site", e.target.value)} placeholder="e.g. Hinjewadi, Pune" aria-invalid={!!errors.site} />
+            <CreatableSelect id="p-site" value={v.site} onChange={(x) => set("site", x)} options={sites} placeholder="Select location…" addLabel="Add new location…" newPlaceholder="e.g. Hinjewadi, Pune" invalid={!!errors.site} />
+          </Field>
+          <Field label="Client work order no." htmlFor="p-wo" hint="As on the annexure">
+            <Input id="p-wo" value={v.workOrderNo} onChange={(e) => set("workOrderNo", e.target.value)} placeholder="e.g. WO/PMD/2026/041" />
+          </Field>
+          <Field label="Client PO no." htmlFor="p-po">
+            <Input id="p-po" value={v.poNo} onChange={(e) => set("poNo", e.target.value)} placeholder="e.g. PO-450012" />
           </Field>
           <Field label="Project manager" htmlFor="p-mgr" required error={errors.managerId} hint={lockManager ? "Only management can reassign the project manager" : undefined}>
             <Select id="p-mgr" value={v.managerId} onChange={(e) => set("managerId", e.target.value)} aria-invalid={!!errors.managerId} disabled={lockManager}>
@@ -200,6 +231,14 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
           </Field>
           <Field label="Allotted expenses (₹)" htmlFor="p-ax" error={errors.allottedExpenses} hint={v.allottedExpenses ? formatINRShort(Number(v.allottedExpenses)) : "Site expense budget"}>
             <Input id="p-ax" type="number" min={0} step={1000} value={v.allottedExpenses} onChange={(e) => set("allottedExpenses", e.target.value)} aria-invalid={!!errors.allottedExpenses} />
+          </Field>
+          <Field
+            label="Operational cost per day (₹)"
+            htmlFor="p-op"
+            error={errors.operationalCostPerDay}
+            hint={`Charged for each calendar day of the project${Number(v.operationalCostPerDay) > 0 ? ` · ${formatINR(Number(v.operationalCostPerDay))} / day` : ""}`}
+          >
+            <Input id="p-op" type="number" min={0} step={10} value={v.operationalCostPerDay} onChange={(e) => set("operationalCostPerDay", e.target.value)} aria-invalid={!!errors.operationalCostPerDay} />
           </Field>
           <Field label="Start date" htmlFor="p-start" required error={errors.startDate}>
             <Input id="p-start" type="date" value={v.startDate} onChange={(e) => set("startDate", e.target.value)} aria-invalid={!!errors.startDate} />

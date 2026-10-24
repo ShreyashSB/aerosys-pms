@@ -19,6 +19,7 @@ import type {
   IdleReason,
   Instrument,
   Project,
+  ProjectBill,
   ProjectCost,
   ProjectInstrument,
   ProjectionMethod,
@@ -30,7 +31,8 @@ import {
   idleManDays,
   instrumentCharge,
   instrumentPerDayValue,
-  managementCost,
+  operationalCost,
+  operationalDays,
   overheadCost,
   ppi as calcPpi,
   progressFromBoq,
@@ -44,6 +46,7 @@ export interface PerformanceData {
   instruments: Instrument[];
   projectInstruments: ProjectInstrument[];
   projectCosts: ProjectCost[];
+  bills: ProjectBill[];
   boqItems: BoqItem[];
   boqExecutions: BoqExecution[];
   dailyLogs: DailyLog[];
@@ -56,6 +59,7 @@ interface ProjectBucket {
   expenses: Expense[];
   deployments: ProjectInstrument[];
   otherCosts: ProjectCost[];
+  bills: ProjectBill[];
 }
 
 export interface PerformanceIndex {
@@ -67,7 +71,7 @@ export interface PerformanceIndex {
 function bucket(idx: Map<string, ProjectBucket>, id: string) {
   let b = idx.get(id);
   if (!b) {
-    b = { boqItems: [], executions: [], logs: [], expenses: [], deployments: [], otherCosts: [] };
+    b = { boqItems: [], executions: [], logs: [], expenses: [], deployments: [], otherCosts: [], bills: [] };
     idx.set(id, b);
   }
   return b;
@@ -82,6 +86,7 @@ export function buildIndex(d: PerformanceData): PerformanceIndex {
   for (const x of d.expenses) bucket(buckets, x.projectId).expenses.push(x);
   for (const x of d.projectInstruments) bucket(buckets, x.projectId).deployments.push(x);
   for (const x of d.projectCosts) bucket(buckets, x.projectId).otherCosts.push(x);
+  for (const x of d.bills) bucket(buckets, x.projectId).bills.push(x);
   return {
     buckets,
     dailyCost: new Map(d.employees.map((e) => [e.id, e.dailyCost])),
@@ -143,7 +148,9 @@ export interface CostHeads {
   expenses: number;
   overhead: number;
   instruments: number;
-  management: number;
+  operational: number;
+  /** Vendor bills entered by Accounts. */
+  bills: number;
   other: number;
   total: number;
 }
@@ -160,6 +167,10 @@ export interface ProjectPerformance {
   projectId: string;
   asOf: string;
   contractValue: number;
+  /** Project's operational cost per calendar day (₹). */
+  operationalCostPerDay: number;
+  /** Calendar days the operational cost is charged for. */
+  operationalDays: number;
   // BOQ & progress
   boqValue: number;
   executedValue: number;
@@ -196,6 +207,8 @@ export interface ProjectPerformance {
   budget: number;
   budgetUtilisation: number; // 0-1+
   contribution: number; // earned value − cost to date
+  /** Client invoices raised to date. */
+  invoicedToDate: number;
   // projection (ESTIMATES)
   projectionMethod: ProjectionMethod | "actual";
   remainingCost: number;
@@ -213,7 +226,7 @@ export function computeProjectPerformance(
   settings: AppSettings,
   asOf: string = todayISO(),
 ): ProjectPerformance {
-  const b = idx.buckets.get(project.id) ?? { boqItems: [], executions: [], logs: [], expenses: [], deployments: [], otherCosts: [] };
+  const b = idx.buckets.get(project.id) ?? { boqItems: [], executions: [], logs: [], expenses: [], deployments: [], otherCosts: [], bills: [] };
 
   // BOQ → progress → earned value
   const rows = boqRows(b.boqItems, b.executions, project.periodStart, asOf);
@@ -278,9 +291,18 @@ export function computeProjectPerformance(
   }
 
   const other = b.otherCosts.filter((c) => c.date <= asOf).reduce((s, c) => s + c.amount, 0);
+  // Accounts: vendor bills are a cost; client invoices are what has been billed so far
+  let bills = 0;
+  let invoiced = 0;
+  for (const x of b.bills) {
+    if (x.date > asOf) continue;
+    if (x.kind === "vendor_bill") bills += x.amount;
+    else invoiced += x.amount;
+  }
   const overhead = overheadCost(wages, settings);
-  const management = managementCost(earned, settings);
-  const total = wages + consumedExpenses + overhead + instruments + management + other;
+  const opDays = operationalDays(project.startDate, project.status === "completed" ? minDate(project.endDate, asOf) : asOf);
+  const operational = operationalCost(opDays, project.operationalCostPerDay);
+  const total = wages + consumedExpenses + overhead + instruments + operational + bills + other;
 
   // Schedule & plan
   const totalDays = Math.max(1, daysBetween(project.startDate, project.endDate));
@@ -304,6 +326,8 @@ export function computeProjectPerformance(
     projectId: project.id,
     asOf,
     contractValue: project.contractValue,
+    operationalCostPerDay: project.operationalCostPerDay,
+    operationalDays: opDays,
     boqValue,
     executedValue,
     currentPeriodValue,
@@ -331,10 +355,11 @@ export function computeProjectPerformance(
     pendingExpenses,
     plannedExpensesToDate: project.allottedExpenses * expected,
     expenseUtilisation: project.allottedExpenses > 0 ? consumedExpenses / project.allottedExpenses : 0,
-    costs: { wages, expenses: consumedExpenses, overhead, instruments, management, other, total },
+    costs: { wages, expenses: consumedExpenses, overhead, instruments, operational, bills, other, total },
     budget: project.estimatedCost,
     budgetUtilisation: project.estimatedCost > 0 ? total / project.estimatedCost : 0,
     contribution: earned - total,
+    invoicedToDate: invoiced,
     projectionMethod: methodUsed,
     remainingCost: finalCost - total,
     finalCost,
@@ -400,7 +425,7 @@ export function summarisePortfolio(projects: Project[], perf: Map<string, Projec
     // PPI is only meaningful where man-days have been consumed
     ppiContract: 0, ppiAllotted: 0, ppiEarned: 0, ppiConsumed: 0,
   };
-  const costs: CostHeads = { wages: 0, expenses: 0, overhead: 0, instruments: 0, management: 0, other: 0, total: 0 };
+  const costs: CostHeads = { wages: 0, expenses: 0, overhead: 0, instruments: 0, operational: 0, bills: 0, other: 0, total: 0 };
   for (const p of live) {
     const f = perf.get(p.id);
     if (!f) continue;

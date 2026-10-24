@@ -10,14 +10,12 @@ import { useAppData } from "@/hooks/useAppData";
 import { useSaveDailyLog } from "@/hooks/mutations";
 import { ATTENDANCE_LABEL, IDLE_REASONS, MAN_DAY_WEIGHT } from "@/domain/assumptions";
 import { summariseLog } from "@/domain/performance";
-import { EXPENSE_CATEGORIES } from "@/features/expenses/ExpenseFormDialog";
 import { parseISODate, todayISO } from "@/lib/dates";
 import { formatINR, formatNumber, formatPct } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { AttendanceEntry, AttendanceStatus, DailyLog, ExpenseCategory, IdleReason, Project } from "@/types/models";
+import type { AttendanceEntry, AttendanceStatus, DailyLog, IdleReason, Project } from "@/types/models";
 
 type WorkLine = { boqItemId: string; qty: string; remarks: string };
-type ExpenseLine = { employeeId: string; category: ExpenseCategory; amount: string; description: string };
 
 const STATUSES = Object.keys(ATTENDANCE_LABEL) as AttendanceStatus[];
 
@@ -42,7 +40,6 @@ export function DailyLogFormDialog({
   const [date, setDate] = useState(todayISO());
   const [rows, setRows] = useState<AttendanceEntry[]>([]);
   const [work, setWork] = useState<WorkLine[]>([]);
-  const [expenses, setExpenses] = useState<ExpenseLine[]>([]);
   const [activities, setActivities] = useState("");
   const [remarks, setRemarks] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -71,7 +68,6 @@ export function DailyLogFormDialog({
       setWork(data.boqExecutions.filter((x) => x.dailyLogId === log.id).map((x) => ({ boqItemId: x.boqItemId, qty: String(x.qty), remarks: x.remarks })));
       setActivities(log.activities);
       setRemarks(log.remarks);
-      setExpenses([]);
       return;
     }
     const logged = new Set(data.dailyLogs.filter((l) => l.projectId === project.id).map((l) => l.date));
@@ -84,14 +80,12 @@ export function DailyLogFormDialog({
         .map((a) => ({ employeeId: a.employeeId, status: sunday ? "weekly_off" : "on_site", idleHours: 0, idleReason: null })),
     );
     setWork([{ boqItemId: "", qty: "", remarks: "" }]);
-    setExpenses([]);
     setActivities("");
     setRemarks("");
   }, [open, log?.id]);
 
   const summary = summariseLog(rows, hours, (id) => data.employeeById.get(id)?.dailyCost ?? 0);
   const workValue = work.reduce((s, w) => s + (Number(w.qty) || 0) * (itemById.get(w.boqItemId)?.rate ?? 0), 0);
-  const expenseTotal = expenses.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const dateTaken = data.dailyLogs.some((l) => l.projectId === project.id && l.date === date && l.id !== log?.id);
 
   const errors = {
@@ -101,9 +95,8 @@ export function DailyLogFormDialog({
   const rowError = (a: AttendanceEntry) =>
     (a.status === "idle" || a.idleHours > 0) && !a.idleReason ? "Reason required" : a.idleHours > hours ? `Max ${hours} h` : undefined;
   const workError = (w: WorkLine) => (!w.boqItemId && w.qty ? "Select item" : w.boqItemId && !(Number(w.qty) > 0) ? "Enter qty" : undefined);
-  const expError = (x: ExpenseLine) => (!(Number(x.amount) > 0) ? "Amount" : !x.employeeId ? "Employee" : undefined);
   const hasErrors =
-    !!errors.date || !!errors.rows || rows.some((r) => rowError(r)) || work.some((w) => workError(w)) || expenses.some((x) => expError(x));
+    !!errors.date || !!errors.rows || rows.some((r) => rowError(r)) || work.some((w) => workError(w));
 
   const setRow = (i: number, patch: Partial<AttendanceEntry>) =>
     setRows((rs) =>
@@ -135,7 +128,6 @@ export function DailyLogFormDialog({
           activities: activities.trim() || work.filter((w) => w.boqItemId).map((w) => itemById.get(w.boqItemId)?.description.split(/[–(]/)[0]!.trim()).join("; "),
           remarks: remarks.trim(),
           work: work.filter((w) => w.boqItemId && Number(w.qty) > 0).map((w) => ({ boqItemId: w.boqItemId, qty: Number(w.qty), remarks: w.remarks })),
-          expenses: expenses.map((x) => ({ employeeId: x.employeeId, category: x.category, amount: Number(x.amount), description: x.description })),
         },
       },
       {
@@ -301,36 +293,6 @@ export function DailyLogFormDialog({
             </Field>
           </div>
 
-          {!log && (
-            <section>
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Daily expenses <span className="font-normal text-muted-foreground">(optional · submitted for approval)</span></h3>
-                {expenseTotal > 0 && <span className="text-xs text-muted-foreground">Total {formatINR(expenseTotal)}</span>}
-              </div>
-              <div className="space-y-2">
-                {expenses.map((x, i) => {
-                  const err = submitted ? expError(x) : undefined;
-                  return (
-                    <div key={i} className="grid grid-cols-12 gap-2">
-                      <Select value={x.employeeId} onChange={(e) => setExpenses((xs) => xs.map((y, k) => (k === i ? { ...y, employeeId: e.target.value } : y)))} className="col-span-6 h-8 text-xs sm:col-span-3" aria-label="Expense employee" aria-invalid={err === "Employee"}>
-                        <option value="">Employee…</option>
-                        {rows.map((r) => (<option key={r.employeeId} value={r.employeeId}>{data.employeeById.get(r.employeeId)?.name}</option>))}
-                      </Select>
-                      <Select value={x.category} onChange={(e) => setExpenses((xs) => xs.map((y, k) => (k === i ? { ...y, category: e.target.value as ExpenseCategory } : y)))} className="col-span-6 h-8 text-xs sm:col-span-3" aria-label="Expense category">
-                        {EXPENSE_CATEGORIES.map((c) => (<option key={c}>{c}</option>))}
-                      </Select>
-                      <Input type="number" min={0} value={x.amount} onChange={(e) => setExpenses((xs) => xs.map((y, k) => (k === i ? { ...y, amount: e.target.value } : y)))} className="col-span-4 h-8 text-xs sm:col-span-2" placeholder="₹ Amount" aria-label="Expense amount" aria-invalid={err === "Amount"} />
-                      <Input value={x.description} onChange={(e) => setExpenses((xs) => xs.map((y, k) => (k === i ? { ...y, description: e.target.value } : y)))} className="col-span-7 h-8 text-xs sm:col-span-3" placeholder="Description" aria-label="Expense description" />
-                      <div className="col-span-1 flex justify-end">
-                        <Button variant="ghost" size="icon-sm" onClick={() => setExpenses((xs) => xs.filter((_, k) => k !== i))} aria-label="Remove expense"><Trash2 className="text-muted-foreground" /></Button>
-                      </div>
-                    </div>
-                  );
-                })}
-                <Button variant="outline" size="sm" disabled={!rows.length} onClick={() => setExpenses((xs) => [...xs, { employeeId: rows[0]?.employeeId ?? "", category: "Food", amount: "", description: "" }])}><Plus /> Add expense</Button>
-              </div>
-            </section>
-          )}
         </div>
       </DialogContent>
     </Dialog>

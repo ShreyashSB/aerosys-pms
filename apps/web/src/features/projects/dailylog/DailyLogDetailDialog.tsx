@@ -4,7 +4,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { ExpenseStatusBadge } from "@/components/common/StatusBadges";
 import { useAppData } from "@/hooks/useAppData";
 import { useDeleteDailyLog } from "@/hooks/mutations";
 import { ATTENDANCE_LABEL, idleManDays, MAN_DAY_WEIGHT } from "@/domain/assumptions";
@@ -38,7 +37,6 @@ export function DailyLogDetailDialog({
         {log && (() => {
           const s = summariseLog(log.attendance, hours, (id) => data.employeeById.get(id)?.dailyCost ?? 0);
           const work = data.boqExecutions.filter((x) => x.dailyLogId === log.id);
-          const exps = data.expenses.filter((e) => e.dailyLogId === log.id);
           const creator = data.employeeById.get(log.createdById);
           const itemById = new Map(data.boqItems.map((b) => [b.id, b]));
           const value = work.reduce((acc, x) => acc + x.qty * (itemById.get(x.boqItemId)?.rate ?? 0), 0);
@@ -111,20 +109,6 @@ export function DailyLogDetailDialog({
                   {work.length > 0 && log.activities && <p className="mt-2 text-muted-foreground">Activities: {log.activities}</p>}
                 </section>
 
-                {exps.length > 0 && (
-                  <section>
-                    <h3 className="mb-2 font-semibold">Expenses</h3>
-                    <div className="divide-y rounded-md border">
-                      {exps.map((x) => (
-                        <div key={x.id} className="flex items-center justify-between gap-2 px-3 py-2">
-                          <span>{x.category} · {x.description} <span className="text-xs text-muted-foreground">({data.employeeById.get(x.employeeId)?.name})</span></span>
-                          <span className="flex items-center gap-2"><span className="tabular">{formatINR(x.amount)}</span><ExpenseStatusBadge status={x.status} /></span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
                 {log.remarks && (
                   <section>
                     <h3 className="mb-1 font-semibold">Remarks</h3>
@@ -140,7 +124,7 @@ export function DailyLogDetailDialog({
         open={confirm}
         onOpenChange={setConfirm}
         title="Delete daily log?"
-        description="Its man-days, idle time and BOQ quantities will be removed from the project. Linked expenses are kept."
+        description="Its man-days, idle time and BOQ quantities will be removed from the project."
         confirmLabel="Delete log"
         destructive
         loading={del.isPending}
