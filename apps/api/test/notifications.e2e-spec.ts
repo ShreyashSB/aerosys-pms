@@ -48,21 +48,14 @@ describe('Notifications (e2e)', () => {
   });
 
   it('sends each event to the roles and people it concerns', async () => {
-    const expense = (
-      await engineer.api().post('/api/expenses').send({ projectId, employeeId: engineer.employeeId, category: 'Travel', amount: 1250, date: '2026-02-01', description: 'Cab' }).expect(201)
-    ).body;
-    await admin().patch(`/api/expenses/${expense.id}/reject`).send({ note: 'No receipt' }).expect(200);
-
-    expect(await titles(admin)).toEqual(['Engineer assigned', 'Expense submitted for approval', 'New project created']);
-    expect(await titles(accounts)).toEqual(['Expense submitted for approval', 'New project created']);
+    expect(await titles(admin)).toEqual(['Engineer assigned', 'New project created']);
+    expect(await titles(accounts)).toEqual(['New project created']);
     // The PM hears about their own project; another PM hears nothing.
-    expect(await titles(pm.api)).toEqual(['Engineer assigned', 'Expense submitted for approval', 'New project created']);
+    expect(await titles(pm.api)).toEqual(['Engineer assigned', 'New project created']);
     expect(await titles(otherPm)).toEqual([]);
-    // The engineer was assigned and had an expense rejected: they hear about both, by name.
-    expect(await titles(engineer.api)).toEqual(['Engineer assigned', 'Expense rejected']);
-    const rejected = (await mine(engineer.api)).find((n) => n.type === 'expense_rejected')!;
-    expect(rejected.message).toContain('₹1,250');
-    expect(rejected.message).toContain('No receipt');
+    // The engineer hears about their assignment, by name.
+    expect(await titles(engineer.api)).toEqual(['Engineer assigned']);
+    expect((await mine(engineer.api))[0].message).toContain(`Engineer ${run}`);
   });
 
   it('keeps read/unread per person', async () => {

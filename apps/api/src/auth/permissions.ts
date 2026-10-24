@@ -22,9 +22,7 @@ export type Permission =
   | 'log.create'
   | 'document.upload'
   | 'expense.viewAll'
-  | 'expense.create'
-  | 'expense.createForOthers'
-  | 'expense.approve'
+  | 'expense.create' // Accounts only: a recorded expense counts at once, there is no approval step
   | 'instrument.view'
   | 'instrument.viewAll'
   | 'instrument.manage'
@@ -40,22 +38,21 @@ export type Permission =
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   management: [
     'dashboard.portfolio', 'project.viewAll', 'project.create', 'project.edit', 'project.delete',
-    'project.progress', 'project.assign', 'project.costs.edit', 'finance.view', 'rates.view',
-    'expense.viewAll', 'expense.create', 'expense.createForOthers', 'expense.approve',
+    'project.progress', 'project.assign', 'finance.view', 'rates.view',
+    'expense.viewAll',
     'instrument.view', 'instrument.viewAll', 'instrument.manage', 'engineer.view', 'engineer.manage',
     'employee.view', 'employee.manage', 'report.view', 'settings.manage', 'boq.edit', 'log.create', 'document.upload',
-    'engineer.review', 'bill.manage',
+    'engineer.review',
   ],
   project_manager: [
-    'project.edit', 'project.progress', 'project.assign', 'project.costs.edit', 'finance.view',
-    'expense.create', 'expense.createForOthers', 'expense.approve',
+    'project.edit', 'project.progress', 'project.assign', 'finance.view',
     'instrument.view', 'instrument.viewAll', 'instrument.manage', 'engineer.view', 'boq.edit', 'log.create', 'document.upload',
     'rates.view', 'engineer.review',
   ],
-  site_engineer: ['project.progress', 'expense.create', 'instrument.view'],
+  site_engineer: ['project.progress', 'instrument.view'],
   accounts: [
     'dashboard.portfolio', 'project.viewAll', 'project.costs.edit', 'finance.view', 'rates.view',
-    'expense.viewAll', 'expense.create', 'expense.createForOthers',
+    'expense.viewAll', 'expense.create',
     'employee.view', 'employee.manage', 'report.view', 'document.upload', 'bill.manage',
   ],
 };

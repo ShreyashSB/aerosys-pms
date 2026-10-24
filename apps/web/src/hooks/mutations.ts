@@ -92,17 +92,7 @@ export const useAssignEngineer = () => useServiceMutation(assignmentService.assi
 export const useReleaseAssignment = () => useServiceMutation(assignmentService.release, [qk.assignments]);
 
 // Expenses -------------------------------------------------------------------
-export const useCreateExpense = () => useServiceMutation(expenseService.create, [qk.expenses, NOTIFS]);
-export const useApproveExpense = () =>
-  useServiceMutation(
-    ({ id, reviewerId, note }: { id: string; reviewerId: string; note?: string }) => expenseService.approve(id, reviewerId, note),
-    [qk.expenses, NOTIFS],
-  );
-export const useRejectExpense = () =>
-  useServiceMutation(
-    ({ id, reviewerId, note }: { id: string; reviewerId: string; note: string }) => expenseService.reject(id, reviewerId, note),
-    [qk.expenses, NOTIFS],
-  );
+export const useCreateExpense = () => useServiceMutation(expenseService.create, [qk.expenses]);
 export const useDeleteExpense = () => useServiceMutation(expenseService.remove, [qk.expenses]);
 
 // Instruments ----------------------------------------------------------------

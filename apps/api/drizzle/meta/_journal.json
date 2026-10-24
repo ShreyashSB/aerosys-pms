@@ -57,6 +57,13 @@
       "when": 1792852266702,
       "tag": "0007_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792852932381,
+      "tag": "0008_expenses_without_approval",
+      "breakpoints": true
     }
   ]
 }

@@ -235,17 +235,12 @@ export const expenses = pgTable(
     date: date('date', { mode: 'string' }).notNull(),
     description: text('description').notNull().default(''),
     receipt: jsonb('receipt').$type<Attachment>(),
-    /** pending, approved or rejected. */
-    status: text('status').notNull().default('pending'),
+    /** When Accounts recorded it. Recorded expenses count towards project cost at once: there is no approval step. */
     submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
-    reviewedById: uuid('reviewed_by_id').references(() => employees.id),
-    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
-    reviewNote: text('review_note').notNull().default(''),
     ...timestamps,
   },
   (t) => [
     index('expenses_project_idx').on(t.projectId),
-    index('expenses_status_idx').on(t.status),
     check('expenses_amount_positive', sql`${t.amount} > 0`),
   ],
 );

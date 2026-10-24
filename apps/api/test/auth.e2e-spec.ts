@@ -105,30 +105,28 @@ describe('Auth and roles (e2e)', () => {
     await pm.api().delete('/api/boq-items/not-a-uuid').expect(400);
   });
 
-  it('records the signed-in person as author and reviewer', async () => {
+  it('records the signed-in person as author', async () => {
     const log = await pm.api()
       .post(`/api/projects/${projectId}/daily-logs`)
       .send({ date: '2026-02-02', attendance: [{ employeeId: engineer.employeeId, status: 'on_site' }], createdById: engineer.employeeId })
       .expect(201);
     expect(log.body.createdById).toBe(pm.employeeId);
-
-    const expense = await engineer.api()
-      .post('/api/expenses')
-      .send({ projectId, employeeId: engineer.employeeId, category: 'Travel', amount: 900, date: '2026-02-02' })
-      .expect(201);
-    const approved = await pm.api().patch(`/api/expenses/${expense.body.id}/approve`).send({}).expect(200);
-    expect(approved.body.reviewedById).toBe(pm.employeeId);
   });
 
-  it('keeps site engineers to their own expenses on their own projects', async () => {
+  it('lets only Accounts record expenses, bills and other costs', async () => {
     const otherProject = (await admin().post('/api/projects').send(project(otherPm.employeeId, 'Sunrise Tower')).expect(201)).body.id;
     const claim = { projectId, employeeId: engineer.employeeId, category: 'Food', amount: 300, date: '2026-02-03' };
-    await engineer.api().post('/api/expenses').send({ ...claim, employeeId: pm.employeeId }).expect(403);
-    await engineer.api().post('/api/expenses').send({ ...claim, projectId: otherProject }).expect(403);
-    const mine = await engineer.api().post('/api/expenses').send(claim).expect(201);
-    await engineer.api().patch(`/api/expenses/${mine.body.id}/approve`).send({}).expect(403);
-    await otherPm.api().patch(`/api/expenses/${mine.body.id}/approve`).send({}).expect(403);
-    await otherPm.api().delete(`/api/expenses/${mine.body.id}`).expect(403);
-    await engineer.api().delete(`/api/expenses/${mine.body.id}`).expect(204);
+    for (const someone of [admin, pm.api, engineer.api]) {
+      await someone().post('/api/expenses').send(claim).expect(403);
+      await someone().post(`/api/projects/${projectId}/bills`).send({ kind: 'vendor_bill', number: `B-${run}`, party: 'Daikin', amount: 1000, date: '2026-02-03' }).expect(403);
+      await someone().post(`/api/projects/${projectId}/costs`).send({ type: 'hire', description: 'Crane', amount: 1000, date: '2026-02-03' }).expect(403);
+    }
+    // Accounts records for anyone, on any project, and can remove a wrong entry.
+    const recorded = await accounts().post('/api/expenses').send({ ...claim, projectId: otherProject }).expect(201);
+    expect(recorded.body.status).toBeUndefined();
+    await pm.api().delete(`/api/expenses/${recorded.body.id}`).expect(403);
+    await accounts().delete(`/api/expenses/${recorded.body.id}`).expect(204);
+    // The approve/reject routes are gone.
+    await accounts().patch(`/api/expenses/${recorded.body.id}/approve`).send({}).expect(404);
   });
 });

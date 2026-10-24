@@ -8,16 +8,14 @@ export type Permission =
   | "project.delete"
   | "project.progress"
   | "project.assign"
-  | "project.costs.edit"
+  | "project.costs.edit" // other project costs (Accounts only)
   | "finance.view" // contract value, costs, profit
   | "rates.view" // employee daily cost rates & wages
   | "boq.edit"
   | "log.create"
   | "document.upload"
   | "expense.viewAll"
-  | "expense.create"
-  | "expense.createForOthers"
-  | "expense.approve"
+  | "expense.create" // record an expense (Accounts only: recorded expenses count at once, no approval step)
   | "instrument.view"
   | "instrument.viewAll"
   | "instrument.manage"
@@ -27,28 +25,27 @@ export type Permission =
   | "employee.manage"
   | "report.view"
   | "engineer.review" // rate engineers when a project closes
-  | "bill.manage" // add vendor bills and client invoices to a project
+  | "bill.manage" // add vendor bills and client invoices to a project (Accounts only)
   | "settings.manage";
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   management: [
     "dashboard.portfolio", "project.viewAll", "project.create", "project.edit", "project.delete",
-    "project.progress", "project.assign", "project.costs.edit", "finance.view", "rates.view",
-    "expense.viewAll", "expense.create", "expense.createForOthers", "expense.approve",
+    "project.progress", "project.assign", "finance.view", "rates.view",
+    "expense.viewAll",
     "instrument.view", "instrument.viewAll", "instrument.manage", "engineer.view", "engineer.manage",
     "employee.view", "employee.manage", "report.view", "settings.manage", "boq.edit", "log.create", "document.upload",
-    "engineer.review", "bill.manage",
+    "engineer.review",
   ],
   project_manager: [
-    "project.edit", "project.progress", "project.assign", "project.costs.edit", "finance.view",
-    "expense.create", "expense.createForOthers", "expense.approve",
+    "project.edit", "project.progress", "project.assign", "finance.view",
     "instrument.view", "instrument.viewAll", "instrument.manage", "engineer.view", "boq.edit", "log.create", "document.upload",
     "rates.view", "engineer.review",
   ],
-  site_engineer: ["project.progress", "expense.create", "instrument.view"],
+  site_engineer: ["project.progress", "instrument.view"],
   accounts: [
     "dashboard.portfolio", "project.viewAll", "project.costs.edit", "finance.view", "rates.view",
-    "expense.viewAll", "expense.create", "expense.createForOthers",
+    "expense.viewAll", "expense.create",
     "employee.view", "employee.manage", "report.view", "document.upload", "bill.manage",
   ],
 };
@@ -62,9 +59,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   management: "Full visibility of projects, costs, profitability, people and reports.",
-  project_manager: "Own projects, engineer assignments, expense approvals and instruments.",
-  site_engineer: "Assigned projects, progress updates, own expenses and instruments.",
-  accounts: "Expenses, bills, invoices, employees, project costs and financial reports.",
+  project_manager: "Own projects, engineer assignments, daily logs and instruments.",
+  site_engineer: "Assigned projects, progress updates and instruments.",
+  accounts: "Records expenses, bills, invoices and project costs; employees and financial reports.",
 };
 
 export function can(role: Role, permission: Permission) {

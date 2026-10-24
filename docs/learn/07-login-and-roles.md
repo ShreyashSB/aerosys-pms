@@ -29,7 +29,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs…
 1. `@Public()` routes (health check, login) pass.
 2. It checks the token's signature, then **loads the account from the database**. A login switched off or a role changed takes effect on the next request, not when the token expires.
 3. Until someone replaces an admin-set password, they can only call `/api/auth/me` and `/api/auth/change-password`.
-4. `@Allow('expense.approve')` on a route is checked against the role's list in `src/auth/permissions.ts`.
+4. `@Allow('expense.create')` on a route is checked against the role's list in `src/auth/permissions.ts`.
 
 `permissions.ts` is the same table as the web app's `apps/web/src/auth/permissions.ts`. The web uses it to hide buttons; the API uses it to refuse requests, which is what actually protects the data. `permissions.spec.ts` fails if the two drift apart.
 
@@ -47,7 +47,9 @@ Some checks need the request body, so they live in the service. For example, an 
 
 ## 5. Who did it comes from the token
 
-The daily log's author, the expense reviewer, the bill's creator and the document uploader all come from the signed-in user (`@User() user: CurrentUser` in the controller), never from the request body. Nobody can approve an expense "as" someone else.
+The daily log's author, the bill's creator, the reviewer of an engineer and the document uploader all come from the signed-in user (`@User() user: CurrentUser` in the controller), never from the request body. Nobody can sign a log "as" someone else.
+
+Money is recorded by **Accounts only**: expenses, bills and invoices, and other project costs (`expense.create`, `bill.manage`, `project.costs.edit`). Since the people entering it are the ones who check it, a recorded expense counts at once; there is no approve/reject step.
 
 ## 6. Getting the first account in
 

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable, type Column } from "@/components/common/DataTable";
 import { FilterBar } from "@/components/common/FilterBar";
 import { ErrorState } from "@/components/common/States";
-import { EXPENSE_STATUS, ExpenseStatusBadge, PROJECT_STATUS } from "@/components/common/StatusBadges";
+import { PROJECT_STATUS } from "@/components/common/StatusBadges";
 import { Money } from "@/components/common/Money";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,6 @@ export function ReportsPage() {
   const [tab, setTab] = useState("performance");
   const [status, setStatus] = useState("");
   const [manager, setManager] = useState("");
-  const [exStatus, setExStatus] = useState("");
   const [exCategory, setExCategory] = useState("");
   const [exProject, setExProject] = useState("");
   const [from, setFrom] = useState("");
@@ -53,13 +52,12 @@ export function ReportsPage() {
     () =>
       data.expenses.filter(
         (e) =>
-          (!exStatus || e.status === exStatus) &&
           (!exCategory || e.category === exCategory) &&
           (!exProject || e.projectId === exProject) &&
           (!from || e.date >= from) &&
           (!to || e.date <= to),
       ),
-    [data.expenses, exStatus, exCategory, exProject, from, to],
+    [data.expenses, exCategory, exProject, from, to],
   );
 
   const since30 = addDays(todayISO(), -30);
@@ -120,7 +118,6 @@ export function ReportsPage() {
     { key: "p", header: "Project", sortValue: (e) => pname(e.projectId), cell: (e) => pname(e.projectId) },
     { key: "c", header: "Category", sortValue: (e) => e.category, cell: (e) => e.category },
     { key: "a", header: "Amount", align: "right", sortValue: (e) => e.amount, cell: (e) => <span className="tabular">{formatINR(e.amount)}</span> },
-    { key: "s", header: "Status", sortValue: (e) => e.status, cell: (e) => <ExpenseStatusBadge status={e.status} /> },
   ];
   type EngRow = (typeof engineerRows)[number];
   const engCols: Column<EngRow>[] = [
@@ -147,7 +144,6 @@ export function ReportsPage() {
       { header: "Date", value: (e) => e.date }, { header: "Employee", value: (e) => name(e.employeeId) },
       { header: "Project", value: (e) => pname(e.projectId) }, { header: "Category", value: (e) => e.category },
       { header: "Description", value: (e) => e.description }, { header: "Amount", value: (e) => e.amount },
-      { header: "Status", value: (e) => EXPENSE_STATUS[e.status].label },
     ]),
     utilisation: () => exportRows("engineer-utilisation", engineerRows, [
       { header: "Engineer", value: (r) => r.e.name }, { header: "Employee ID", value: (r) => r.e.code },
@@ -209,14 +205,10 @@ export function ReportsPage() {
           <p className="mt-2 text-xs text-muted-foreground">* Projected values are estimates based on the projection method in Settings — not actual results.</p>
         </TabsContent>
         <TabsContent value="expenses">
-          <FilterBar onReset={() => { setExStatus(""); setExCategory(""); setExProject(""); setFrom(""); setTo(""); }} showReset={!!(exStatus || exCategory || exProject || from || to)}>
+          <FilterBar onReset={() => { setExCategory(""); setExProject(""); setFrom(""); setTo(""); }} showReset={!!(exCategory || exProject || from || to)}>
             <Select value={exProject} onChange={(e) => setExProject(e.target.value)} className="w-auto max-w-56" aria-label="Filter by project">
               <option value="">All projects</option>
               {data.projects.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
-            </Select>
-            <Select value={exStatus} onChange={(e) => setExStatus(e.target.value)} className="w-auto" aria-label="Filter by status">
-              <option value="">All statuses</option>
-              {Object.entries(EXPENSE_STATUS).map(([k, v]) => (<option key={k} value={k}>{v.label}</option>))}
             </Select>
             <Select value={exCategory} onChange={(e) => setExCategory(e.target.value)} className="w-auto" aria-label="Filter by category">
               <option value="">All categories</option>
@@ -228,7 +220,6 @@ export function ReportsPage() {
           <div className="mb-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span>{expenseRows.length} expenses</span>
             <span>Total <strong className="text-foreground">{formatINR(sum(expenseRows, (e) => e.amount))}</strong></span>
-            <span>Approved <strong className="text-foreground">{formatINR(sum(expenseRows.filter((e) => e.status === "approved"), (e) => e.amount))}</strong></span>
           </div>
           <DataTable rows={expenseRows} columns={expCols} rowKey={(e) => e.id} loading={data.isLoading} pageSize={15} initialSort={{ key: "d", dir: "desc" }} />
         </TabsContent>

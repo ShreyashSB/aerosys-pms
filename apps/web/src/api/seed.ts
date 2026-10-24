@@ -59,7 +59,7 @@ export interface Database {
   settings: AppSettings;
 }
 
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 /** Deterministic PRNG so the seed is identical on every fresh load. */
 function mulberry32(seed: number) {
@@ -573,10 +573,10 @@ export function buildSeed(): Database {
       ["Other", 1000, 6000, ["Printing of drawings", "Courier of documents to client", "Site pass & gate charges"]],
     ];
     const weights = [0.22, 0.2, 0.12, 0.1, 0.24, 0.08, 0.04];
-    const targetApproved = allottedExpenses * s.progress * s.expFactor;
+    const targetSpent = allottedExpenses * s.progress * s.expFactor;
     const records: Expense[] = [];
     if (workLogs.length) {
-      const count = Math.max(6, Math.round(targetApproved / 16000));
+      const count = Math.max(6, Math.round(targetSpent / 16000));
       for (let k = 0; k < count; k++) {
         const r = rand();
         let acc = 0;
@@ -585,8 +585,6 @@ export function buildSeed(): Database {
         const [category, min, max, descs] = categories[ci]!;
         const log = workLogs[Math.floor(((k + rand()) / count) * workLogs.length)] ?? workLogs[workLogs.length - 1]!;
         const worker = log.attendance.find((a) => a.status === "on_site") ?? log.attendance[0]!;
-        const age = daysBetween(log.date, T);
-        const pending = s.status === "active" && age <= 12 && rand() < 0.65;
         records.push({
           id: `exp_${seq.exp}`,
           code: `EXP-${1000 + seq.exp++}`,
@@ -597,22 +595,14 @@ export function buildSeed(): Database {
           date: log.date,
           description: pick(descs),
           receipt: rand() > 0.2 ? { fileName: `receipt_${seq.exp}.jpg`, size: Math.round(between(80000, 480000)), mimeType: "image/jpeg" } : null,
-          status: pending ? "pending" : "approved",
-          submittedAt: new Date(parseISODate(log.date).getTime() + 19.5 * 3600000).toISOString(),
-          reviewedById: pending ? null : E(s.manager),
-          reviewedAt: pending ? null : new Date(parseISODate(addDays(log.date, 2)).getTime() + 11 * 3600000).toISOString(),
-          reviewNote: "",
+          // Accounts records it the day after.
+          submittedAt: new Date(parseISODate(addDays(log.date, 1)).getTime() + 11 * 3600000).toISOString(),
         });
       }
-      const approved = records.filter((x) => x.status === "approved");
-      const sumApproved = approved.reduce((acc, x) => acc + x.amount, 0);
-      const f = sumApproved > 0 ? targetApproved / sumApproved : 1;
-      for (const x of records) x.amount = round(x.status === "approved" ? x.amount * f : x.amount, 10);
-      // a few rejected claims (not counted)
-      for (let k = 0; k < 2; k++) {
-        const base = records[Math.floor(rand() * records.length)]!;
-        records.push({ ...base, id: `exp_${seq.exp}`, code: `EXP-${1000 + seq.exp++}`, amount: round(between(1500, 9000), 10), status: "rejected", reviewNote: "Not a project expense / duplicate claim", description: "Personal travel claim", category: "Travel" });
-      }
+      // Scale so the project's spend matches its story (on budget, overspent…).
+      const spent = records.reduce((acc, x) => acc + x.amount, 0);
+      const f = spent > 0 ? targetSpent / spent : 1;
+      for (const x of records) x.amount = round(x.amount * f, 10);
     }
     expenses.push(...records);
 
@@ -672,23 +662,8 @@ export function buildSeed(): Database {
   }
 
   // ----------------------------------------------------------- notifications
+  // None to start with: deadline alerts are raised by the scheduled check on first load.
   const notifications: AppNotification[] = [];
-  const pending = expenses.filter((e) => e.status === "pending").sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
-  for (const e of pending) {
-    const emp = employees.find((x) => x.id === e.employeeId)!;
-    const project = projects.find((p) => p.id === e.projectId)!;
-    notifications.push({
-      id: `ntf_${notifications.length + 1}`,
-      type: "expense_submitted",
-      title: "Expense submitted for approval",
-      message: `${emp.name} submitted ${e.category} expense of ₹${e.amount.toLocaleString("en-IN")} on ${project.name}.`,
-      link: `/expenses?status=pending`,
-      createdAt: e.submittedAt,
-      audienceRoles: ["management", "accounts"],
-      audienceEmployeeIds: [project.managerId],
-      readBy: [],
-    });
-  }
 
   return {
     version: DB_VERSION,

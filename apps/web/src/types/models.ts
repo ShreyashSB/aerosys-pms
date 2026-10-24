@@ -112,7 +112,6 @@ export type ExpenseCategory =
   | "Tools & Consumables"
   | "Other";
 
-export type ExpenseStatus = "pending" | "approved" | "rejected";
 
 export interface Receipt {
   fileName: string;
@@ -131,11 +130,8 @@ export interface Expense {
   date: ISODate;
   description: string;
   receipt: Receipt | null;
-  status: ExpenseStatus;
+  /** When Accounts recorded it. A recorded expense counts towards project cost at once; there is no approval step. */
   submittedAt: ISODateTime;
-  reviewedById: ID | null;
-  reviewedAt: ISODateTime | null;
-  reviewNote: string;
 }
 
 export type InstrumentStatus = "available" | "assigned" | "maintenance" | "retired";
@@ -229,9 +225,6 @@ export interface ProjectCost {
 }
 
 export type NotificationType =
-  | "expense_submitted"
-  | "expense_approved"
-  | "expense_rejected"
   | "engineer_assigned"
   | "instrument_assigned"
   | "project_deadline"

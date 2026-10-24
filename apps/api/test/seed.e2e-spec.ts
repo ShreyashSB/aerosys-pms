@@ -29,9 +29,9 @@ describe('Demo seed (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
-    // Sign in as a demo Management user: proves the seeded logins work.
-    const login = await request(app.getHttpServer()).post('/api/auth/login').send({ email: 'rajesh.kulkarni@aerosyshvac.in', password: DEMO_PASSWORD }).expect(200);
-    expect(login.body.user).toMatchObject({ role: 'management', name: 'Rajesh Kulkarni', mustChangePassword: false });
+    // Sign in as a demo Accounts user (they record expenses): proves the seeded logins work.
+    const login = await request(app.getHttpServer()).post('/api/auth/login').send({ email: 'pooja.nair@aerosyshvac.in', password: DEMO_PASSWORD }).expect(200);
+    expect(login.body.user).toMatchObject({ role: 'accounts', name: 'Pooja Nair', mustChangePassword: false });
     api = () => request.agent(app.getHttpServer()).set('Authorization', `Bearer ${login.body.token}`);
   });
 

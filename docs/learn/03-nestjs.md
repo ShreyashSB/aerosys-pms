@@ -99,9 +99,8 @@ Every route except the two marked needs `Authorization: Bearer <token>`; see [07
 | `POST /api/projects/:projectId/daily-logs`, `PUT /api/daily-logs/:id` | Save a day's log: attendance and work done, checked for double booking |
 | `DELETE /api/daily-logs/:id` | Delete a log and its executions (204) |
 | `GET /api/expenses?projectId=&status=` | List expenses, newest first |
-| `POST /api/expenses` | Submit an expense; it starts as pending with the next `EXP-` number |
-| `PATCH /api/expenses/:id/approve`, `PATCH /api/expenses/:id/reject` | Review a pending expense (rejecting needs a note) |
-| `DELETE /api/expenses/:id` | Withdraw a pending expense (204) |
+| `POST /api/expenses` | Accounts records an expense for whoever spent it; it gets the next `EXP-` number and counts at once |
+| `DELETE /api/expenses/:id` | Accounts removes a wrong entry (204) |
 | `GET /api/bills?projectId=`, `POST /api/projects/:projectId/bills` | List or record vendor bills and client invoices |
 | `PUT /api/bills/:id`, `DELETE /api/bills/:id` | Edit or delete a bill |
 | `GET /api/project-costs?projectId=`, `POST /api/projects/:projectId/costs` | List or add other direct costs (sub-contract, hire) |

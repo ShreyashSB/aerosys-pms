@@ -9,9 +9,6 @@ import { progressByProject, projectProgress } from './progress.js';
 export const NOTIFICATION_TYPES = [
   'project_created',
   'engineer_assigned',
-  'expense_submitted',
-  'expense_approved',
-  'expense_rejected',
   'instrument_assigned',
   'project_deadline',
   'project_completion',

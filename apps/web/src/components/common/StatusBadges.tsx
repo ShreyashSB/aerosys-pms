@@ -1,5 +1,5 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import type { EmployeeStatus, ExpenseStatus, InstrumentStatus, ProjectStatus } from "@/types/models";
+import type { EmployeeStatus, InstrumentStatus, ProjectStatus } from "@/types/models";
 
 type Tone = BadgeProps["tone"];
 
@@ -9,12 +9,6 @@ export const PROJECT_STATUS: Record<ProjectStatus, { label: string; tone: Tone }
   on_hold: { label: "On Hold", tone: "warning" },
   completed: { label: "Completed", tone: "success" },
   archived: { label: "Archived", tone: "outline" },
-};
-
-export const EXPENSE_STATUS: Record<ExpenseStatus, { label: string; tone: Tone }> = {
-  pending: { label: "Pending", tone: "warning" },
-  approved: { label: "Approved", tone: "success" },
-  rejected: { label: "Rejected", tone: "danger" },
 };
 
 export const INSTRUMENT_STATUS: Record<InstrumentStatus, { label: string; tone: Tone }> = {
@@ -32,10 +26,6 @@ export const EMPLOYEE_STATUS: Record<EmployeeStatus, { label: string; tone: Tone
 
 export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
   const s = PROJECT_STATUS[status];
-  return <Badge tone={s.tone} dot>{s.label}</Badge>;
-}
-export function ExpenseStatusBadge({ status }: { status: ExpenseStatus }) {
-  const s = EXPENSE_STATUS[status];
   return <Badge tone={s.tone} dot>{s.label}</Badge>;
 }
 export function InstrumentStatusBadge({ status }: { status: InstrumentStatus }) {

@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { FilterBar, SearchInput } from "@/components/common/FilterBar";
 import { ErrorState } from "@/components/common/States";
 import { StatCard } from "@/components/common/StatCard";
-import { EXPENSE_STATUS } from "@/components/common/StatusBadges";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { ExpenseTable } from "@/features/expenses/ExpenseTable";
@@ -17,12 +16,11 @@ import { downloadCsv, toCsv } from "@/lib/csv";
 import { formatINR } from "@/lib/format";
 import { todayISO } from "@/lib/dates";
 import { includesText, sum } from "@/lib/utils";
-import type { ExpenseStatus } from "@/types/models";
 
 export function ExpensesPage() {
   const { user } = useCurrentUser();
   const data = useScopedData();
-  const filters = useUrlState(["q", "project", "employee", "status", "category", "from", "to"] as const);
+  const filters = useUrlState(["q", "project", "employee", "category", "from", "to"] as const);
   const f = filters.values;
   const [open, setOpen] = useState(false);
   const isEngineer = user.role === "site_engineer";
@@ -34,7 +32,6 @@ export function ExpensesPage() {
         (e) =>
           (!f.project || e.projectId === f.project) &&
           (!f.employee || e.employeeId === f.employee) &&
-          (!f.status || e.status === f.status) &&
           (!f.category || e.category === f.category) &&
           (!f.from || e.date >= f.from) &&
           (!f.to || e.date <= f.to) &&
@@ -45,7 +42,9 @@ export function ExpensesPage() {
 
   const projectOptions = [...new Set(base.map((e) => e.projectId))].map((id) => data.projectById.get(id)).filter((p) => !!p);
   const employeeOptions = [...new Set(base.map((e) => e.employeeId))].map((id) => data.employeeById.get(id)).filter((e) => !!e);
-  const byStatus = (s: ExpenseStatus) => rows.filter((e) => e.status === s);
+  const thisMonth = todayISO().slice(0, 7);
+  const monthRows = rows.filter((e) => e.date.startsWith(thisMonth));
+  const byCategory = [...rows.reduce((m, e) => m.set(e.category, (m.get(e.category) ?? 0) + e.amount), new Map<string, number>())].sort((a, b) => b[1] - a[1]);
 
   const exportCsv = () =>
     downloadCsv(
@@ -58,7 +57,6 @@ export function ExpensesPage() {
         { header: "Category", value: (e) => e.category },
         { header: "Description", value: (e) => e.description },
         { header: "Amount (INR)", value: (e) => e.amount },
-        { header: "Status", value: (e) => EXPENSE_STATUS[e.status].label },
       ]),
     );
 
@@ -69,11 +67,11 @@ export function ExpensesPage() {
       <PageHeader
         title={isEngineer ? "My Expenses" : "Expenses"}
         description={
-          can(user.role, "expense.approve")
-            ? "Review and approve site expenses. Approved expenses are added to project cost automatically."
+          can(user.role, "expense.create")
+            ? "Record site expenses against a project. They count towards the project cost straight away."
             : isEngineer
-              ? "Submit site expenses and track their approval."
-              : "All expense claims across projects."
+              ? "Expenses Accounts has recorded against your name."
+              : "Expenses recorded by Accounts across projects."
         }
         breadcrumbs={[{ label: "Dashboard", to: "/" }, { label: "Expenses" }]}
         actions={
@@ -91,18 +89,14 @@ export function ExpensesPage() {
       />
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Total (filtered)" value={formatINR(sum(rows, (e) => e.amount))} hint={`${rows.length} claims`} loading={data.isLoading} />
-        <StatCard label="Pending approval" value={formatINR(sum(byStatus("pending"), (e) => e.amount))} hint={`${byStatus("pending").length} claims`} loading={data.isLoading} />
-        <StatCard label="Approved" value={formatINR(sum(byStatus("approved"), (e) => e.amount))} hint={`${byStatus("approved").length} claims`} loading={data.isLoading} />
-        <StatCard label="Rejected" value={formatINR(sum(byStatus("rejected"), (e) => e.amount))} hint={`${byStatus("rejected").length} claims`} loading={data.isLoading} />
+        <StatCard label="Total (filtered)" value={formatINR(sum(rows, (e) => e.amount))} hint={`${rows.length} expenses`} loading={data.isLoading} />
+        <StatCard label="This month" value={formatINR(sum(monthRows, (e) => e.amount))} hint={`${monthRows.length} expenses`} loading={data.isLoading} />
+        <StatCard label="Average expense" value={formatINR(rows.length ? sum(rows, (e) => e.amount) / rows.length : 0)} loading={data.isLoading} />
+        <StatCard label="Largest category" value={byCategory[0] ? formatINR(byCategory[0][1]) : "—"} hint={byCategory[0]?.[0]} loading={data.isLoading} />
       </div>
 
       <FilterBar onReset={filters.reset} showReset={filters.active}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search ID, description…" />
-        <Select value={f.status} onChange={(e) => filters.set("status", e.target.value)} className="w-auto" aria-label="Filter by status">
-          <option value="">All statuses</option>
-          {(Object.keys(EXPENSE_STATUS) as ExpenseStatus[]).map((s) => (<option key={s} value={s}>{EXPENSE_STATUS[s].label}</option>))}
-        </Select>
         <Select value={f.project} onChange={(e) => filters.set("project", e.target.value)} className="w-auto max-w-56" aria-label="Filter by project">
           <option value="">All projects</option>
           {projectOptions.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}

@@ -3,9 +3,8 @@ import { AttachmentSchema } from '../common/attachment.js';
 import { isoDate } from '../common/dates.js';
 
 export const EXPENSE_CATEGORIES = ['Travel', 'Accommodation', 'Food', 'Local Conveyance', 'Site Material', 'Tools & Consumables', 'Other'] as const;
-export const EXPENSE_STATUSES = ['pending', 'approved', 'rejected'] as const;
 
-/** Body for POST /api/expenses. A new expense always starts as "pending". */
+/** Body for POST /api/expenses. `employeeId` is who spent the money; Accounts records it for them. */
 export const ExpenseInputSchema = z.object({
   projectId: z.uuid(),
   employeeId: z.uuid(),
@@ -17,14 +16,7 @@ export const ExpenseInputSchema = z.object({
 });
 export type ExpenseInput = z.infer<typeof ExpenseInputSchema>;
 
-/** Body for PATCH /api/expenses/:id/approve and /reject. The reviewer is the signed-in person. */
-export const ReviewInputSchema = z.object({
-  note: z.string().trim().max(500).default(''),
-});
-export type ReviewInput = z.infer<typeof ReviewInputSchema>;
-
 export const ExpenseQuerySchema = z.object({
   projectId: z.uuid().optional(),
-  status: z.enum(EXPENSE_STATUSES).optional(),
 });
 export type ExpenseQuery = z.infer<typeof ExpenseQuerySchema>;

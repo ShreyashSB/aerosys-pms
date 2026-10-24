@@ -33,7 +33,7 @@ export function LoginPage() {
             Track project progress, site engineer deployment, expenses, instruments and profitability across all Aerosys HVAC sites.
           </p>
           <ul className="mt-8 space-y-3 text-sm text-sidebar-foreground">
-            {["Live project costing & profit margins", "Expense approvals that update project cost instantly", "Engineer & instrument deployment tracking"].map((t) => (
+            {["Live project costing & profit margins", "Expenses, bills and invoices that update project cost instantly", "Engineer & instrument deployment tracking"].map((t) => (
               <li key={t} className="flex items-center gap-2">
                 <span className="size-1.5 rounded-full bg-sky-400" /> {t}
               </li>

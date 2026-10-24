@@ -43,7 +43,7 @@ export function PerformanceTab({
   ];
   if (showFinance) {
     planRows.push(
-      { label: "Expenses", planned: p.plannedExpensesToDate, actual: p.consumedExpenses, fmt: formatINRShort, health: expenseHealth(p), note: "Planned to date vs approved", lowerIsBetter: true, key: "expenses" },
+      { label: "Expenses", planned: p.plannedExpensesToDate, actual: p.consumedExpenses, fmt: formatINRShort, health: expenseHealth(p), note: "Planned to date vs recorded", lowerIsBetter: true, key: "expenses" },
       { label: "Total cost", planned: p.budget * p.expectedProgress, actual: p.costs.total, fmt: formatINRShort, health: costHealth(p), note: "Budget to date vs actual cost", lowerIsBetter: true },
     );
   }

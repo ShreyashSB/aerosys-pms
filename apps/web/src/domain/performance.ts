@@ -199,7 +199,6 @@ export interface ProjectPerformance {
   // expenses
   allottedExpenses: number;
   consumedExpenses: number;
-  pendingExpenses: number;
   plannedExpensesToDate: number;
   expenseUtilisation: number; // 0-1+
   // cost
@@ -273,14 +272,9 @@ export function computeProjectPerformance(
     }
   }
 
-  // Expenses (approved only count as consumed)
+  // Expenses: Accounts records them, and every recorded expense counts
   let consumedExpenses = 0;
-  let pendingExpenses = 0;
-  for (const e of b.expenses) {
-    if (e.date > asOf) continue;
-    if (e.status === "approved") consumedExpenses += e.amount;
-    else if (e.status === "pending") pendingExpenses += e.amount;
-  }
+  for (const e of b.expenses) if (e.date <= asOf) consumedExpenses += e.amount;
 
   // Instruments
   let instruments = 0;
@@ -352,7 +346,6 @@ export function computeProjectPerformance(
     ppiVariancePct: consumed > 0 && basePpi > 0 ? ((rPpi - basePpi) / basePpi) * 100 : 0,
     allottedExpenses: project.allottedExpenses,
     consumedExpenses,
-    pendingExpenses,
     plannedExpensesToDate: project.allottedExpenses * expected,
     expenseUtilisation: project.allottedExpenses > 0 ? consumedExpenses / project.allottedExpenses : 0,
     costs: { wages, expenses: consumedExpenses, overhead, instruments, operational, bills, other, total },
