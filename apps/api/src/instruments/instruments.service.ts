@@ -7,13 +7,17 @@ import { employees, instrumentDeployments, instruments, type InstrumentDeploymen
 import type { CurrentUser } from '../auth/current-user.js';
 import { assertProjectAccess } from '../auth/project-access.js';
 import { findProject, isClosed } from '../projects/find-project.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import type { DeploymentQuery, InstrumentDto, InstrumentInput, IssueInput, StatusInput } from './instruments.dto.js';
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 @Injectable()
 export class InstrumentsService {
-  constructor(@Inject(DB) private readonly db: Database) {}
+  constructor(
+    @Inject(DB) private readonly db: Database,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
    * A LEFT JOIN to the open deployment: every instrument comes back, with the
@@ -87,13 +91,13 @@ export class InstrumentsService {
   async assign(id: string, { engineerId, projectId }: IssueInput, user: CurrentUser): Promise<InstrumentDto> {
     // A project manager can issue instruments only to their own projects.
     await assertProjectAccess(this.db, user, projectId);
-    return this.db.transaction(async (tx) => {
+    const issued = await this.db.transaction(async (tx) => {
       const current = await this.get(id, tx);
       if (current.status === 'retired') throw new BadRequestException('Retired instruments cannot be assigned');
       if (current.status === 'maintenance') throw new BadRequestException('Instrument is under maintenance');
       const project = await findProject(tx, projectId);
       if (isClosed(project)) throw new BadRequestException('Cannot issue instruments to a closed project');
-      const [eng] = await tx.select({ id: employees.id }).from(employees).where(eq(employees.id, engineerId));
+      const [eng] = await tx.select({ id: employees.id, name: employees.name }).from(employees).where(eq(employees.id, engineerId));
       if (!eng) throw new BadRequestException('Engineer not found');
       await this.closeOpen(tx, id);
       try {
@@ -103,8 +107,18 @@ export class InstrumentsService {
         if (isUniqueViolation(err)) throw new ConflictException('This instrument was just issued by someone else');
         throw err;
       }
-      return this.get(id, tx);
+      return { instrument: await this.get(id, tx), project, engineer: eng };
     });
+    const { instrument, project, engineer } = issued;
+    await this.notifications.notify({
+      type: 'instrument_assigned',
+      title: 'Instrument issued',
+      message: `${instrument.name} (${instrument.code}) issued to ${engineer.name} for ${project.name}.`,
+      link: '/instruments',
+      audienceRoles: ['management'],
+      audienceEmployeeIds: [engineer.id, project.managerId],
+    });
+    return instrument;
   }
 
   /** Back from site: close the open deployment. */

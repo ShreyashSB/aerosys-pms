@@ -13,6 +13,7 @@ import { ExpensesModule } from './expenses/expenses.module.js';
 import { HealthModule } from './health/health.module.js';
 import { InstrumentsModule } from './instruments/instruments.module.js';
 import { LookupsModule } from './lookups/lookups.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 import { ProjectCostsModule } from './project-costs/project-costs.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module.js';
     ConfigModule,
     DbModule,
     AuthModule,
+    NotificationsModule,
     UsersModule,
     HealthModule,
     SettingsModule,

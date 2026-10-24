@@ -5,6 +5,7 @@ import { DB, type Database } from '../db/db.module.js';
 import { clients, employees, projects, projectTypes, sites } from '../db/schema.js';
 import { LookupsService } from '../lookups/lookups.service.js';
 import { closeOpenAssignments } from '../assignments/assignments.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import type { ProjectDto, ProjectInput, ProjectStatus } from './projects.dto.js';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class ProjectsService {
   constructor(
     @Inject(DB) private readonly db: Database,
     private readonly lookups: LookupsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -76,11 +78,21 @@ export class ProjectsService {
         return row.id;
       }),
     );
-    return this.get(id);
+    const project = await this.get(id);
+    await this.notifications.notify({
+      type: 'project_created',
+      title: 'New project created',
+      message: `${project.name} for ${project.clientName} has been created.`,
+      link: `/projects/${id}`,
+      audienceRoles: ['management', 'accounts'],
+      audienceEmployeeIds: [project.managerId],
+    });
+    return project;
   }
 
   async update(id: string, input: ProjectInput): Promise<ProjectDto> {
     await this.checkManager(input.managerId);
+    const [before] = await this.db.select({ managerId: projects.managerId }).from(projects).where(eq(projects.id, id));
     await this.run(() =>
       this.db.transaction(async (tx) => {
         const refs = await this.resolveNames(input, tx);
@@ -94,7 +106,18 @@ export class ProjectsService {
         if (input.status === 'completed') await closeOpenAssignments(tx, id);
       }),
     );
-    return this.get(id);
+    const project = await this.get(id);
+    if (before && before.managerId !== input.managerId) {
+      await this.notifications.notify({
+        type: 'engineer_assigned',
+        title: 'Project manager assigned',
+        message: `You are now the project manager for ${project.name}.`,
+        link: `/projects/${id}`,
+        audienceRoles: [],
+        audienceEmployeeIds: [input.managerId],
+      });
+    }
+    return project;
   }
 
   async setStatus(id: string, status: ProjectStatus): Promise<ProjectDto> {

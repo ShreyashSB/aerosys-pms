@@ -5,13 +5,18 @@ import { isUniqueViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { attendanceEntries, boqExecutions, boqItems, dailyLogs, employees, projects, settings, type DailyLogRow } from '../db/schema.js';
 import { findProject, isClosed } from '../projects/find-project.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
+import { formatNumber } from '../common/format.js';
 import { WORKING_STATUSES, type DailyLogDto, type DailyLogInput } from './daily-logs.dto.js';
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 @Injectable()
 export class DailyLogsService {
-  constructor(@Inject(DB) private readonly db: Database) {}
+  constructor(
+    @Inject(DB) private readonly db: Database,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** Logs with their attendance: two queries, then grouped in memory (no N+1 queries). */
   async list(projectId?: string): Promise<DailyLogDto[]> {
@@ -55,7 +60,7 @@ export class DailyLogsService {
     if (isClosed(project)) throw new BadRequestException('Project is closed for daily logging');
     if (input.date > todayIST()) throw new BadRequestException('Daily logs cannot be created for future dates');
     if (input.date < project.startDate) throw new BadRequestException('Date is before the project start date');
-    await this.checkIdleHours(input);
+    const hoursPerManDay = await this.checkIdleHours(input);
     await this.checkPeople(input);
     await this.checkDoubleBooking(input, logId);
     await this.checkWorkItems(projectId, input);
@@ -67,8 +72,10 @@ export class DailyLogsService {
       idleReason: a.status === 'idle' || a.idleHours > 0 ? a.idleReason : null,
     }));
 
+    const progressBefore = await this.notifications.progressOf(projectId);
+    let id: string;
     try {
-      const id = await this.db.transaction(async (tx) => {
+      id = await this.db.transaction(async (tx) => {
         const fields = { date: input.date, activities: input.activities, remarks: input.remarks };
         let id = logId;
         if (id) {
@@ -91,11 +98,36 @@ export class DailyLogsService {
         await this.touchProject(tx, projectId);
         return id;
       });
-      return this.get(id);
     } catch (err) {
       if (isUniqueViolation(err)) throw new ConflictException('A daily log already exists for this date – open it to edit');
       throw err;
     }
+    await this.notifyIdle(project, id, input.date, attendance, hoursPerManDay);
+    await this.notifications.progressMilestones(projectId, progressBefore);
+    return this.get(id);
+  }
+
+  /** Two or more idle man-days on one log is worth the manager's attention. */
+  private async notifyIdle(
+    project: { id: string; name: string; managerId: string },
+    logId: string,
+    date: string,
+    attendance: Array<{ status: string; idleHours: number; idleReason: string | null }>,
+    hoursPerManDay: number,
+  ) {
+    const idle = attendance.reduce((s, a) => s + idleManDays(a.status, a.idleHours, hoursPerManDay), 0);
+    if (idle < 2) return;
+    const reasons = [...new Set(attendance.map((a) => a.idleReason).filter(Boolean))].join(', ');
+    await this.notifications.notify({
+      type: 'idle_recorded',
+      title: 'Idle time recorded',
+      message: `${formatNumber(idle, 1)} idle man-days logged on ${project.name} for ${date} (${reasons}).`,
+      link: `/projects/${project.id}?tab=log`,
+      audienceRoles: ['management'],
+      audienceEmployeeIds: [project.managerId],
+      // Saving the same log again with the same idle time doesn't raise it twice.
+      dedupeKey: `idle:${logId}:${idle}`,
+    });
   }
 
   private async withAttendance(logs: DailyLogRow[]): Promise<DailyLogDto[]> {
@@ -117,6 +149,7 @@ export class DailyLogsService {
     const [s] = await this.db.select({ hours: settings.hoursPerManDay }).from(settings);
     const hours = s?.hours ?? 8;
     if (input.attendance.some((a) => a.idleHours > hours)) throw new BadRequestException(`Idle hours cannot exceed ${hours} (one man-day)`);
+    return hours;
   }
 
   private async checkPeople(input: DailyLogInput) {
@@ -161,4 +194,11 @@ export class DailyLogsService {
   private touchProject(tx: Tx, projectId: string) {
     return tx.update(projects).set({ updatedAt: new Date() }).where(eq(projects.id, projectId));
   }
+}
+
+/** Same rule as the web's `idleManDays`: a fully idle day is one man-day, partial idle hours a share of one. */
+function idleManDays(status: string, idleHours: number, hoursPerManDay: number): number {
+  if (status === 'idle') return 1;
+  if (!(WORKING_STATUSES as readonly string[]).includes(status) || !idleHours) return 0;
+  return Math.min(1, idleHours / Math.max(1, hoursPerManDay));
 }

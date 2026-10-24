@@ -5,11 +5,15 @@ import { isUniqueViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { assignments, employees, type Assignment } from '../db/schema.js';
 import { findProject, isClosed } from '../projects/find-project.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import type { AssignmentInput } from './assignments.dto.js';
 
 @Injectable()
 export class AssignmentsService {
-  constructor(@Inject(DB) private readonly db: Database) {}
+  constructor(
+    @Inject(DB) private readonly db: Database,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** All assignments, or one project's when `projectId` is given. */
   list(projectId?: string): Promise<Assignment[]> {
@@ -25,14 +29,23 @@ export class AssignmentsService {
     if (isClosed(project)) throw new BadRequestException('Cannot assign engineers to a closed project');
     const [emp] = await this.db.select().from(employees).where(eq(employees.id, input.employeeId));
     if (!emp) throw new BadRequestException('Engineer not found');
+    let row: Assignment;
     try {
-      const [row] = await this.db.insert(assignments).values({ ...input, projectId }).returning();
-      return row;
+      [row] = await this.db.insert(assignments).values({ ...input, projectId }).returning();
     } catch (err) {
       // The partial unique index allows only one open assignment per person per project.
       if (isUniqueViolation(err)) throw new ConflictException(`${emp.name} is already assigned to this project`);
       throw err;
     }
+    await this.notifications.notify({
+      type: 'engineer_assigned',
+      title: 'Engineer assigned',
+      message: `${emp.name} has been assigned to ${project.name} as ${input.role} (${input.allocation}%).`,
+      link: `/projects/${projectId}`,
+      audienceRoles: ['management'],
+      audienceEmployeeIds: [emp.id, project.managerId],
+    });
+    return row;
   }
 
   /**
