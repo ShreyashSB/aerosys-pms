@@ -4,7 +4,6 @@ import {
   explainInstruments,
   explainManDays,
   explainOperational,
-  explainOverhead,
   explainPpi,
   explainProgress,
   explainProjectedProfit,
@@ -17,7 +16,7 @@ import type { AppSettings, Employee } from "@/types/models";
 
 export type MetricKey =
   | "ppi" | "runningPpi" | "progress" | "manDays" | "idle" | "expenses"
-  | "wages" | "overhead" | "instruments" | "operational" | "bills" | "projectedProfit" | "other";
+  | "wages" | "instruments" | "operational" | "bills" | "projectedProfit" | "other";
 
 export function explainMetric(key: MetricKey, p: ProjectPerformance, s: AppSettings, employeeById: Map<string, Employee>): Explanation {
   switch (key) {
@@ -28,7 +27,6 @@ export function explainMetric(key: MetricKey, p: ProjectPerformance, s: AppSetti
     case "idle": return explainIdle(p, s.hoursPerManDay);
     case "expenses": return explainExpenses(p);
     case "wages": return explainWages(p, employeeById);
-    case "overhead": return explainOverhead(p, s);
     case "instruments": return explainInstruments(p);
     case "operational": return explainOperational(p, p.operationalCostPerDay);
     case "projectedProfit": return explainProjectedProfit(p);

@@ -59,7 +59,7 @@ export interface Database {
   settings: AppSettings;
 }
 
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
 
 /** Deterministic PRNG so the seed is identical on every fresh load. */
 function mulberry32(seed: number) {

@@ -39,7 +39,6 @@ export function PnlStatement({ data, settings }: { data: PnlData; settings: AppS
   const lines: Array<[string, number]> = [
     ["Wages", c.wages],
     ["Expenses", c.expenses],
-    ["Overhead", c.overhead],
     ["Instrument charges", c.instruments],
     ["Operational charges", c.operational],
   ];
@@ -85,8 +84,7 @@ export function PnlStatement({ data, settings }: { data: PnlData; settings: AppS
         <Info className="mt-0.5 size-3.5 shrink-0" />
         <span>
           Projected values are estimates, not actual profit.{" "}
-          {data.projectionMethod && data.projectionMethod !== "mixed" ? `Method: ${PROJECTION_LABEL[data.projectionMethod]}.` : "Each project uses its own projection (see project pages)."} Overhead uses a demo rate from Settings
-          ({formatPct(settings.overheadPctOfWages)} of wages); operational charges use each project's cost per day.
+          {data.projectionMethod && data.projectionMethod !== "mixed" ? `Method: ${PROJECTION_LABEL[data.projectionMethod]}.` : "Each project uses its own projection (see project pages)."} Operational charges use each project's cost per day.
         </span>
       </p>
     </div>

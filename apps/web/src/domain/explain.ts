@@ -129,18 +129,6 @@ export function explainWages(p: ProjectPerformance, employeeById: Map<string, Em
   };
 }
 
-export function explainOverhead(p: ProjectPerformance, s: AppSettings): Explanation {
-  return {
-    title: "Overhead",
-    steps: [
-      { label: "Wages", value: formatINR(p.costs.wages) },
-      { op: "×", label: "Overhead rate", value: formatPct(s.overheadPctOfWages) },
-      { op: "=", label: "Overhead", value: formatINR(p.costs.overhead), strong: true },
-    ],
-    notes: ["Demo assumption: overhead is a % of wages. Rate is set in Settings; method to be confirmed by Aerosys."],
-  };
-}
-
 export function explainOperational(p: ProjectPerformance, perDay: number): Explanation {
   return {
     title: "Operational charges",

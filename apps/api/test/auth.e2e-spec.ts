@@ -90,7 +90,7 @@ describe('Auth and roles (e2e)', () => {
 
   it('checks the role on every change', async () => {
     await engineer.api().post('/api/projects').send(project(pm.employeeId, 'Not allowed')).expect(403);
-    await accounts().put('/api/settings').send({ companyName: 'X', deadlineAlertDays: 14, hoursPerManDay: 8, overheadPctOfWages: 20, projectionMethod: 'performance', targetMarginPct: 15 }).expect(403);
+    await accounts().put('/api/settings').send({ companyName: 'X', deadlineAlertDays: 14, hoursPerManDay: 8, projectionMethod: 'performance', targetMarginPct: 15 }).expect(403);
     await pm.api().delete(`/api/projects/${projectId}`).expect(403);
   });
 

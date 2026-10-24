@@ -9,7 +9,6 @@ export type CostHead = Exclude<keyof CostHeads, "total">;
 export const COST_HEADS: Array<{ key: CostHead; label: string; hint: string }> = [
   { key: "wages", label: "Wages", hint: "Man-days × daily cost" },
   { key: "expenses", label: "Expenses", hint: "Site expenses recorded by Accounts" },
-  { key: "overhead", label: "Overhead", hint: "% of wages (demo)" },
   { key: "instruments", label: "Instrument charges", hint: "Usage charge on deployments" },
   { key: "operational", label: "Operational charges", hint: "Project days × operational cost per day" },
   { key: "bills", label: "Vendor bills", hint: "Entered by Accounts" },

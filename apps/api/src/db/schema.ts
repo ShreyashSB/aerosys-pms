@@ -196,7 +196,6 @@ export const settings = pgTable(
     companyName: text('company_name').notNull().default('Aerosys HVAC Solutions Pvt Ltd'),
     deadlineAlertDays: integer('deadline_alert_days').notNull().default(14),
     hoursPerManDay: numeric('hours_per_man_day', { precision: 4, scale: 2, mode: 'number' }).notNull().default(8),
-    overheadPctOfWages: numeric('overhead_pct_of_wages', { precision: 5, scale: 2, mode: 'number' }).notNull().default(20),
     /** performance or budget. */
     projectionMethod: text('projection_method').notNull().default('performance'),
     targetMarginPct: numeric('target_margin_pct', { precision: 5, scale: 2, mode: 'number' }).notNull().default(15),

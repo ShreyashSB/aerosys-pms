@@ -35,7 +35,6 @@ export function SettingsPage() {
       setForm({
         companyName: settings.companyName,
         hoursPerManDay: String(settings.hoursPerManDay),
-        overheadPctOfWages: String(settings.overheadPctOfWages),
         projectionMethod: settings.projectionMethod,
         targetMarginPct: String(settings.targetMarginPct),
         deadlineAlertDays: String(settings.deadlineAlertDays),
@@ -51,7 +50,6 @@ export function SettingsPage() {
     ? {
         companyName: form.companyName.trim() ? undefined : "Required",
         hoursPerManDay: range(form.hoursPerManDay, 1, 24),
-        overheadPctOfWages: range(form.overheadPctOfWages, 0, 100),
         targetMarginPct: range(form.targetMarginPct, 0, 100),
         deadlineAlertDays: range(form.deadlineAlertDays, 1, 90),
       }
@@ -116,7 +114,6 @@ export function SettingsPage() {
                     {
                       companyName: form.companyName.trim(),
                       hoursPerManDay: Number(form.hoursPerManDay),
-                      overheadPctOfWages: Number(form.overheadPctOfWages),
                       projectionMethod: form.projectionMethod,
                       targetMarginPct: Number(form.targetMarginPct),
                       deadlineAlertDays: Number(form.deadlineAlertDays),
@@ -130,9 +127,6 @@ export function SettingsPage() {
                 </Field>
                 <Field label="Working hours per man-day" htmlFor="s-hours" error={errs.hoursPerManDay} hint="Converts idle man-hours into idle man-days">
                   <Input id="s-hours" type="number" min={1} max={24} step={0.5} value={form.hoursPerManDay} disabled={!editable} onChange={(e) => setF("hoursPerManDay", e.target.value)} />
-                </Field>
-                <Field label="Overhead (% of wages)" htmlFor="s-oh" error={errs.overheadPctOfWages} hint="Demo assumption for overhead cost">
-                  <Input id="s-oh" type="number" min={0} max={100} step={0.5} value={form.overheadPctOfWages} disabled={!editable} onChange={(e) => setF("overheadPctOfWages", e.target.value)} />
                 </Field>
                 <Field label="Projected cost method" htmlFor="s-proj" hint={PROJECTION_LABEL[form.projectionMethod]}>
                   <Select id="s-proj" value={form.projectionMethod} disabled={!editable} onChange={(e) => setF("projectionMethod", e.target.value as ProjectionMethod)}>
@@ -154,7 +148,7 @@ export function SettingsPage() {
                     <li>Running PPI = Earned Value ÷ Consumed Man-Days</li>
                     <li>Wages = Consumed Man-Days × employee Daily Cost; Idle Days = Σ idle person-days</li>
                     <li>Operational charges = Calendar days since project start (to completion) × the project's operational cost per day</li>
-                    <li>Cost to date = Wages + Expenses + Overhead + Instrument + Operational (+ other direct costs)</li>
+                    <li>Cost to date = Wages + Expenses + Instrument + Operational (+ other direct costs)</li>
                   </ul>
                 </div>
                 {editable && (
