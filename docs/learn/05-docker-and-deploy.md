@@ -37,14 +37,15 @@ You need three free accounts. Sign in to each with GitHub.
 
 Free plan: 0.5 GB storage, the database sleeps when idle and wakes on the next query in about a second.
 
-To fill a new Neon database with the demo, run `pnpm db:migrate` and then `pnpm db:seed -- --yes` with `DATABASE_URL` set to the Neon string. In a Codespace that is `export DATABASE_URL='postgresql://…'` first.
+You don't create any tables yourself: the API runs the migrations when it starts (`MIGRATE_ON_START=true`).
 
 ### 2. API: Render
 
 1. [render.com](https://render.com) -> **New -> Blueprint** -> pick this repository. Render reads `render.yaml` and proposes the `aerosys-api` service (Docker, Singapore, free).
-2. It asks for the two secret values:
+2. It asks for the values marked `sync: false` in `render.yaml`:
    - `DATABASE_URL`: the Neon string.
    - `WEB_ORIGIN`: the Vercel URL from step 3 (put `http://localhost:5173` for now and update it later).
+   - `FIRST_ADMIN_NAME`, `FIRST_ADMIN_EMAIL`, `FIRST_ADMIN_PASSWORD`: you, the first Management login. The API creates it on start, but only while the database has no logins at all (`apps/api/src/auth/first-admin.ts`). This replaces running `pnpm db:create-user`, because Render's free plan gives you no shell to run it in. You must pick a new password at first sign-in, so the one typed here stops working straight away.
 3. Deploy. Render builds the Docker image, starts it, runs migrations, and checks `/api/health`.
    Render also generates `JWT_SECRET`, the random value that signs login tokens. The API refuses to start in production without a long one.
 4. Open `https://aerosys-api.onrender.com/api/health` (your name may differ). You should see `"database":"up"`.

@@ -59,6 +59,8 @@ An empty database has no one to sign in as. Run, once:
 pnpm db:create-user -- --name "Your Name" --email you@company.in --role management --password 'a-strong-start'
 ```
 
+On a host with no shell (Render's free plan) set `FIRST_ADMIN_NAME`, `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD` instead: the API creates the same login when it starts, and only if the database has no logins yet. It locks the `users` table while it checks, so two copies of the API starting at once can't both create one.
+
 That person signs in, picks their own password, and then creates everyone else's login from the Employees page. The demo data (`pnpm db:seed -- --yes`) instead gives every demo user the password `demo1234`; never seed a database real people use.
 
 ## 7. The web side
