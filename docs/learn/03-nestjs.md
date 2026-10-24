@@ -77,6 +77,26 @@ The pipe runs before the controller method and answers 400 with field errors if 
 | `POST /api/projects`, `PUT /api/projects/:id` | Create or edit a project; new client, site or type names are added to their lists |
 | `PATCH /api/projects/:id/status` | Change only the status |
 | `DELETE /api/projects/:id` | Delete a project (204) |
+| `GET /api/settings`, `PUT /api/settings` | Read or change the app-wide settings (one row) |
+| `GET /api/assignments?projectId=` | Who is on which project, open and past |
+| `POST /api/projects/:projectId/assignments` | Put an engineer on a project (one open assignment per person) |
+| `DELETE /api/assignments/:id` | Release an engineer: ends the assignment today (204) |
+| `GET /api/boq-items?projectId=`, `POST /api/projects/:projectId/boq-items` | List or add bill of quantities lines |
+| `PUT /api/boq-items/:id`, `DELETE /api/boq-items/:id` | Edit or delete a BOQ line |
+| `GET /api/boq-executions?projectId=`, `POST /api/boq-items/:id/executions` | List or add executed quantity by hand |
+| `DELETE /api/boq-executions/:id` | Delete a hand-entered execution (204) |
+| `POST /api/projects/:projectId/close-period` | Start a new billing period from today |
+| `GET /api/daily-logs?projectId=`, `GET /api/daily-logs/:id` | List or read daily logs with attendance |
+| `POST /api/projects/:projectId/daily-logs`, `PUT /api/daily-logs/:id` | Save a day's log: attendance and work done, checked for double booking |
+| `DELETE /api/daily-logs/:id` | Delete a log and its executions (204) |
+| `GET /api/expenses?projectId=&status=` | List expenses, newest first |
+| `POST /api/expenses` | Submit an expense; it starts as pending with the next `EXP-` number |
+| `PATCH /api/expenses/:id/approve`, `PATCH /api/expenses/:id/reject` | Review a pending expense (rejecting needs a note) |
+| `DELETE /api/expenses/:id` | Withdraw a pending expense (204) |
+| `GET /api/bills?projectId=`, `POST /api/projects/:projectId/bills` | List or record vendor bills and client invoices |
+| `PUT /api/bills/:id`, `DELETE /api/bills/:id` | Edit or delete a bill |
+| `GET /api/project-costs?projectId=`, `POST /api/projects/:projectId/costs` | List or add other direct costs (sub-contract, hire) |
+| `DELETE /api/project-costs/:id` | Delete a cost (204) |
 
 ## Async in TypeScript (vs Java)
 
