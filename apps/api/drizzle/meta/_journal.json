@@ -15,6 +15,13 @@
       "when": 1792844749173,
       "tag": "0001_seed_project_types",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792848912109,
+      "tag": "0002_employees_projects",
+      "breakpoints": true
     }
   ]
 }

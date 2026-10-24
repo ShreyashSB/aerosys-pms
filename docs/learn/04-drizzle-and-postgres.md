@@ -61,5 +61,29 @@ Never edit a migration that has already run on a shared database. Add a new one 
 ## Conventions we follow
 
 - Every table has `id uuid`, `created_at`, `updated_at`.
-- Money will be stored as whole paise in `bigint` (₹1,250.50 is stored as `125050`) to avoid rounding errors.
+- Money and man-days are `numeric(14, 2)`: exact decimals in Postgres (no float rounding when it sums), read into TypeScript as plain numbers with `mode: 'number'`. That is exact for any amount this business will see. We picked this over storing whole paise in `bigint` because every screen and form already works in rupees.
 - Calculated KPIs are not stored as the truth; they are computed from the raw rows.
+
+## Relations: employees and projects
+
+`projects` points at four other tables with **foreign keys**: `client_id`, `site_id`, `project_type_id` and `manager_id`. Postgres then refuses a project whose manager doesn't exist, and refuses deleting a client that a project still uses. The database guards the data even if the code has a bug.
+
+The web app wants a flat project (`clientName: "Tata Projects"`), not ids. `ProjectsService.selectProjects()` does that with **JOINs**:
+
+```ts
+db.select({ id: projects.id, clientName: clients.name, /* … */ })
+  .from(projects)
+  .innerJoin(clients, eq(projects.clientId, clients.id))
+//   SELECT projects.id, clients.name AS "clientName" … FROM projects INNER JOIN clients ON …
+```
+
+Saving goes the other way. The form sends names, and `LookupsService.findOrCreate` turns each one into an id, adding it the first time ("Add new"). That runs inside a **transaction**:
+
+```ts
+await db.transaction(async (tx) => {
+  const clientId = await lookups.findOrCreate(clients, input.clientName, tx);
+  await tx.insert(projects).values({ ...fields, clientId });
+}); // both rows are saved, or neither
+```
+
+If the project insert fails (say the project ID is taken), the new client row is rolled back too, so no orphan clients are left behind.
