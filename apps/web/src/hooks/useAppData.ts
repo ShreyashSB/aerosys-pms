@@ -17,6 +17,7 @@ import {
   useInstruments,
   useProjectCosts,
   useProjects,
+  useReviews,
   useSettings,
 } from "./queries";
 
@@ -39,8 +40,9 @@ export function useAppData() {
   const boqExecutions = useBoqExecutions();
   const dailyLogs = useDailyLogs();
   const documents = useDocuments();
+  const reviews = useReviews();
 
-  const all = [projects, employees, assignments, expenses, instruments, deployments, projectCosts, settingsQ, boqItems, boqExecutions, dailyLogs, documents];
+  const all = [projects, employees, assignments, expenses, instruments, deployments, projectCosts, settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews];
   const isLoading = all.some((q) => q.isLoading);
   const error = all.find((q) => q.error)?.error ?? null;
 
@@ -77,6 +79,7 @@ export function useAppData() {
       boqExecutions: boqExecutions.data ?? [],
       dailyLogs: dailyLogs.data ?? [],
       documents: documents.data ?? [],
+      reviews: reviews.data ?? [],
       settings,
       index,
       perf,
@@ -87,7 +90,7 @@ export function useAppData() {
     };
   }, [
     projects.data, employees.data, assignments.data, expenses.data, instruments.data, deployments.data,
-    projectCosts.data, settingsQ.data, boqItems.data, boqExecutions.data, dailyLogs.data, documents.data,
+    projectCosts.data, settingsQ.data, boqItems.data, boqExecutions.data, dailyLogs.data, documents.data, reviews.data,
   ]);
 
   return { ...derived, isLoading, error };

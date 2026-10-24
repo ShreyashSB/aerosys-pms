@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
-  Activity, BarChart3, Building2, Calculator, ChevronRight, ClipboardList, FileSpreadsheet, FolderOpen, LayoutGrid, MapPin, Pencil, Plus, Receipt, Users, Wrench,
+  Activity, BarChart3, Building2, Calculator, ChevronRight, ClipboardList, FileSpreadsheet, FolderOpen, LayoutGrid, MapPin, Pencil, Plus, Receipt, Star, Users, Wrench,
 } from "lucide-react";
 import { useCurrentUser } from "@/auth/AuthContext";
 import { can, canManageProject } from "@/auth/permissions";
@@ -24,6 +24,7 @@ import { InstrumentsTab } from "@/features/projects/tabs/InstrumentsTab";
 import { CostsTab } from "@/features/projects/tabs/CostsTab";
 import { DocumentsTab } from "@/features/projects/tabs/DocumentsTab";
 import { PnlDrawer } from "@/features/projects/PnlDrawer";
+import { ReviewTeamDialog, projectTeam } from "@/features/projects/ReviewTeamDialog";
 import { DailyLogFormDialog } from "@/features/projects/dailylog/DailyLogFormDialog";
 import { DailyLogDetailDialog } from "@/features/projects/dailylog/DailyLogDetailDialog";
 import { AttendanceSummaryDialog } from "@/features/projects/dailylog/AttendanceSummaryDialog";
@@ -47,6 +48,7 @@ export function ProjectDetailPage() {
   const [logForm, setLogForm] = useState<{ open: boolean; logId: string | null }>({ open: false, logId: null });
   const [viewLog, setViewLog] = useState<string | null>(null);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   if (data.isLoading) return <PageSkeleton />;
   if (data.error) return <ErrorState error={data.error} />;
@@ -67,6 +69,15 @@ export function ProjectDetailPage() {
   const canEditBoq = can(user.role, "boq.edit") && isManager && project.status !== "archived";
   const canAddExpense = can(user.role, "expense.create") && (user.role !== "site_engineer" || isAssignedEngineer) && open;
   const canEditCosts = can(user.role, "project.costs.edit") && (user.role !== "project_manager" || isManager);
+  // Closing a project prompts its manager to review the team (the edit form sends ?review=1).
+  const canReview = can(user.role, "engineer.review") && isManager && project.status === "completed";
+  const unreviewed = canReview ? projectTeam(project, data).filter((m) => !m.review).length : 0;
+  const reviewDialogOpen = canReview && (reviewOpen || params.get("review") === "1");
+  const closeReview = (o: boolean) => {
+    if (o) return;
+    setReviewOpen(false);
+    if (params.has("review")) setParams({ tab }, { replace: true });
+  };
   const explain = (k: MetricKey) => setExplanation(explainMetric(k, p, data.settings, data.employeeById));
 
   const projectExpenses = (user.role === "site_engineer" ? data.scopedExpenses : data.expenses).filter((e) => e.projectId === id);
@@ -129,6 +140,16 @@ export function ProjectDetailPage() {
           ))}
         </dl>
       </div>
+
+      {unreviewed > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning-soft px-4 py-3">
+          <p className="flex items-center gap-2 text-sm">
+            <Star className="size-4 text-warning" />
+            Project closed. {unreviewed} engineer{unreviewed === 1 ? " is" : "s are"} waiting for your review.
+          </p>
+          <Button size="sm" onClick={() => setReviewOpen(true)}>Review team</Button>
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -229,6 +250,7 @@ export function ProjectDetailPage() {
       <ProjectFormDialog open={editOpen} onOpenChange={setEditOpen} project={project} />
       <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} projectId={project.id} />
       <CalcDrawer explanation={explanation} onClose={() => setExplanation(null)} />
+      <ReviewTeamDialog open={reviewDialogOpen} onOpenChange={closeReview} project={project} />
       <PnlDrawer
         settings={data.settings}
         onClose={() => setPnlOpen(false)}

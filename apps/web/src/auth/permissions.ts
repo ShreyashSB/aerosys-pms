@@ -26,6 +26,7 @@ export type Permission =
   | "employee.view"
   | "employee.manage"
   | "report.view"
+  | "engineer.review" // rate engineers when a project closes
   | "settings.manage";
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -35,12 +36,13 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "expense.viewAll", "expense.create", "expense.createForOthers", "expense.approve",
     "instrument.view", "instrument.viewAll", "instrument.manage", "engineer.view", "engineer.manage",
     "employee.view", "employee.manage", "report.view", "settings.manage", "boq.edit", "log.create", "document.upload",
+    "engineer.review",
   ],
   project_manager: [
     "project.edit", "project.progress", "project.assign", "project.costs.edit", "finance.view",
     "expense.create", "expense.createForOthers", "expense.approve",
     "instrument.view", "instrument.viewAll", "instrument.manage", "engineer.view", "boq.edit", "log.create", "document.upload",
-    "rates.view",
+    "rates.view", "engineer.review",
   ],
   site_engineer: ["project.progress", "expense.create", "instrument.view"],
   accounts: [

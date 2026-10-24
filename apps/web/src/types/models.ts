@@ -66,6 +66,21 @@ export interface Project {
   updatedAt: ISODateTime;
 }
 
+/**
+ * A project manager's review of one engineer, written when the project closes.
+ * Feeds the engineer's history for performance reviews.
+ */
+export interface EngineerReview {
+  id: ID;
+  projectId: ID;
+  employeeId: ID;
+  reviewerId: ID; // employee id of the reviewer
+  rating: 1 | 2 | 3 | 4 | 5;
+  comments: string;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
 export interface ProjectAssignment {
   id: ID;
   projectId: ID;

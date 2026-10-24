@@ -105,6 +105,8 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
           onSuccess: () => {
             toast.success("Project updated", { description: input.name });
             onOpenChange(false);
+            // Closing a project prompts the PM to review the team.
+            if (project.status !== "completed" && input.status === "completed") navigate(`/projects/${project.id}?review=1`);
           },
         },
       );

@@ -12,6 +12,7 @@ import {
   boqService,
   dailyLogService,
   documentService,
+  reviewService,
 } from "@/services";
 import type { DailyLogInput } from "@/services/dailyLogService";
 import { qk } from "./queries";
@@ -50,6 +51,14 @@ export const useDeleteProject = () =>
     qk.projects, qk.assignments, qk.expenses, qk.projectCosts, qk.deployments, qk.instruments,
     qk.boqItems, qk.boqExecutions, qk.dailyLogs, qk.documents,
   ]);
+
+// Engineer reviews at project close -----------------------------------------
+export const useSaveProjectReviews = () =>
+  useServiceMutation(
+    ({ projectId, reviewerId, reviews }: { projectId: string; reviewerId: string; reviews: Parameters<typeof reviewService.saveForProject>[2] }) =>
+      reviewService.saveForProject(projectId, reviewerId, reviews),
+    [qk.reviews],
+  );
 
 // Annexure / BOQ -------------------------------------------------------------
 const BOQ: QueryKey[] = [qk.boqItems, qk.boqExecutions, NOTIFS];
