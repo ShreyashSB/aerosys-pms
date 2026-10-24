@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, Input, Select } from "@/components/ui/input";
 import { PROJECTION_LABEL } from "@/domain/assumptions";
 import { Skeleton } from "@/components/ui/misc";
+import { AppearanceCard } from "@/features/settings/AppearanceCard";
 import type { AppSettings, ProjectionMethod, Role } from "@/types/models";
 
 export function SettingsPage() {
@@ -74,6 +75,8 @@ export function SettingsPage() {
             <div><p className="text-xs text-muted-foreground">Role</p><p className="font-medium">{ROLE_LABELS[user.role]}</p></div>
           </CardContent>
         </Card>
+
+        <AppearanceCard />
 
         <Card>
           <CardHeader>

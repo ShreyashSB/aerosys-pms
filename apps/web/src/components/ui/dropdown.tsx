@@ -1,5 +1,6 @@
 import * as DM from "@radix-ui/react-dropdown-menu";
 import type { ComponentProps } from "react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const DropdownMenu = DM.Root;
@@ -37,4 +38,26 @@ export function DropdownMenuLabel({ className, ...props }: ComponentProps<typeof
 
 export function DropdownMenuSeparator() {
   return <DM.Separator className="my-1 h-px bg-border" />;
+}
+
+export const DropdownMenuRadioGroup = DM.RadioGroup;
+
+/** A menu item that shows a tick when it is the selected value of its DropdownMenuRadioGroup. */
+export function DropdownMenuRadioItem({ className, children, ...props }: ComponentProps<typeof DM.RadioItem>) {
+  return (
+    <DM.RadioItem
+      className={cn(
+        "relative flex cursor-pointer select-none items-center gap-2 rounded py-1.5 pl-7 pr-2 text-sm outline-none data-[highlighted]:bg-muted data-[state=checked]:font-medium",
+        className,
+      )}
+      {...props}
+    >
+      <span className="absolute left-2 flex size-4 items-center justify-center">
+        <DM.ItemIndicator>
+          <Check className="size-4 text-primary" />
+        </DM.ItemIndicator>
+      </span>
+      {children}
+    </DM.RadioItem>
+  );
 }
