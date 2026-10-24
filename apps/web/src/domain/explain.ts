@@ -4,7 +4,7 @@
  * explanation can never disagree with the number on screen.
  */
 import { formatINR, formatNumber, formatPct } from "@/lib/format";
-import type { AppSettings, Employee } from "@/types/models";
+import type { Employee } from "@/types/models";
 import { HEALTH_THRESHOLDS, MIN_PROGRESS_FOR_PERFORMANCE_PROJECTION, PROJECTION_LABEL } from "./assumptions";
 import type { PortfolioPerformance, ProjectPerformance } from "./performance";
 
