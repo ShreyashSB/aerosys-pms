@@ -145,11 +145,11 @@ export function explainOperational(p: ProjectPerformance, perDay: number): Expla
   return {
     title: "Operational charges",
     steps: [
-      { label: "Consumed man-days", value: formatNumber(p.consumedManDays, 1) },
+      { label: "Project days to date", value: formatNumber(p.operationalDays, 0) },
       { op: "×", label: "Operational cost per day", value: formatINR(perDay) },
       { op: "=", label: "Operational charges", value: formatINR(p.costs.operational), strong: true },
     ],
-    notes: ["Charged for every man-day logged, as in the costing sheet. The rate is set on the project."],
+    notes: ["Charged for every calendar day from the start date to today (or to completion). The rate is set on the project."],
   };
 }
 

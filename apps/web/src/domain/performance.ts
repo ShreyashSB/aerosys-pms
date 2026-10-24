@@ -32,6 +32,7 @@ import {
   instrumentCharge,
   instrumentPerDayValue,
   operationalCost,
+  operationalDays,
   overheadCost,
   ppi as calcPpi,
   progressFromBoq,
@@ -166,8 +167,10 @@ export interface ProjectPerformance {
   projectId: string;
   asOf: string;
   contractValue: number;
-  /** Project's operational cost per man-day (₹). */
+  /** Project's operational cost per calendar day (₹). */
   operationalCostPerDay: number;
+  /** Calendar days the operational cost is charged for. */
+  operationalDays: number;
   // BOQ & progress
   boqValue: number;
   executedValue: number;
@@ -297,7 +300,8 @@ export function computeProjectPerformance(
     else invoiced += x.amount;
   }
   const overhead = overheadCost(wages, settings);
-  const operational = operationalCost(consumed, project.operationalCostPerDay);
+  const opDays = operationalDays(project.startDate, project.status === "completed" ? minDate(project.endDate, asOf) : asOf);
+  const operational = operationalCost(opDays, project.operationalCostPerDay);
   const total = wages + consumedExpenses + overhead + instruments + operational + bills + other;
 
   // Schedule & plan
@@ -323,6 +327,7 @@ export function computeProjectPerformance(
     asOf,
     contractValue: project.contractValue,
     operationalCostPerDay: project.operationalCostPerDay,
+    operationalDays: opDays,
     boqValue,
     executedValue,
     currentPeriodValue,

@@ -236,7 +236,7 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
             label="Operational cost per day (₹)"
             htmlFor="p-op"
             error={errors.operationalCostPerDay}
-            hint={`Charged per man-day worked${Number(v.operationalCostPerDay) > 0 ? ` · ${formatINR(Number(v.operationalCostPerDay))} / MD` : ""}`}
+            hint={`Charged for each calendar day of the project${Number(v.operationalCostPerDay) > 0 ? ` · ${formatINR(Number(v.operationalCostPerDay))} / day` : ""}`}
           >
             <Input id="p-op" type="number" min={0} step={10} value={v.operationalCostPerDay} onChange={(e) => set("operationalCostPerDay", e.target.value)} aria-invalid={!!errors.operationalCostPerDay} />
           </Field>

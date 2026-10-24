@@ -86,7 +86,7 @@ export function PnlStatement({ data, settings }: { data: PnlData; settings: AppS
         <span>
           Projected values are estimates, not actual profit.{" "}
           {data.projectionMethod && data.projectionMethod !== "mixed" ? `Method: ${PROJECTION_LABEL[data.projectionMethod]}.` : "Each project uses its own projection (see project pages)."} Overhead uses a demo rate from Settings
-          ({formatPct(settings.overheadPctOfWages)} of wages); operational charges use each project's cost per man-day.
+          ({formatPct(settings.overheadPctOfWages)} of wages); operational charges use each project's cost per day.
         </span>
       </p>
     </div>

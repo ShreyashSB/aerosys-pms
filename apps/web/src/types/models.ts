@@ -58,7 +58,7 @@ export interface Project {
   workOrderNo: string;
   /** Client's purchase order number. */
   poNo: string;
-  /** Operational cost in ₹ per man-day (₹150 in the costing sheet). Replaces the management charge. */
+  /** Operational cost in ₹ per calendar day of the project. Replaces the management charge. */
   operationalCostPerDay: number;
   /** Man-days allotted in the estimate – the PPI baseline. */
   allottedManDays: number;

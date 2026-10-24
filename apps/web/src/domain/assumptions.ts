@@ -115,11 +115,15 @@ export function overheadCost(wages: number, s: Pick<AppSettings, "overheadPctOfW
 }
 
 /**
- * Operational charges = consumed man-days × the project's operational cost per day.
- * Charged per man-day worked, as in Aerosys's costing sheet (Operation ₹150 per man-day).
+ * Operational charges = calendar days the project has run × the project's operational cost per day.
+ * Days count from the start date up to today, or up to the completion date once the project is completed.
  */
-export function operationalCost(consumedManDays: number, perDay: number) {
-  return consumedManDays * perDay;
+export function operationalDays(start: string, end: string) {
+  return end < start ? 0 : daysBetween(start, end) + 1;
+}
+
+export function operationalCost(days: number, perDay: number) {
+  return days * perDay;
 }
 
 /**

@@ -137,7 +137,7 @@ export function SettingsPage() {
                     <li>Progress = Executed BOQ Value ÷ Total BOQ Value; Earned Value = Work Order Value × Progress</li>
                     <li>Running PPI = Earned Value ÷ Consumed Man-Days</li>
                     <li>Wages = Consumed Man-Days × employee Daily Cost; Idle Days = Σ idle person-days</li>
-                    <li>Operational charges = Consumed Man-Days × the project's operational cost per day</li>
+                    <li>Operational charges = Calendar days since project start (to completion) × the project's operational cost per day</li>
                     <li>Cost to date = Wages + Approved Expenses + Overhead + Instrument + Operational (+ other direct costs)</li>
                   </ul>
                 </div>
