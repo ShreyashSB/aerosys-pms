@@ -4,6 +4,7 @@ import { isForeignKeyViolation, isUniqueViolation } from '../common/pg-errors.js
 import { DB, type Database } from '../db/db.module.js';
 import { clients, employees, projects, projectTypes, sites } from '../db/schema.js';
 import { LookupsService } from '../lookups/lookups.service.js';
+import { closeOpenAssignments } from '../assignments/assignments.service.js';
 import type { ProjectDto, ProjectInput, ProjectStatus } from './projects.dto.js';
 
 @Injectable()
@@ -90,14 +91,19 @@ export class ProjectsService {
           .where(eq(projects.id, id))
           .returning({ id: projects.id });
         if (!row) throw new NotFoundException('Project not found');
+        if (input.status === 'completed') await closeOpenAssignments(tx, id);
       }),
     );
     return this.get(id);
   }
 
   async setStatus(id: string, status: ProjectStatus): Promise<ProjectDto> {
-    const [row] = await this.db.update(projects).set({ status }).where(eq(projects.id, id)).returning({ id: projects.id });
-    if (!row) throw new NotFoundException('Project not found');
+    await this.db.transaction(async (tx) => {
+      const [row] = await tx.update(projects).set({ status }).where(eq(projects.id, id)).returning({ id: projects.id });
+      if (!row) throw new NotFoundException('Project not found');
+      // Completing a project releases everyone still assigned to it.
+      if (status === 'completed') await closeOpenAssignments(tx, id);
+    });
     return this.get(id);
   }
 
