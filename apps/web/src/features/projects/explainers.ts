@@ -29,7 +29,7 @@ export function explainMetric(key: MetricKey, p: ProjectPerformance, s: AppSetti
     case "expenses": return explainExpenses(p);
     case "wages": return explainWages(p, employeeById);
     case "overhead": return explainOverhead(p, s);
-    case "instruments": return explainInstruments(p, s);
+    case "instruments": return explainInstruments(p);
     case "management": return explainManagement(p, s);
     case "projectedProfit": return explainProjectedProfit(p);
     case "other": return { title: "Other direct costs", steps: [{ label: "Σ direct cost entries (Costs tab)", value: "", strong: true }] };

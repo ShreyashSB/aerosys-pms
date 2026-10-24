@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Ban, MoreHorizontal, Pencil, Plus, Send, Undo2, Wrench, CheckCircle2, Hammer } from "lucide-react";
+import { Ban, MoreHorizontal, Pencil, Plus, Send, Undo2, Wrench, CheckCircle2, Hammer, FileCheck2 } from "lucide-react";
 import { useCurrentUser } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { useScopedData } from "@/hooks/useAppData";
@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown";
 import { AssignInstrumentDialog, INSTRUMENT_CATEGORIES, InstrumentFormDialog } from "@/features/instruments/InstrumentDialogs";
-import { formatINR, formatINRShort } from "@/lib/format";
+import { instrumentPerDayValue } from "@/domain/assumptions";
+import { addDays, todayISO } from "@/lib/dates";
+import { formatDate, formatINR, formatINRShort } from "@/lib/format";
 import { includesText, sum } from "@/lib/utils";
 import type { Instrument, InstrumentStatus } from "@/types/models";
 
@@ -49,6 +51,9 @@ export function InstrumentsPage() {
     [base, f, data.employeeById],
   );
 
+  // On a project the instrument is at that project's site; otherwise wherever it is stored.
+  const locationOf = (i: Instrument) => (i.assignedProjectId ? data.projectById.get(i.assignedProjectId)?.site ?? "Project site" : i.currentLocation);
+
   const columns: Column<Instrument>[] = [
     {
       key: "name",
@@ -60,12 +65,27 @@ export function InstrumentsPage() {
           <p className="text-xs text-muted-foreground">
             {i.code} · SN <span className="font-mono">{i.serialNumber}</span>
           </p>
+          {i.calibration && <CalibrationLine validUntil={i.calibration.validUntil} />}
         </div>
       ),
     },
     { key: "category", header: "Category", sortValue: (i) => i.category, cell: (i) => i.category, hideOnMobile: true, className: "whitespace-nowrap" },
     ...(can(user.role, "finance.view") || manage
-      ? [{ key: "value", header: "Purchase value", align: "right" as const, sortValue: (i: Instrument) => i.purchaseValue, cell: (i: Instrument) => <span className="tabular">{formatINR(i.purchaseValue)}</span>, hideOnMobile: true }]
+      ? [
+          {
+            key: "value",
+            header: "Asset value",
+            align: "right" as const,
+            sortValue: (i: Instrument) => i.assetValue,
+            hideOnMobile: true,
+            cell: (i: Instrument) => (
+              <div className="tabular">
+                <p>{formatINR(i.assetValue)}</p>
+                <p className="text-xs text-muted-foreground">{formatINR(instrumentPerDayValue(i))} / day</p>
+              </div>
+            ),
+          },
+        ]
       : []),
     { key: "status", header: "Status", sortValue: (i) => i.status, cell: (i) => <InstrumentStatusBadge status={i.status} /> },
     { key: "engineer", header: "Assigned engineer", sortValue: (i) => data.employeeById.get(i.assignedEngineerId ?? "")?.name ?? "~", cell: (i) => data.employeeById.get(i.assignedEngineerId ?? "")?.name ?? <span className="text-muted-foreground">—</span> },
@@ -77,8 +97,15 @@ export function InstrumentsPage() {
         i.assignedProjectId ? (
           <Link to={`/projects/${i.assignedProjectId}?tab=instruments`} className="hover:text-primary hover:underline">{data.projectById.get(i.assignedProjectId)?.name}</Link>
         ) : (
-          <span className="text-muted-foreground">{i.notes || "In store"}</span>
+          <span className="text-muted-foreground">{i.notes || "—"}</span>
         ),
+    },
+    {
+      key: "location",
+      header: "Location",
+      sortValue: (i) => locationOf(i),
+      hideOnMobile: true,
+      cell: (i) => (i.assignedProjectId ? <span>{locationOf(i)}</span> : <span className="text-muted-foreground">{locationOf(i)}</span>),
     },
     ...(manage
       ? [
@@ -141,7 +168,7 @@ export function InstrumentsPage() {
       />
       {!isEngineer && (
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-          <StatCard label="Total instruments" value={base.length} loading={data.isLoading} hint={`${formatINRShort(sum(base, (i) => i.purchaseValue))} asset value`} />
+          <StatCard label="Total instruments" value={base.length} loading={data.isLoading} hint={`${formatINRShort(sum(base, (i) => i.assetValue))} asset value`} />
           <StatCard label="Available" value={count("available")} loading={data.isLoading} />
           <StatCard label="Assigned" value={count("assigned")} loading={data.isLoading} />
           <StatCard label="Maintenance" value={count("maintenance")} loading={data.isLoading} />
@@ -193,5 +220,17 @@ export function InstrumentsPage() {
         }
       />
     </div>
+  );
+}
+
+/** "Calibrated · valid till 12 Mar 2027", amber when it expires within 30 days, red once expired. */
+function CalibrationLine({ validUntil }: { validUntil: string | null }) {
+  const today = todayISO();
+  const tone = !validUntil ? "text-muted-foreground" : validUntil < today ? "text-danger" : validUntil <= addDays(today, 30) ? "text-warning" : "text-success";
+  const text = !validUntil ? "Calibration certificate on file" : validUntil < today ? `Calibration expired ${formatDate(validUntil)}` : `Calibrated · valid till ${formatDate(validUntil)}`;
+  return (
+    <p className={`mt-0.5 flex items-center gap-1 text-xs ${tone}`}>
+      <FileCheck2 className="size-3" /> {text}
+    </p>
   );
 }

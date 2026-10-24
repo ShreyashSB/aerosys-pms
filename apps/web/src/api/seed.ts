@@ -52,7 +52,7 @@ export interface Database {
   settings: AppSettings;
 }
 
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 /** Deterministic PRNG so the seed is identical on every fresh load. */
 function mulberry32(seed: number) {
@@ -188,19 +188,39 @@ export function buildSeed(): Database {
     ["Rotary Hammer Drill", "Power Tools", 18000, "RHD"],
     ["Full Body Harness Kit (set of 5)", "Safety", 12000, "SFH"],
   ];
-  const instruments: Instrument[] = insRows.map((r, i) => ({
-    id: `ins_${i + 1}`,
-    code: `INS-${String(i + 1).padStart(3, "0")}`,
-    name: r[0],
-    serialNumber: `${r[3]}-${2019 + (i % 6)}${String(4471 + i * 137).padStart(5, "0")}`,
-    category: r[1],
-    purchaseValue: r[2],
-    purchaseDate: d(-2600 + i * 110),
-    status: "available",
-    assignedEngineerId: null,
-    assignedProjectId: null,
-    notes: "",
-  }));
+  // Expected service life in years, by category (used for the end-of-life date).
+  const lifeYears: Record<Instrument["category"], number> = {
+    Measurement: 5,
+    "Refrigerant Handling": 4,
+    "Air Balancing": 5,
+    "Electrical Testing": 5,
+    "Power Tools": 3,
+    Safety: 2,
+  };
+  const stores = ["Pune HQ store", "Mumbai office store", "Hyderabad site office"];
+  const instruments: Instrument[] = insRows.map((r, i) => {
+    const purchaseDate = d(-1400 + i * 60);
+    return {
+      id: `ins_${i + 1}`,
+      code: `INS-${String(i + 1).padStart(3, "0")}`,
+      name: r[0],
+      serialNumber: `${r[3]}-${2019 + (i % 6)}${String(4471 + i * 137).padStart(5, "0")}`,
+      category: r[1],
+      assetValue: r[2],
+      purchaseDate,
+      endOfLifeDate: addDays(purchaseDate, Math.round(lifeYears[r[1]] * 365)),
+      currentLocation: stores[i % stores.length]!,
+      // A few instruments carry a (metadata-only) calibration certificate in the demo data.
+      calibration:
+        i % 4 === 0
+          ? { fileName: `${r[3]}-calibration-certificate.pdf`, size: 184_000 + i * 1_500, mimeType: "application/pdf", validUntil: d(30 + i * 20) }
+          : null,
+      status: "available",
+      assignedEngineerId: null,
+      assignedProjectId: null,
+      notes: "",
+    };
+  });
   instruments[6]!.status = "maintenance";
   instruments[6]!.notes = "Sent for annual calibration";
   instruments[17]!.status = "retired";

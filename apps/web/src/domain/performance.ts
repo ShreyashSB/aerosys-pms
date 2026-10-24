@@ -29,6 +29,7 @@ import {
   expectedProgress as calcExpectedProgress,
   idleManDays,
   instrumentCharge,
+  instrumentPerDayValue,
   managementCost,
   overheadCost,
   ppi as calcPpi,
@@ -60,7 +61,7 @@ interface ProjectBucket {
 export interface PerformanceIndex {
   buckets: Map<string, ProjectBucket>;
   dailyCost: Map<string, number>;
-  instrumentValue: Map<string, number>;
+  instrumentPerDay: Map<string, number>;
 }
 
 function bucket(idx: Map<string, ProjectBucket>, id: string) {
@@ -84,7 +85,7 @@ export function buildIndex(d: PerformanceData): PerformanceIndex {
   return {
     buckets,
     dailyCost: new Map(d.employees.map((e) => [e.id, e.dailyCost])),
-    instrumentValue: new Map(d.instruments.map((i) => [i.id, i.purchaseValue])),
+    instrumentPerDay: new Map(d.instruments.map((i) => [i.id, instrumentPerDayValue(i)])),
   };
 }
 
@@ -273,7 +274,7 @@ export function computeProjectPerformance(
   for (const d of b.deployments) {
     const end = minDate(d.returnedAt ?? asOf, asOf);
     if (end < d.assignedAt) continue;
-    instruments += instrumentCharge(idx.instrumentValue.get(d.instrumentId) ?? 0, daysBetween(d.assignedAt, end) + 1, settings);
+    instruments += instrumentCharge(idx.instrumentPerDay.get(d.instrumentId) ?? 0, daysBetween(d.assignedAt, end) + 1);
   }
 
   const other = b.otherCosts.filter((c) => c.date <= asOf).reduce((s, c) => s + c.amount, 0);
