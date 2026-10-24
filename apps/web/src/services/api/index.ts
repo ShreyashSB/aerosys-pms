@@ -119,8 +119,6 @@ export const dailyLogService: Service<"dailyLogService"> = {
 export const expenseService: Service<"expenseService"> = {
   list: () => http.get<Expense[]>("/api/expenses"),
   create: (input) => http.post<Expense>("/api/expenses", input),
-  approve: (id, _reviewerId, note = "") => http.patch<Expense>(`/api/expenses/${id}/approve`, { note }),
-  reject: (id, _reviewerId, note) => http.patch<Expense>(`/api/expenses/${id}/reject`, { note }),
   remove: (id) => http.delete(`/api/expenses/${id}`),
 };
 

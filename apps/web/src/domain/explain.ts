@@ -171,14 +171,13 @@ export function explainExpenses(p: ProjectPerformance): Explanation {
   return {
     title: "Consumed expenses",
     steps: [
-      { label: "Approved expenses", value: formatINR(p.consumedExpenses) },
+      { label: "Recorded expenses", value: formatINR(p.consumedExpenses) },
       { op: "÷", label: "Allotted expenses", value: formatINR(p.allottedExpenses) },
       { op: "=", label: "Expense utilisation", value: pct(p.expenseUtilisation), strong: true },
       { label: "Remaining expense budget", value: formatINR(p.allottedExpenses - p.consumedExpenses) },
       { label: "Planned expenses by today", value: formatINR(p.plannedExpensesToDate) },
-      { label: "Pending approval (not yet counted)", value: formatINR(p.pendingExpenses) },
     ],
-    notes: ["Only approved expenses count as consumed."],
+    notes: ["Every expense Accounts records counts as consumed, from its expense date."],
   };
 }
 

@@ -8,8 +8,6 @@ import { Progress } from "@/components/ui/misc";
 import { useForm, type Errors } from "@/hooks/useForm";
 import { useCreateExpense } from "@/hooks/mutations";
 import { useScopedData } from "@/hooks/useAppData";
-import { useCurrentUser } from "@/auth/AuthContext";
-import { can } from "@/auth/permissions";
 import { todayISO } from "@/lib/dates";
 import type { ExpenseCategory, Receipt } from "@/types/models";
 
@@ -56,12 +54,10 @@ export function ExpenseFormDialog({
   /** Pre-select and lock the project (when adding from the project page). */
   projectId?: string;
 }) {
-  const { user } = useCurrentUser();
   const data = useScopedData();
   const create = useCreateExpense();
-  const forOthers = can(user.role, "expense.createForOthers");
 
-  const initial: Values = { employeeId: user.employeeId, projectId: projectId ?? "", category: "", amount: "", date: todayISO(), description: "" };
+  const initial: Values = { employeeId: "", projectId: projectId ?? "", category: "", amount: "", date: todayISO(), description: "" };
   const form = useForm<Values>(initial, validate);
   const { values: v, errors, set } = form;
 
@@ -77,18 +73,13 @@ export function ExpenseFormDialog({
     }
   }, [open, projectId]);
 
-  // Projects the selected employee can book against
-  const openProjects = data.scopedProjects.filter((p) => p.status === "active" || p.status === "planning" || p.status === "on_hold");
-  const employeeProjects =
-    user.role === "site_engineer"
-      ? openProjects.filter((p) => data.assignments.some((a) => a.projectId === p.id && a.employeeId === user.employeeId && !a.endDate))
-      : openProjects;
+  // Accounts records expenses for any open project, on behalf of whoever spent the money.
+  const employeeProjects = data.scopedProjects.filter((p) => p.status === "active" || p.status === "planning" || p.status === "on_hold");
   const engineersOnProject = v.projectId
     ? data.employees.filter((e) => data.assignments.some((a) => a.projectId === v.projectId && a.employeeId === e.id))
     : [];
-  const employeeOptions = forOthers
-    ? [...new Map([...engineersOnProject, ...data.employees.filter((e) => e.status === "active")].map((e) => [e.id, e])).values()]
-    : data.employees.filter((e) => e.id === user.employeeId);
+  // People on the project first, then everyone else who is active.
+  const employeeOptions = [...new Map([...engineersOnProject, ...data.employees.filter((e) => e.status === "active")].map((e) => [e.id, e])).values()];
 
   const onFile = (file: File | undefined) => {
     if (!file) return;
@@ -131,7 +122,7 @@ export function ExpenseFormDialog({
       },
       {
         onSuccess: (exp) => {
-          toast.success("Expense submitted for approval", { description: `${exp.code} is now pending review.` });
+          toast.success("Expense recorded", { description: `${exp.code} is added to the project cost.` });
           onOpenChange(false);
         },
       },
@@ -143,14 +134,14 @@ export function ExpenseFormDialog({
       <DialogContent
         side="right"
         title="Add expense"
-        description="Submitted expenses go to the project manager / management for approval."
+        description="Recorded expenses count towards the project cost straight away."
         footer={
           <>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
               Cancel
             </Button>
             <Button type="submit" form="expense-form" loading={create.isPending} disabled={uploadPct !== null}>
-              Submit expense
+              Save expense
             </Button>
           </>
         }
@@ -165,12 +156,9 @@ export function ExpenseFormDialog({
                 </option>
               ))}
             </Select>
-            {user.role === "site_engineer" && employeeProjects.length === 0 && (
-              <p className="text-xs text-warning">You have no active project assignments to book expenses against.</p>
-            )}
           </Field>
           <Field label="Employee" htmlFor="x-emp" required error={errors.employeeId} className="sm:col-span-2">
-            <Select id="x-emp" value={v.employeeId} onChange={(e) => set("employeeId", e.target.value)} disabled={!forOthers} aria-invalid={!!errors.employeeId}>
+            <Select id="x-emp" value={v.employeeId} onChange={(e) => set("employeeId", e.target.value)} aria-invalid={!!errors.employeeId}>
               <option value="">Select employee…</option>
               {employeeOptions.map((e) => (
                 <option key={e.id} value={e.id}>

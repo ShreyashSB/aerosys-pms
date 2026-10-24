@@ -1,6 +1,6 @@
 # 08 — Notifications
 
-The bell in the top bar now reads from Postgres. Expense submitted? Management, accounts and the project's manager hear about it. Expense rejected? Only the person who claimed it does. This chapter shows how one table serves all of them.
+The bell in the top bar now reads from Postgres. An engineer assigned? Management, the engineer and the project's manager hear about it. A project created? Management, accounts and its manager do. This chapter shows how one table serves all of them.
 
 ## 1. One row, many readers
 
@@ -33,7 +33,7 @@ primaryKey({ columns: [t.notificationId, t.userId] })
 
 ## 3. Raising one: a side effect that must not fail the request
 
-`ExpensesService.create` saves the expense, then calls `notifications.notify(...)`. `notify` catches its own errors and only logs them. The expense is already saved; a hiccup in the bell shouldn't tell the engineer their claim failed.
+`AssignmentsService.assign` saves the assignment, then calls `notifications.notify(...)`. `notify` catches its own errors and only logs them. The assignment is already saved; a hiccup in the bell shouldn't tell the manager it failed.
 
 `NotificationsModule` is `@Global()`, so every service can just put `private readonly notifications: NotificationsService` in its constructor, like `DB`.
 
@@ -49,9 +49,9 @@ Progress for those alerts (`notifications/progress.ts`) is one SQL query: `SUM(q
 
 ```bash
 TOKEN=$(curl -s localhost:3000/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"pooja.nair@aerosyshvac.in","password":"demo1234"}' | jq -r .token)
+  -d '{"email":"rajesh.kulkarni@aerosyshvac.in","password":"demo1234"}' | jq -r .token)
 curl -s localhost:3000/api/notifications -H "Authorization: Bearer $TOKEN" | jq '.[0]'
 curl -s -X POST localhost:3000/api/notifications/read-all -H "Authorization: Bearer $TOKEN" -w '%{http_code}\n'
 ```
 
-Then in the Neon SQL editor: `SELECT * FROM notification_reads;`. There is one row for each notification Pooja just read.
+Then in the Neon SQL editor: `SELECT * FROM notification_reads;`. There is one row for each notification Rajesh just read.

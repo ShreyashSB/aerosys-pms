@@ -105,7 +105,7 @@ Four Postgres features do work here that would otherwise be code:
 
 - **A sequence for expense numbers.** `expense_code_seq` hands out 1001, 1002, … and the `code` column defaults to `'EXP-' || nextval('expense_code_seq')`. Two people submitting at the same moment can never get the same number, which "read the highest code, add one" can't promise.
 - **An index on an expression.** `project_bills_number_idx` is unique on `(project_id, kind, lower(number))`, so `INV-7` and `inv-7` count as the same invoice number.
-- **A conditional update.** Approving runs `UPDATE expenses SET status = 'approved' … WHERE id = $1 AND status = 'pending'`. If two managers press Approve at once, only one update finds a pending row; the other gets no row back and a clear "already approved" answer.
+- **A conditional update.** (This was expense approval, removed when Accounts became the only one recording expenses; the idea still matters.) `UPDATE … SET status = 'approved' WHERE id = $1 AND status = 'pending'` lets only one of two simultaneous clicks win: the other finds no pending row and gets a clear answer instead of a silent double change.
 - **`jsonb` for small nested data.** A receipt is `{ fileName, size, mimeType }`, stored in one `jsonb` column and typed in TypeScript with `.$type<Attachment>()`. The file itself goes to object storage in a later step.
 
 **Try it:** run `pnpm db:studio`, open `expenses`, and add a row without a code. Postgres fills it in.

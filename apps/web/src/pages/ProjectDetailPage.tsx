@@ -62,14 +62,13 @@ export function ProjectDetailPage() {
   const manager = data.employeeById.get(project.managerId);
   const assignments = data.assignments.filter((a) => a.projectId === id);
   const isManager = canManageProject(user, project);
-  const isAssignedEngineer = assignments.some((a) => a.employeeId === user.employeeId && !a.endDate);
   const showFinance = can(user.role, "finance.view");
   const open = project.status === "active" || project.status === "on_hold";
   const canEdit = can(user.role, "project.edit") && isManager;
   const canLog = can(user.role, "log.create") && isManager && open;
   const canEditBoq = can(user.role, "boq.edit") && isManager && project.status !== "archived";
-  const canAddExpense = can(user.role, "expense.create") && (user.role !== "site_engineer" || isAssignedEngineer) && open;
-  const canEditCosts = can(user.role, "project.costs.edit") && (user.role !== "project_manager" || isManager);
+  const canAddExpense = can(user.role, "expense.create") && open;
+  const canEditCosts = can(user.role, "project.costs.edit");
   // Closing a project prompts its manager to review the team (the edit form sends ?review=1).
   const canReview = can(user.role, "engineer.review") && isManager && project.status === "completed";
   const unreviewed = canReview ? projectTeam(project, data).filter((m) => !m.review).length : 0;
@@ -82,7 +81,6 @@ export function ProjectDetailPage() {
   const explain = (k: MetricKey) => setExplanation(explainMetric(k, p, data.settings, data.employeeById));
 
   const projectExpenses = (user.role === "site_engineer" ? data.scopedExpenses : data.expenses).filter((e) => e.projectId === id);
-  const pending = projectExpenses.filter((e) => e.status === "pending");
   const editingLog = logForm.logId ? data.dailyLogs.find((l) => l.id === logForm.logId) : null;
 
   const facts: Array<[string, React.ReactNode]> = [
@@ -163,7 +161,7 @@ export function ProjectDetailPage() {
           <TabsTrigger value="log"><Activity /> Daily Work Log</TabsTrigger>
           <TabsTrigger value="team"><Users /> Team</TabsTrigger>
           <TabsTrigger value="expenses">
-            <Receipt /> Expenses {pending.length > 0 && <span className="rounded-full bg-warning-soft px-1.5 text-xs text-warning">{pending.length}</span>}
+            <Receipt /> Expenses
           </TabsTrigger>
           {showFinance && <TabsTrigger value="bills"><FileText /> Bills & invoices</TabsTrigger>}
           {showFinance && <TabsTrigger value="costs"><Calculator /> Costs</TabsTrigger>}
@@ -216,7 +214,7 @@ export function ProjectDetailPage() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">
               {showFinance && <>Allotted {formatINR(p.allottedExpenses)} · </>}
-              Approved {formatINR(sum(projectExpenses.filter((e) => e.status === "approved"), (e) => e.amount))} · Pending {formatINR(sum(pending, (e) => e.amount))}
+              Recorded {formatINR(sum(projectExpenses, (e) => e.amount))}
               {showFinance && <> · Remaining {formatINR(p.allottedExpenses - p.consumedExpenses)}</>}
             </p>
             {canAddExpense && (

@@ -18,7 +18,6 @@ import { Progress, Skeleton } from "@/components/ui/misc";
 import { ProjectStatusBadge, InstrumentStatusBadge } from "@/components/common/StatusBadges";
 import { CostBreakdown } from "@/features/dashboard/CostBreakdown";
 import { ExpenseTable } from "@/features/expenses/ExpenseTable";
-import { ExpenseFormDialog } from "@/features/expenses/ExpenseFormDialog";
 import { ProjectFormDialog } from "@/features/projects/ProjectFormDialog";
 import { PnlDrawer } from "@/features/projects/PnlDrawer";
 import { expenseHealth, costHealth, profitHealth, runningPpiHealth, TONE_CLASSES, type Health } from "@/domain/health";
@@ -64,11 +63,6 @@ function PortfolioDashboard() {
   const overBudget = live.filter((r) => expenseHealth(r.f).tone === "bad" || costHealth(r.f).tone === "bad");
   const lowPpi = live.filter((r) => r.f.consumedManDays > 0 && r.f.ppiVariancePct < 0);
   const filtered = filter === "risk" ? atRisk : filter === "budget" ? overBudget : filter === "ppi" ? lowPpi : rows;
-
-  const pendingForMe = useMemo(
-    () => data.scopedExpenses.filter((e) => e.status === "pending" && (user.role !== "project_manager" || data.projectById.get(e.projectId)?.managerId === user.employeeId)),
-    [data.scopedExpenses, data.projectById, user],
-  );
 
   if (error) return <ErrorState error={error} />;
 
@@ -193,11 +187,6 @@ function PortfolioDashboard() {
         }
         actions={
           <>
-            {can(user.role, "expense.approve") && pendingForMe.length > 0 && (
-              <Button variant="outline" onClick={() => navigate("/expenses?status=pending")}>
-                <Receipt /> {pendingForMe.length} pending approval{pendingForMe.length > 1 ? "s" : ""}
-              </Button>
-            )}
             {can(user.role, "project.create") && (
               <Button onClick={() => setCreateOpen(true)}>
                 <Plus /> New project
@@ -364,25 +353,6 @@ function PortfolioDashboard() {
         </div>
       )}
 
-      {can(user.role, "expense.approve") && (
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>Expenses awaiting approval</CardTitle>
-              <CardDescription>
-                {pendingForMe.length} claims · {formatINR(sum(pendingForMe, (e) => e.amount))} — approved claims are added to consumed expenses and project cost immediately
-              </CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/expenses?status=pending">Open expenses</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <ExpenseTable expenses={pendingForMe} loading={isLoading} pageSize={5} />
-          </CardContent>
-        </Card>
-      )}
-
       <ProjectFormDialog open={createOpen} onOpenChange={setCreateOpen} />
       <CalcDrawer explanation={explanation} onClose={() => setExplanation(null)} />
       <PnlDrawer
@@ -426,14 +396,13 @@ function CountCard({ label, count, active, onClick, loading }: { label: string; 
 function EngineerDashboard() {
   const { user, employee } = useCurrentUser();
   const data = useScopedData();
-  const [expenseOpen, setExpenseOpen] = useState(false);
   const { isLoading, error } = data;
 
   const myAssignments = data.assignments.filter((a) => a.employeeId === user.employeeId && !a.endDate);
   const myExpenses = data.scopedExpenses;
   const myInstruments = data.instruments.filter((i) => i.assignedEngineerId === user.employeeId);
-  const pending = myExpenses.filter((e) => e.status === "pending");
   const month = todayISO().slice(0, 7);
+  const myExpensesMonth = myExpenses.filter((e) => e.date.startsWith(month));
   const myMonth = data.dailyLogs
     .filter((l) => l.date.startsWith(month))
     .flatMap((l) => l.attendance.filter((a) => a.employeeId === user.employeeId));
@@ -447,16 +416,11 @@ function EngineerDashboard() {
       <PageHeader
         title={`${greeting()}, ${employee.name.split(" ")[0]}`}
         description={`${employee.designation} · ${employee.baseLocation}`}
-        actions={
-          <Button onClick={() => setExpenseOpen(true)}>
-            <Plus /> Add expense
-          </Button>
-        }
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Active assignments" value={myAssignments.length} icon={<FolderKanban />} loading={isLoading} />
         <StatCard label="My man-days this month" value={formatNumber(mdMonth, 1)} icon={<Clock />} loading={isLoading} hint={idleMonth ? `${idleMonth} idle days logged` : "No idle days"} />
-        <StatCard label="Pending claims" value={pending.length} icon={<Receipt />} loading={isLoading} hint={formatINR(sum(pending, (e) => e.amount))} />
+        <StatCard label="My expenses this month" value={formatINR(sum(myExpensesMonth, (e) => e.amount))} icon={<Receipt />} loading={isLoading} hint={`${myExpensesMonth.length} recorded by Accounts`} />
         <StatCard label="Instruments with me" value={myInstruments.length} icon={<Wrench />} loading={isLoading} />
       </div>
 
@@ -530,7 +494,7 @@ function EngineerDashboard() {
         <CardHeader>
           <div>
             <CardTitle>My recent expenses</CardTitle>
-            <CardDescription>Track the approval status of your claims</CardDescription>
+            <CardDescription>Expenses Accounts has recorded against your name</CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild><Link to="/expenses">View all</Link></Button>
         </CardHeader>
@@ -538,7 +502,6 @@ function EngineerDashboard() {
           <ExpenseTable expenses={myExpenses} loading={isLoading} hideEmployee pageSize={5} />
         </CardContent>
       </Card>
-      <ExpenseFormDialog open={expenseOpen} onOpenChange={setExpenseOpen} />
     </div>
   );
 }

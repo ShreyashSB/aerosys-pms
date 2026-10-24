@@ -3,12 +3,13 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module.js';
 import { signIn, type Api } from './helpers.js';
 
-/** Expenses, bills & invoices and other project costs against a real Postgres. */
+/** Expenses, bills & invoices and other project costs against a real Postgres. Accounts records all of them. */
 describe('Money (e2e)', () => {
   let app: INestApplication;
+  /** Management: sets up the employees and the project. */
+  let admin: Api;
+  /** Accounts: records the money. */
   let api: Api;
-  /** The signed-in Management user: recorded as reviewer, author and uploader. */
-  let adminId: string;
   const run = Date.now().toString(36);
   let pmId: string;
   let engineerId: string;
@@ -38,11 +39,12 @@ describe('Money (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
-    ({ api, employeeId: adminId } = await signIn(app));
+    admin = (await signIn(app)).api;
+    api = (await signIn(app, 'accounts')).api;
     pmId = await employee('Farhan Shaikh');
     engineerId = await employee('Karan Mehta');
     projectId = (
-      await api()
+      await admin()
         .post('/api/projects')
         .send({ name: `Phoenix Mall ${run}`, clientName: `Client ${run}`, site: `Site ${run}`, projectType: 'Commissioning', managerId: pmId, contractValue: 1000000, estimatedCost: 780000, allottedManDays: 150, startDate: '2026-01-01', endDate: '2026-12-31', status: 'active' })
         .expect(201)
@@ -53,10 +55,10 @@ describe('Money (e2e)', () => {
     await app.close();
   });
 
-  it('submits an expense as pending with the next EXP number', async () => {
+  it('records an expense with the next EXP number', async () => {
     const a = await api().post('/api/expenses').send(expense()).expect(201);
     const b = await api().post('/api/expenses').send(expense({ amount: 300 })).expect(201);
-    expect(a.body).toMatchObject({ status: 'pending', amount: 1250.5, reviewedById: null, receipt: { fileName: 'ticket.pdf' } });
+    expect(a.body).toMatchObject({ amount: 1250.5, receipt: { fileName: 'ticket.pdf' } });
     expect(a.body.code).toMatch(/^EXP-\d+$/);
     expect(Number(b.body.code.slice(4))).toBe(Number(a.body.code.slice(4)) + 1);
   });
@@ -70,30 +72,17 @@ describe('Money (e2e)', () => {
     await api().post('/api/expenses').send(expense({ receipt: { fileName: 'big.pdf', size: 20_000_000, mimeType: 'application/pdf' } })).expect(400);
   });
 
-  it('approves once, and refuses a second review', async () => {
+  it('deletes a wrong entry', async () => {
     const { body } = await api().post('/api/expenses').send(expense()).expect(201);
-    const ok = await api().patch(`/api/expenses/${body.id}/approve`).send({}).expect(200);
-    expect(ok.body).toMatchObject({ status: 'approved', reviewedById: adminId });
-    expect(ok.body.reviewedAt).toBeTruthy();
-    const again = await api().patch(`/api/expenses/${body.id}/reject`).send({ note: 'No' }).expect(400);
-    expect(again.body.message).toBe('Expense has already been approved');
-    await api().delete(`/api/expenses/${body.id}`).expect(400);
+    await api().delete(`/api/expenses/${body.id}`).expect(204);
+    await api().delete(`/api/expenses/${body.id}`).expect(404);
   });
 
-  it('needs a reason to reject, and lets a pending one be withdrawn', async () => {
-    const { body } = await api().post('/api/expenses').send(expense()).expect(201);
-    await api().patch(`/api/expenses/${body.id}/reject`).send({}).expect(400);
-    await api().patch(`/api/expenses/${body.id}/reject`).send({ note: 'No receipt' }).expect(200);
-    const pending = await api().post('/api/expenses').send(expense()).expect(201);
-    await api().delete(`/api/expenses/${pending.body.id}`).expect(204);
-    await api().delete(`/api/expenses/${pending.body.id}`).expect(404);
-  });
-
-  it('filters expenses by project and status', async () => {
-    const { body } = await api().get(`/api/expenses?projectId=${projectId}&status=rejected`).expect(200);
-    expect(body.length).toBeGreaterThan(0);
-    expect(body.every((e: { status: string }) => e.status === 'rejected')).toBe(true);
-    await api().get('/api/expenses?status=lost').expect(400);
+  it('filters expenses by project', async () => {
+    const { body } = await api().get(`/api/expenses?projectId=${projectId}`).expect(200);
+    expect(body).toHaveLength(2);
+    expect(body.every((e: { projectId: string }) => e.projectId === projectId)).toBe(true);
+    await api().get('/api/expenses?projectId=nope').expect(400);
   });
 
   it('records bills and invoices, refusing a repeated number', async () => {
@@ -122,7 +111,7 @@ describe('Money (e2e)', () => {
 
   it('deletes expenses, bills and costs with their project', async () => {
     await api().post(`/api/projects/${projectId}/costs`).send({ type: 'other', description: 'Scaffolding', amount: 5000, date: '2026-03-05' }).expect(201);
-    await api().delete(`/api/projects/${projectId}`).expect(204);
+    await admin().delete(`/api/projects/${projectId}`).expect(204);
     expect((await api().get(`/api/expenses?projectId=${projectId}`).expect(200)).body).toHaveLength(0);
     expect((await api().get(`/api/bills?projectId=${projectId}`).expect(200)).body).toHaveLength(0);
     expect((await api().get(`/api/project-costs?projectId=${projectId}`).expect(200)).body).toHaveLength(0);

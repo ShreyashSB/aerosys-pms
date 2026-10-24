@@ -135,9 +135,7 @@ export async function seedDemo(db: Database) {
         id: id(e.id),
         projectId: id(e.projectId),
         employeeId: id(e.employeeId),
-        reviewedById: optId(e.reviewedById),
         submittedAt: new Date(e.submittedAt),
-        reviewedAt: e.reviewedAt ? new Date(e.reviewedAt) : null,
       })),
     );
     // The demo brings its own EXP numbers, so move the sequence past them.

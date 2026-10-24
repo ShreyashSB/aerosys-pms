@@ -1,6 +1,6 @@
 import * as Popover from "@radix-ui/react-popover";
 import { useNavigate } from "react-router-dom";
-import { Bell, PauseCircle, CheckCheck, CheckCircle2, ClipboardList, Clock, FolderPlus, UserPlus, Wrench, XCircle, type LucideIcon } from "lucide-react";
+import { Bell, PauseCircle, CheckCheck, Clock, FolderPlus, UserPlus, Wrench, type LucideIcon } from "lucide-react";
 import { useCurrentUser } from "@/auth/AuthContext";
 import { useNotifications } from "@/hooks/queries";
 import { useMarkAllNotificationsRead, useMarkNotificationRead } from "@/hooks/mutations";
@@ -11,9 +11,6 @@ import { cn } from "@/lib/utils";
 import type { NotificationType } from "@/types/models";
 
 const ICONS: Record<NotificationType, { icon: LucideIcon; cls: string }> = {
-  expense_submitted: { icon: ClipboardList, cls: "bg-warning-soft text-warning" },
-  expense_approved: { icon: CheckCircle2, cls: "bg-success-soft text-success" },
-  expense_rejected: { icon: XCircle, cls: "bg-danger-soft text-danger" },
   engineer_assigned: { icon: UserPlus, cls: "bg-info-soft text-info" },
   instrument_assigned: { icon: Wrench, cls: "bg-info-soft text-info" },
   project_deadline: { icon: Clock, cls: "bg-danger-soft text-danger" },
@@ -65,7 +62,8 @@ export function NotificationCenter() {
             ) : (
               data.slice(0, 30).map((n) => {
                 const isUnread = !n.readBy.includes(user.id);
-                const { icon: Icon, cls } = ICONS[n.type];
+                // A type this version no longer raises (from older data) falls back to a plain bell.
+                const { icon: Icon, cls } = ICONS[n.type] ?? { icon: Bell, cls: "bg-muted text-muted-foreground" };
                 return (
                   <Popover.Close asChild key={n.id}>
                     <button
