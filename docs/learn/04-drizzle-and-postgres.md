@@ -98,3 +98,14 @@ Four Postgres features do work here that would otherwise be code:
 - **`jsonb` for small nested data.** A receipt is `{ fileName, size, mimeType }`, stored in one `jsonb` column and typed in TypeScript with `.$type<Attachment>()`. The file itself goes to object storage in a later step.
 
 **Try it:** run `pnpm db:studio`, open `expenses`, and add a row without a code. Postgres fills it in.
+
+## Instruments and reviews: derive, don't duplicate
+
+- **Status from history.** An instrument is "assigned" when it has a deployment with no `returned_at`. We don't store that twice. `InstrumentsService` LEFT JOINs the open deployment and works the status out in SQL:
+
+  ```sql
+  CASE WHEN instrument_deployments.id IS NULL THEN instruments.status ELSE 'assigned' END
+  ```
+
+  If a project is deleted, its deployments go with it (cascade), and the instrument shows as available again by itself.
+- **Upsert.** Saving PM reviews runs `INSERT … ON CONFLICT (project_id, employee_id) DO UPDATE SET rating = excluded.rating, …`. `excluded` is the row we tried to insert. Reviewing an engineer again changes the earlier review instead of adding a second one, in one statement.

@@ -36,6 +36,13 @@
       "when": 1792849515198,
       "tag": "0004_money",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792849816102,
+      "tag": "0005_assets",
+      "breakpoints": true
     }
   ]
 }

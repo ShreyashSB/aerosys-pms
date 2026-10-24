@@ -97,6 +97,15 @@ The pipe runs before the controller method and answers 400 with field errors if 
 | `PUT /api/bills/:id`, `DELETE /api/bills/:id` | Edit or delete a bill |
 | `GET /api/project-costs?projectId=`, `POST /api/projects/:projectId/costs` | List or add other direct costs (sub-contract, hire) |
 | `DELETE /api/project-costs/:id` | Delete a cost (204) |
+| `GET /api/instruments`, `GET /api/instruments/:id` | List or read instruments, with who has each one now |
+| `POST /api/instruments`, `PUT /api/instruments/:id` | Add or edit an instrument (next `INS-NNN` if no code is given) |
+| `POST /api/instruments/:id/assign`, `POST /api/instruments/:id/return` | Issue to an engineer on a project, or bring it back |
+| `PATCH /api/instruments/:id/status` | Mark available, under maintenance or retired |
+| `GET /api/instrument-deployments?projectId=&instrumentId=` | Issue history, which drives instrument cost |
+| `GET /api/documents?projectId=`, `POST /api/projects/:projectId/documents` | List or record project documents |
+| `DELETE /api/documents/:id` | Delete a document (204) |
+| `GET /api/engineer-reviews?projectId=` or `?employeeId=` | PM reviews of engineers |
+| `PUT /api/projects/:projectId/reviews` | Save the PM's reviews once the project is completed |
 
 ## Async in TypeScript (vs Java)
 
