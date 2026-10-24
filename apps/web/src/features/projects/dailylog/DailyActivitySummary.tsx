@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/common/States";
 import { formatDate, formatINR, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/** Recent daily logs for a project: people, working/idle MD, key work, expenses, remarks. */
+/** Recent daily logs for a project: people, working/idle MD, key work, wages, remarks. */
 export function DailyActivitySummary({
   projectId,
   limit,
@@ -33,8 +33,7 @@ export function DailyActivitySummary({
           return it ? `${it.description.split(/[–(]/)[0]!.trim()} — ${formatNumber(x.qty, 2)} ${it.uom}` : "";
         })
         .filter(Boolean);
-      const exp = data.expenses.filter((e) => e.dailyLogId === log.id && e.status !== "rejected").reduce((acc, e) => acc + e.amount, 0);
-      return { log, s, work, exp };
+      return { log, s, work };
     });
   }, [data, projectId]);
   const rows = all.slice(0, pageSize);
@@ -51,12 +50,12 @@ export function DailyActivitySummary({
             <th className="px-3 py-2 text-right font-medium">Working MD</th>
             <th className="px-3 py-2 text-right font-medium">Idle MD</th>
             <th className="px-3 py-2 text-left font-medium">Key work completed</th>
-            {showCost && <th className="px-3 py-2 text-right font-medium">Expenses</th>}
+            {showCost && <th className="px-3 py-2 text-right font-medium">Wages</th>}
             <th className="px-5 py-2 text-left font-medium">Remarks</th>
           </tr>
         </thead>
         <tbody className="divide-y">
-          {rows.map(({ log, s, work, exp }) => (
+          {rows.map(({ log, s, work }) => (
             <tr key={log.id} onClick={() => onOpen(log.id)} className="cursor-pointer hover:bg-muted/50">
               <td className="whitespace-nowrap px-5 py-2.5 font-medium">{formatDate(log.date)}</td>
               <td className="px-3 py-2.5 text-right tabular">{s.people}</td>
@@ -65,7 +64,7 @@ export function DailyActivitySummary({
               <td className="max-w-80 px-3 py-2.5">
                 <p className="truncate" title={work.join("; ") || log.activities}>{work.length ? work.join("; ") : <span className="text-muted-foreground">{log.activities || "—"}</span>}</p>
               </td>
-              {showCost && <td className="px-3 py-2.5 text-right tabular">{exp ? formatINR(exp) : "—"}</td>}
+              {showCost && <td className="px-3 py-2.5 text-right tabular">{formatINR(s.wages)}</td>}
               <td className="max-w-56 truncate px-5 py-2.5 text-muted-foreground" title={log.remarks}>{log.remarks || "—"}</td>
             </tr>
           ))}

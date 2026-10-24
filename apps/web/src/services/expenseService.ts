@@ -4,9 +4,7 @@ import { uid } from "@/lib/utils";
 import type { Expense } from "@/types/models";
 import { pushNotification } from "./notificationService";
 
-export type ExpenseInput = Pick<Expense, "employeeId" | "projectId" | "category" | "amount" | "date" | "description" | "receipt"> & {
-  dailyLogId?: string | null;
-};
+export type ExpenseInput = Pick<Expense, "employeeId" | "projectId" | "category" | "amount" | "date" | "description" | "receipt">;
 
 function validate(input: ExpenseInput) {
   if (!(input.amount > 0)) throw new ApiError("Amount must be greater than zero");
@@ -32,7 +30,6 @@ export const expenseService = {
       const seq = Math.max(1000, ...data.expenses.map((e) => Number(e.code.split("-")[1]) || 0)) + 1;
       const expense: Expense = {
         ...input,
-        dailyLogId: input.dailyLogId ?? null,
         id: uid("exp"),
         code: `EXP-${seq}`,
         status: "pending",

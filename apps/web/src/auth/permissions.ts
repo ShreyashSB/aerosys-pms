@@ -27,6 +27,7 @@ export type Permission =
   | "employee.manage"
   | "report.view"
   | "engineer.review" // rate engineers when a project closes
+  | "bill.manage" // add vendor bills and client invoices to a project
   | "settings.manage";
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -36,7 +37,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "expense.viewAll", "expense.create", "expense.createForOthers", "expense.approve",
     "instrument.view", "instrument.viewAll", "instrument.manage", "engineer.view", "engineer.manage",
     "employee.view", "employee.manage", "report.view", "settings.manage", "boq.edit", "log.create", "document.upload",
-    "engineer.review",
+    "engineer.review", "bill.manage",
   ],
   project_manager: [
     "project.edit", "project.progress", "project.assign", "project.costs.edit", "finance.view",
@@ -48,7 +49,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   accounts: [
     "dashboard.portfolio", "project.viewAll", "project.costs.edit", "finance.view", "rates.view",
     "expense.viewAll", "expense.create", "expense.createForOthers",
-    "employee.view", "employee.manage", "report.view", "document.upload",
+    "employee.view", "employee.manage", "report.view", "document.upload", "bill.manage",
   ],
 };
 
@@ -63,7 +64,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   management: "Full visibility of projects, costs, profitability, people and reports.",
   project_manager: "Own projects, engineer assignments, expense approvals and instruments.",
   site_engineer: "Assigned projects, progress updates, own expenses and instruments.",
-  accounts: "Expenses, employees, project costs and financial reports.",
+  accounts: "Expenses, bills, invoices, employees, project costs and financial reports.",
 };
 
 export function can(role: Role, permission: Permission) {

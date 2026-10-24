@@ -7,6 +7,7 @@ import { scopeProjects } from "@/auth/permissions";
 import { useAuth } from "@/auth/AuthContext";
 import {
   useAssignments,
+  useBills,
   useBoqExecutions,
   useBoqItems,
   useDailyLogs,
@@ -41,8 +42,9 @@ export function useAppData() {
   const dailyLogs = useDailyLogs();
   const documents = useDocuments();
   const reviews = useReviews();
+  const bills = useBills();
 
-  const all = [projects, employees, assignments, expenses, instruments, deployments, projectCosts, settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews];
+  const all = [projects, employees, assignments, expenses, instruments, deployments, projectCosts, settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews, bills];
   const isLoading = all.some((q) => q.isLoading);
   const error = all.find((q) => q.error)?.error ?? null;
 
@@ -56,6 +58,7 @@ export function useAppData() {
       instruments: instruments.data ?? [],
       projectInstruments: deployments.data ?? [],
       projectCosts: projectCosts.data ?? [],
+      bills: bills.data ?? [],
       boqItems: boqItems.data ?? [],
       boqExecutions: boqExecutions.data ?? [],
       dailyLogs: dailyLogs.data ?? [],
@@ -80,6 +83,7 @@ export function useAppData() {
       dailyLogs: dailyLogs.data ?? [],
       documents: documents.data ?? [],
       reviews: reviews.data ?? [],
+      bills: bills.data ?? [],
       settings,
       index,
       perf,
@@ -90,7 +94,7 @@ export function useAppData() {
     };
   }, [
     projects.data, employees.data, assignments.data, expenses.data, instruments.data, deployments.data,
-    projectCosts.data, settingsQ.data, boqItems.data, boqExecutions.data, dailyLogs.data, documents.data, reviews.data,
+    projectCosts.data, settingsQ.data, boqItems.data, boqExecutions.data, dailyLogs.data, documents.data, reviews.data, bills.data,
   ]);
 
   return { ...derived, isLoading, error };

@@ -52,6 +52,14 @@ export interface Project {
   contractValue: number;
   /** Budgeted total cost (all cost heads). */
   estimatedCost: number;
+  /** Commissioning, TAB, Design, Audit, Other or a type added from the form. */
+  projectType: string;
+  /** Client's work order number (as on the annexure). */
+  workOrderNo: string;
+  /** Client's purchase order number. */
+  poNo: string;
+  /** Operational cost in ₹ per man-day (₹150 in the costing sheet). Replaces the management charge. */
+  operationalCostPerDay: number;
   /** Man-days allotted in the estimate – the PPI baseline. */
   allottedManDays: number;
   /** Budget for site expenses (travel, stay, consumables…). */
@@ -119,8 +127,6 @@ export interface Expense {
   date: ISODate;
   description: string;
   receipt: Receipt | null;
-  /** Set when the expense was raised from a daily work log. */
-  dailyLogId: ID | null;
   status: ExpenseStatus;
   submittedAt: ISODateTime;
   reviewedById: ID | null;
@@ -174,6 +180,36 @@ export interface ProjectInstrument {
   engineerId: ID | null;
   assignedAt: ISODate;
   returnedAt: ISODate | null;
+}
+
+/** Built-in project types; more can be added from the project form. */
+export const DEFAULT_PROJECT_TYPES = ["Commissioning", "TAB (Testing, Adjusting, Balancing)", "Design", "Audit", "Other"];
+
+/** Values offered in the project form dropdowns. "Add new" in the form appends to these. */
+export interface Lookups {
+  clients: string[];
+  sites: string[];
+  projectTypes: string[];
+}
+
+/**
+ * A bill or invoice entered by Accounts against a project.
+ * Vendor bills are a project cost; client invoices are what Aerosys has billed the client.
+ */
+export type BillKind = "vendor_bill" | "client_invoice";
+
+export interface ProjectBill {
+  id: ID;
+  projectId: ID;
+  kind: BillKind;
+  number: string; // bill / invoice number
+  party: string; // vendor or client name
+  amount: number;
+  date: ISODate;
+  attachment: Receipt | null;
+  notes: string;
+  createdById: ID;
+  createdAt: ISODateTime;
 }
 
 export type ProjectCostType = "subcontract" | "hire" | "other";
@@ -296,8 +332,6 @@ export interface AppSettings {
   hoursPerManDay: number;
   /** Overhead charged as a % of wages (demo assumption). */
   overheadPctOfWages: number;
-  /** Management charges as a % of earned value (demo assumption). */
-  managementPctOfEarnedValue: number;
   /** How remaining cost is projected. */
   projectionMethod: ProjectionMethod;
   /** Margin below which projected profit is flagged. */

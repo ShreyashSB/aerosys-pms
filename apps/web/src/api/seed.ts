@@ -26,6 +26,7 @@ import type {
   Instrument,
   Project,
   ProjectAssignment,
+  ProjectBill,
   ProjectCost,
   ProjectDocument,
   ProjectInstrument,
@@ -33,6 +34,8 @@ import type {
 } from "@/types/models";
 import { addDays, daysBetween, parseISODate, todayISO } from "@/lib/dates";
 import { DEFAULT_SETTINGS } from "@/domain/assumptions";
+import { DEFAULT_PROJECT_TYPES } from "@/types/models";
+import type { Lookups } from "@/types/models";
 import { BOQ_TEMPLATES, DISCRETE_UOMS } from "./seedBoq";
 
 export interface Database {
@@ -50,11 +53,13 @@ export interface Database {
   dailyLogs: DailyLog[];
   documents: ProjectDocument[];
   engineerReviews: EngineerReview[];
+  bills: ProjectBill[];
+  lookups: Lookups;
   notifications: AppNotification[];
   settings: AppSettings;
 }
 
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 /** Deterministic PRNG so the seed is identical on every fresh load. */
 function mulberry32(seed: number) {
@@ -325,6 +330,9 @@ export function buildSeed(): Database {
   ];
 
   const projects: Project[] = [];
+  const bills: ProjectBill[] = [];
+  const [COMM, TAB, DESIGN, AUDIT] = DEFAULT_PROJECT_TYPES as [string, string, string, string];
+  const typeByProject = [COMM, COMM, TAB, COMM, TAB, COMM, TAB, COMM, COMM, TAB, DESIGN, AUDIT];
   const assignments: ProjectAssignment[] = [];
   const boqItems: BoqItem[] = [];
   const boqExecutions: BoqExecution[] = [];
@@ -355,6 +363,10 @@ export function buildSeed(): Database {
       name: s.name,
       clientName: s.client,
       site: s.site,
+      projectType: typeByProject[pi] ?? COMM,
+      workOrderNo: `WO/${s.client.split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()}/${parseISODate(startDate).getFullYear()}/${String(41 + pi * 7).padStart(3, "0")}`,
+      poNo: s.status === "planning" ? "" : `PO-${450000 + pi * 1137}`,
+      operationalCostPerDay: 150,
       managerId: E(s.manager),
       contractValue: s.value,
       estimatedCost: round(s.value * 0.78, 10000),
@@ -368,6 +380,26 @@ export function buildSeed(): Database {
       createdAt: new Date(parseISODate(addDays(startDate, -20)).getTime() + 10 * 3600000).toISOString(),
       updatedAt: now,
     });
+
+    // ---- Accounts: RA invoices raised to the client and a vendor bill or two
+    if (s.progress > 0) {
+      const raCount = s.progress >= 1 ? 3 : s.progress > 0.5 ? 2 : 1;
+      for (let k = 1; k <= raCount; k++) {
+        const share = (s.progress * 0.85) / raCount;
+        bills.push({
+          id: `bill_${bills.length + 1}`, projectId: id, kind: "client_invoice", number: `AER/${pi + 1}/RA-${k}`, party: s.client,
+          amount: round(s.value * share, 1000), date: addDays(startDate, Math.round((daysBetween(startDate, endDate < T ? endDate : T) * k) / (raCount + 0.5))),
+          attachment: { fileName: `RA-${k}_invoice.pdf`, size: 180000 + k * 9000, mimeType: "application/pdf" }, notes: `Running account bill ${k}`,
+          createdById: E(6), createdAt: now,
+        });
+      }
+      bills.push({
+        id: `bill_${bills.length + 1}`, projectId: id, kind: "vendor_bill", number: `INV-${7300 + pi * 11}`, party: pi % 2 ? "Shree Ganesh Insulation Works" : "Pune Duct Fabricators",
+        amount: round(s.value * 0.012, 100), date: addDays(startDate, 25),
+        attachment: { fileName: `vendor_bill_${pi + 1}.pdf`, size: 95000, mimeType: "application/pdf" }, notes: "Material supplied to site",
+        createdById: E(6), createdAt: now,
+      });
+    }
 
     // ---- BOQ: scale template quantities so items ≈ 90% of value, lump sum absorbs the rest
     const tpl = BOQ_TEMPLATES[s.boq]!;
@@ -565,7 +597,6 @@ export function buildSeed(): Database {
           date: log.date,
           description: pick(descs),
           receipt: rand() > 0.2 ? { fileName: `receipt_${seq.exp}.jpg`, size: Math.round(between(80000, 480000)), mimeType: "image/jpeg" } : null,
-          dailyLogId: category === "Food" || category === "Local Conveyance" ? log.id : null,
           status: pending ? "pending" : "approved",
           submittedAt: new Date(parseISODate(log.date).getTime() + 19.5 * 3600000).toISOString(),
           reviewedById: pending ? null : E(s.manager),
@@ -580,7 +611,7 @@ export function buildSeed(): Database {
       // a few rejected claims (not counted)
       for (let k = 0; k < 2; k++) {
         const base = records[Math.floor(rand() * records.length)]!;
-        records.push({ ...base, id: `exp_${seq.exp}`, code: `EXP-${1000 + seq.exp++}`, amount: round(between(1500, 9000), 10), status: "rejected", reviewNote: "Not a project expense / duplicate claim", description: "Personal travel claim", category: "Travel", dailyLogId: null });
+        records.push({ ...base, id: `exp_${seq.exp}`, code: `EXP-${1000 + seq.exp++}`, amount: round(between(1500, 9000), 10), status: "rejected", reviewNote: "Not a project expense / duplicate claim", description: "Personal travel claim", category: "Travel" });
       }
     }
     expenses.push(...records);
@@ -669,6 +700,12 @@ export function buildSeed(): Database {
     instruments,
     projectInstruments,
     engineerReviews,
+    bills,
+    lookups: {
+      clients: [...new Set(projects.map((p) => p.clientName))].sort(),
+      sites: [...new Set(projects.map((p) => p.site))].sort(),
+      projectTypes: [...DEFAULT_PROJECT_TYPES],
+    },
     projectCosts,
     boqItems,
     boqExecutions,

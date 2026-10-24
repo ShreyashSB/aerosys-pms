@@ -33,7 +33,6 @@ export function SettingsPage() {
         companyName: settings.companyName,
         hoursPerManDay: String(settings.hoursPerManDay),
         overheadPctOfWages: String(settings.overheadPctOfWages),
-        managementPctOfEarnedValue: String(settings.managementPctOfEarnedValue),
         projectionMethod: settings.projectionMethod,
         targetMarginPct: String(settings.targetMarginPct),
         deadlineAlertDays: String(settings.deadlineAlertDays),
@@ -50,7 +49,6 @@ export function SettingsPage() {
         companyName: form.companyName.trim() ? undefined : "Required",
         hoursPerManDay: range(form.hoursPerManDay, 1, 24),
         overheadPctOfWages: range(form.overheadPctOfWages, 0, 100),
-        managementPctOfEarnedValue: range(form.managementPctOfEarnedValue, 0, 50),
         targetMarginPct: range(form.targetMarginPct, 0, 100),
         deadlineAlertDays: range(form.deadlineAlertDays, 1, 90),
       }
@@ -100,7 +98,6 @@ export function SettingsPage() {
                       companyName: form.companyName.trim(),
                       hoursPerManDay: Number(form.hoursPerManDay),
                       overheadPctOfWages: Number(form.overheadPctOfWages),
-                      managementPctOfEarnedValue: Number(form.managementPctOfEarnedValue),
                       projectionMethod: form.projectionMethod,
                       targetMarginPct: Number(form.targetMarginPct),
                       deadlineAlertDays: Number(form.deadlineAlertDays),
@@ -117,9 +114,6 @@ export function SettingsPage() {
                 </Field>
                 <Field label="Overhead (% of wages)" htmlFor="s-oh" error={errs.overheadPctOfWages} hint="Demo assumption for overhead cost">
                   <Input id="s-oh" type="number" min={0} max={100} step={0.5} value={form.overheadPctOfWages} disabled={!editable} onChange={(e) => setF("overheadPctOfWages", e.target.value)} />
-                </Field>
-                <Field label="Management charges (% of earned value)" htmlFor="s-mg" error={errs.managementPctOfEarnedValue} hint="Demo assumption for management cost">
-                  <Input id="s-mg" type="number" min={0} max={50} step={0.5} value={form.managementPctOfEarnedValue} disabled={!editable} onChange={(e) => setF("managementPctOfEarnedValue", e.target.value)} />
                 </Field>
                 <Field label="Projected cost method" htmlFor="s-proj" hint={PROJECTION_LABEL[form.projectionMethod]}>
                   <Select id="s-proj" value={form.projectionMethod} disabled={!editable} onChange={(e) => setF("projectionMethod", e.target.value as ProjectionMethod)}>
@@ -140,7 +134,8 @@ export function SettingsPage() {
                     <li>Progress = Executed BOQ Value ÷ Total BOQ Value; Earned Value = Work Order Value × Progress</li>
                     <li>Running PPI = Earned Value ÷ Consumed Man-Days</li>
                     <li>Wages = Consumed Man-Days × employee Daily Cost; Idle Days = Σ idle person-days</li>
-                    <li>Cost to date = Wages + Approved Expenses + Overhead + Instrument + Management (+ other direct costs)</li>
+                    <li>Operational charges = Consumed Man-Days × the project's operational cost per day</li>
+                    <li>Cost to date = Wages + Approved Expenses + Overhead + Instrument + Operational (+ other direct costs)</li>
                   </ul>
                 </div>
                 {editable && (

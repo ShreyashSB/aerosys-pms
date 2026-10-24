@@ -11,7 +11,8 @@ export const COST_HEADS: Array<{ key: CostHead; label: string; hint: string }> =
   { key: "expenses", label: "Expenses", hint: "Approved site expenses" },
   { key: "overhead", label: "Overhead", hint: "% of wages (demo)" },
   { key: "instruments", label: "Instrument charges", hint: "Usage charge on deployments" },
-  { key: "management", label: "Management charges", hint: "% of earned value (demo)" },
+  { key: "operational", label: "Operational charges", hint: "Man-days × operational cost per day" },
+  { key: "bills", label: "Vendor bills", hint: "Entered by Accounts" },
   { key: "other", label: "Other direct costs", hint: "Hire, sub-contract…" },
 ];
 
@@ -22,7 +23,7 @@ export const COST_HEADS: Array<{ key: CostHead; label: string; hint: string }> =
  */
 export function CostBreakdown({ costs, onSelect, budget }: { costs: CostHeads; onSelect?: (head: CostHead) => void; budget?: number }) {
   const [hover, setHover] = useState<CostHead | null>(null);
-  const heads = COST_HEADS.filter((h) => h.key !== "other" || costs.other > 0);
+  const heads = COST_HEADS.filter((h) => (h.key !== "other" && h.key !== "bills") || costs[h.key] > 0);
   const max = Math.max(1, ...heads.map((h) => costs[h.key]));
   const total = costs.total || 1;
 

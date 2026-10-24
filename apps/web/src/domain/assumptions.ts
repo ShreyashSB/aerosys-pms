@@ -114,9 +114,12 @@ export function overheadCost(wages: number, s: Pick<AppSettings, "overheadPctOfW
   return (wages * s.overheadPctOfWages) / 100;
 }
 
-/** DEMO ASSUMPTION: Management charges = x% of earned value (x from Settings). */
-export function managementCost(earned: number, s: Pick<AppSettings, "managementPctOfEarnedValue">) {
-  return (earned * s.managementPctOfEarnedValue) / 100;
+/**
+ * Operational charges = consumed man-days × the project's operational cost per day.
+ * Charged per man-day worked, as in Aerosys's costing sheet (Operation ₹150 per man-day).
+ */
+export function operationalCost(consumedManDays: number, perDay: number) {
+  return consumedManDays * perDay;
 }
 
 /**
@@ -196,7 +199,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   deadlineAlertDays: 14,
   hoursPerManDay: 8,
   overheadPctOfWages: 20,
-  managementPctOfEarnedValue: 3,
   projectionMethod: "performance",
   targetMarginPct: 15,
 };
