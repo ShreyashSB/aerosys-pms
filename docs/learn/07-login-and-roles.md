@@ -59,6 +59,23 @@ pnpm db:create-user -- --name "Your Name" --email you@company.in --role manageme
 
 That person signs in, picks their own password, and then creates everyone else's login from the Employees page. The demo data (`pnpm db:seed -- --yes`) instead gives every demo user the password `demo1234`; never seed a database real people use.
 
+## 7. The web side
+
+The React app does the same thing in a few small pieces. Each is worth opening:
+
+| Piece | File | What it does |
+| --- | --- | --- |
+| Token store | `apps/web/src/api/http.ts` (`authToken`) | Keeps the token in `localStorage`, so a refresh keeps you signed in, and adds `Authorization: Bearer …` to every request. |
+| 401 handler | `http.ts` (`setUnauthorizedHandler`) | Any 401 (token expired, login switched off) calls `logout()`, which clears the token and every cached query, and you land on the login page. |
+| Who am I | `apps/web/src/auth/AuthContext.tsx` (`ApiAuthProvider`) | A TanStack Query for `GET /api/auth/me`, keyed by the token. Signing in puts the login response straight into that cache, so there is no extra request. |
+| First sign-in | `features/auth/FirstPasswordScreen.tsx` | While `mustChangePassword` is true the app shows only this screen. The server refuses everything else anyway (403), so the UI just follows the server. |
+| Accounts | `features/employees/EmployeeFormDialog.tsx` + `services/api/index.ts` (`syncLogin`) | "System access" on the employee form creates the login (with a starting password), changes its role, switches it off ("No login") or resets the password. |
+
+Two things to notice:
+
+- **React only hides; the server decides.** Hiding a button for a site engineer is about tidiness. The real rule is the `@Allow` on the route. Try it: sign in as an engineer and send a `POST /api/projects` with curl, and you get 403 whatever the UI shows.
+- **Demo mode is untouched.** Without `VITE_API_BASE_URL`, `AuthProvider` renders the old `DemoAuthProvider` (pick any person, no password), so the Vercel preview still works on its own.
+
 ## Try it
 
 ```bash

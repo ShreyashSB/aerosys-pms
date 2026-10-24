@@ -3,11 +3,9 @@
  * instead of the in-browser demo data. Each one has the exact type of its
  * demo twin, so hooks and pages work with either.
  *
- * Until login and roles exist on the server:
- * - users are worked out from employees (department → role), and a role
- *   picked in the employee form is not saved;
- * - notifications stay empty;
- * - "who did it" ids (reviewer, uploader…) are sent in the request body.
+ * The server works out "who did it" (author, reviewer, uploader) from the
+ * sign-in token, so the actor ids the demo services take are not sent.
+ * Notifications stay empty until the server sends them.
  */
 import { http } from "@/api/http";
 import { ApiError } from "@/api/mockDb";
@@ -31,6 +29,7 @@ import type {
   User,
 } from "@/types/models";
 import type * as demo from "../demo";
+import type { EmployeeInput } from "../employeeService";
 
 type Service<K extends keyof typeof demo> = (typeof demo)[K];
 
@@ -49,26 +48,45 @@ export const projectService: Service<"projectService"> = {
   remove: (id) => http.delete(`/api/projects/${id}`),
 };
 
-/** Interim roles until the server has users: the department decides. */
-function roleFor(e: Employee): Role | null {
-  if (e.status === "inactive") return null;
-  if (e.department === "Management") return "management";
-  if (e.department === "Projects") return "project_manager";
-  if (e.department === "Accounts") return "accounts";
-  return e.isSiteEngineer ? "site_engineer" : null;
+const toApiEmployee = (input: EmployeeInput) => {
+  const { appRole: _role, password: _password, ...rest } = input;
+  return { ...rest, code: input.code?.trim() || undefined };
+};
+
+/**
+ * Brings the employee's login in line with the form's "System access" field:
+ * create it (with the starting password), change its role, switch it off or
+ * back on, and reset the password when a new one was typed.
+ */
+async function syncLogin(employeeId: string, role: Role | null, password?: string) {
+  const users = await http.get<User[]>("/api/users");
+  const login = users.find((u) => u.employeeId === employeeId);
+  if (!login) {
+    if (!role) return;
+    if (!password) throw new ApiError("Set a starting password to give this person a login");
+    await http.post("/api/users", { employeeId, role, password });
+    return;
+  }
+  const active = role !== null;
+  if (login.role !== (role ?? login.role) || login.active !== active) {
+    await http.put(`/api/users/${login.id}`, { role: role ?? login.role, active });
+  }
+  if (active && password) await http.post(`/api/users/${login.id}/reset-password`, { password });
 }
 
 export const employeeService: Service<"employeeService"> = {
   list: () => http.get<Employee[]>("/api/employees"),
-  async listUsers() {
-    const employees = await http.get<Employee[]>("/api/employees");
-    return employees.flatMap((e): User[] => {
-      const role = roleFor(e);
-      return role ? [{ id: `usr_${e.id}`, employeeId: e.id, role, email: e.email }] : [];
-    });
+  listUsers: () => http.get<User[]>("/api/users"),
+  async create(input) {
+    const employee = await http.post<Employee>("/api/employees", toApiEmployee(input));
+    await syncLogin(employee.id, input.appRole, input.password);
+    return employee;
   },
-  create: (input) => http.post<Employee>("/api/employees", { ...withoutKey(input, "appRole"), code: input.code?.trim() || undefined }),
-  update: (id, input) => http.put<Employee>(`/api/employees/${id}`, { ...withoutKey(input, "appRole"), code: input.code?.trim() || undefined }),
+  async update(id, input) {
+    const employee = await http.put<Employee>(`/api/employees/${id}`, toApiEmployee(input));
+    await syncLogin(id, input.appRole, input.password);
+    return employee;
+  },
 };
 
 export const assignmentService: Service<"assignmentService"> = {
@@ -92,8 +110,7 @@ export const boqService: Service<"boqService"> = {
 
 export const dailyLogService: Service<"dailyLogService"> = {
   list: () => http.get<DailyLog[]>("/api/daily-logs"),
-  save: ({ projectId, ...input }, actorId, logId) => {
-    const body = { ...input, createdById: actorId };
+  save: ({ projectId, ...body }, _actorId, logId) => {
     return logId ? http.put<DailyLog>(`/api/daily-logs/${logId}`, body) : http.post<DailyLog>(`/api/projects/${projectId}/daily-logs`, body);
   },
   remove: (id) => http.delete(`/api/daily-logs/${id}`),
@@ -102,14 +119,14 @@ export const dailyLogService: Service<"dailyLogService"> = {
 export const expenseService: Service<"expenseService"> = {
   list: () => http.get<Expense[]>("/api/expenses"),
   create: (input) => http.post<Expense>("/api/expenses", input),
-  approve: (id, reviewerId, note = "") => http.patch<Expense>(`/api/expenses/${id}/approve`, { reviewerId, note }),
-  reject: (id, reviewerId, note) => http.patch<Expense>(`/api/expenses/${id}/reject`, { reviewerId, note }),
+  approve: (id, _reviewerId, note = "") => http.patch<Expense>(`/api/expenses/${id}/approve`, { note }),
+  reject: (id, _reviewerId, note) => http.patch<Expense>(`/api/expenses/${id}/reject`, { note }),
   remove: (id) => http.delete(`/api/expenses/${id}`),
 };
 
 export const billService: Service<"billService"> = {
   list: () => http.get<ProjectBill[]>("/api/bills"),
-  create: ({ projectId, ...rest }, actorId) => http.post<ProjectBill>(`/api/projects/${projectId}/bills`, { ...rest, createdById: actorId }),
+  create: ({ projectId, ...rest }) => http.post<ProjectBill>(`/api/projects/${projectId}/bills`, rest),
   remove: (id) => http.delete(`/api/bills/${id}`),
 };
 
@@ -131,13 +148,13 @@ export const instrumentService: Service<"instrumentService"> = {
 
 export const documentService: Service<"documentService"> = {
   list: () => http.get<ProjectDocument[]>("/api/documents"),
-  upload: ({ projectId, ...rest }, actorId) => http.post<ProjectDocument>(`/api/projects/${projectId}/documents`, { ...rest, uploadedById: actorId }),
+  upload: ({ projectId, ...rest }) => http.post<ProjectDocument>(`/api/projects/${projectId}/documents`, rest),
   remove: (id) => http.delete(`/api/documents/${id}`),
 };
 
 export const reviewService: Service<"reviewService"> = {
   list: () => http.get<EngineerReview[]>("/api/engineer-reviews"),
-  saveForProject: (projectId, reviewerId, reviews) => http.put<EngineerReview[]>(`/api/projects/${projectId}/reviews`, { reviewerId, reviews }),
+  saveForProject: (projectId, _reviewerId, reviews) => http.put<EngineerReview[]>(`/api/projects/${projectId}/reviews`, { reviews }),
 };
 
 export const settingsService: Service<"settingsService"> = {

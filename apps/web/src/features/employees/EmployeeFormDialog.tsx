@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { ROLE_LABELS } from "@/auth/permissions";
 import { EMPLOYEE_STATUS } from "@/components/common/StatusBadges";
 import { todayISO } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
+import { USE_API } from "@/api/http";
+import { MIN_PASSWORD } from "@/features/auth/ChangePasswordForm";
 import type { Department, Employee, EmployeeStatus, Role } from "@/types/models";
 
 const DEPARTMENTS: Department[] = ["Management", "Projects", "Engineering", "Service", "Accounts", "Admin"];
@@ -27,10 +29,17 @@ type Values = {
   isSiteEngineer: boolean;
   baseLocation: string;
   appRole: Role | "";
+  /** Live database only: starting password for a new login, or a new one to reset it to. */
+  password: string;
 };
 
-const validate = (v: Values): Errors<Values> => {
+/** `hasLogin`: the employee already has an active login (so the password field is optional). */
+const validate = (v: Values, hasLogin: boolean): Errors<Values> => {
   const e: Errors<Values> = {};
+  if (USE_API && v.appRole) {
+    if (!hasLogin && !v.password) e.password = "Set a starting password for the new login";
+    else if (v.password && v.password.length < MIN_PASSWORD) e.password = `At least ${MIN_PASSWORD} characters`;
+  }
   if (!v.name.trim()) e.name = "Name is required";
   if (!/^\S+@\S+\.\S+$/.test(v.email)) e.email = "Enter a valid email";
   if (!v.designation.trim()) e.designation = "Designation is required";
@@ -66,9 +75,11 @@ export function EmployeeFormDialog({
     isSiteEngineer: e?.isSiteEngineer ?? false,
     baseLocation: e?.baseLocation ?? "Pune",
     appRole: (e && users.find((u) => u.employeeId === e.id)?.role) || "",
+    password: "",
     ...(!e ? defaults : {}),
   });
-  const form = useForm<Values>(toValues(employee), validate);
+  const hasLogin = !!employee && users.some((u) => u.employeeId === employee.id);
+  const form = useForm<Values>(toValues(employee), useCallback((v: Values) => validate(v, hasLogin), [hasLogin]));
   const { values: v, errors, set } = form;
 
   useEffect(() => {
@@ -82,6 +93,7 @@ export function EmployeeFormDialog({
       designation: vals.designation.trim(),
       dailyCost: Number(vals.dailyCost),
       appRole: vals.appRole || null,
+      password: vals.password || undefined,
     };
     const done = (msg: string) => () => {
       toast.success(msg, { description: input.name });
@@ -156,7 +168,7 @@ export function EmployeeFormDialog({
               ))}
             </Select>
           </Field>
-          <Field label="System access" htmlFor="e-role" hint="Grants a login with this role">
+          <Field label="System access" htmlFor="e-role" hint={USE_API && hasLogin ? "\"No login\" switches their login off" : "Grants a login with this role"}>
             <Select id="e-role" value={v.appRole} onChange={(e) => set("appRole", e.target.value as Role | "")}>
               <option value="">No login</option>
               {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
@@ -166,6 +178,17 @@ export function EmployeeFormDialog({
               ))}
             </Select>
           </Field>
+          {USE_API && v.appRole && (
+            <Field
+              label={hasLogin ? "Reset password" : "Starting password"}
+              htmlFor="e-pass"
+              required={!hasLogin}
+              error={errors.password}
+              hint={hasLogin ? "Leave blank to keep their password. A new one must be changed at next sign-in." : "Share it with them; they pick their own at first sign-in"}
+            >
+              <Input id="e-pass" type="text" autoComplete="off" value={v.password} onChange={(e) => set("password", e.target.value)} aria-invalid={!!errors.password} />
+            </Field>
+          )}
           <label className="flex items-center gap-2 self-end pb-2 text-sm">
             <input type="checkbox" className="size-4 accent-primary" checked={v.isSiteEngineer} onChange={(e) => set("isSiteEngineer", e.target.checked)} />
             Deployable site engineer / technician

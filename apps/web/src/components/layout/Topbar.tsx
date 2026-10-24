@@ -18,6 +18,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import type { View } from "@/appearance/AppearanceContext";
 import { AppearanceMenu } from "./AppearanceMenu";
 import { LogoMark } from "./Logo";
+import { USE_API } from "@/api/http";
 import { NotificationCenter } from "./NotificationCenter";
 
 const ROLES: Role[] = ["management", "project_manager", "site_engineer", "accounts"];
@@ -54,7 +55,8 @@ export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view:
         <GlobalSearch />
       </div>
 
-      {/* Demo role switcher */}
+      {/* Demo role switcher (demo data only: on the live database your login decides your role) */}
+      {!USE_API && (
       <div className="hidden items-center gap-2 rounded-md border border-dashed border-primary/40 bg-primary-soft/50 py-1 pl-2.5 pr-1 md:flex">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Demo role</span>
         <select
@@ -73,6 +75,7 @@ export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view:
           ))}
         </select>
       </div>
+      )}
 
       <AppearanceMenu />
       <NotificationCenter />
@@ -95,6 +98,7 @@ export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view:
             <span className="block font-normal">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {!USE_API && (
           <div className="md:hidden">
             <DropdownMenuLabel>Switch demo role</DropdownMenuLabel>
             {ROLES.filter((r) => r !== user.role).map((r) => (
@@ -104,7 +108,8 @@ export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view:
             ))}
             <DropdownMenuSeparator />
           </div>
-          {sameRoleUsers.length > 0 && (
+          )}
+          {!USE_API && sameRoleUsers.length > 0 && (
             <>
               <DropdownMenuLabel>Switch to another {ROLE_LABELS[user.role]}</DropdownMenuLabel>
               {sameRoleUsers.map((u) => (

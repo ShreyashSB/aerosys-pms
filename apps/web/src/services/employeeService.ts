@@ -2,7 +2,11 @@ import { ApiError, clone, db, simulateLatency } from "@/api/mockDb";
 import { uid } from "@/lib/utils";
 import type { Employee, Role, User } from "@/types/models";
 
-export type EmployeeInput = Omit<Employee, "id" | "code"> & { code?: string; appRole: Role | null };
+/**
+ * `password`: on the live database, the starting password for a new login, or
+ * a new one to reset it to. The demo data has no passwords and ignores it.
+ */
+export type EmployeeInput = Omit<Employee, "id" | "code"> & { code?: string; appRole: Role | null; password?: string };
 
 function validate(input: EmployeeInput) {
   if (!input.name.trim()) throw new ApiError("Name is required");
@@ -41,7 +45,7 @@ export const employeeService = {
     return db.write((data) => {
       if (data.employees.some((e) => e.email.toLowerCase() === input.email.toLowerCase()))
         throw new ApiError("An employee with this email already exists");
-      const { appRole, code, ...rest } = input;
+      const { appRole, code, password: _password, ...rest } = input;
       const nextNo = Math.max(100, ...data.employees.map((e) => Number(e.code.split("-")[1]) || 0)) + 1;
       const emp: Employee = { ...rest, id: uid("emp"), code: code?.trim() || `AHV-${nextNo}` };
       data.employees.push(emp);
@@ -56,7 +60,7 @@ export const employeeService = {
     return db.write((data) => {
       const emp = data.employees.find((e) => e.id === id);
       if (!emp) throw new ApiError("Employee not found", 404);
-      const { appRole, code, ...rest } = input;
+      const { appRole, code, password: _password, ...rest } = input;
       Object.assign(emp, rest);
       if (code?.trim()) emp.code = code.trim();
       syncUser(data.users, emp, appRole);

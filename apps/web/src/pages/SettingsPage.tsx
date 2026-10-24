@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Database, RotateCcw, Shield } from "lucide-react";
+import { Database, KeyRound, RotateCcw, Shield } from "lucide-react";
+import { USE_API } from "@/api/http";
+import { ChangePasswordForm } from "@/features/auth/ChangePasswordForm";
 import { useAuth, useCurrentUser } from "@/auth/AuthContext";
 import { can, ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/auth/permissions";
 import { useSettings } from "@/hooks/queries";
@@ -73,6 +75,20 @@ export function SettingsPage() {
             <div><p className="text-xs text-muted-foreground">Role</p><p className="font-medium">{ROLE_LABELS[user.role]}</p></div>
           </CardContent>
         </Card>
+
+        {USE_API && (
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle className="flex items-center gap-2"><KeyRound className="size-4" /> Password</CardTitle>
+                <CardDescription>Change the password you sign in with.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="max-w-md">
+              <ChangePasswordForm />
+            </CardContent>
+          </Card>
+        )}
 
         <AppearanceCard />
 
@@ -168,6 +184,7 @@ export function SettingsPage() {
           </CardContent>
         </Card>
 
+        {!USE_API && (
         <Card>
           <CardHeader>
             <div>
@@ -181,6 +198,7 @@ export function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+        )}
       </div>
 
       <ConfirmDialog
