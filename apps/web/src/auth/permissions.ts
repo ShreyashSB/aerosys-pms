@@ -30,7 +30,7 @@ export type Permission =
   | "bill.manage" // add vendor bills and client invoices to a project
   | "settings.manage";
 
-const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   management: [
     "dashboard.portfolio", "project.viewAll", "project.create", "project.edit", "project.delete",
     "project.progress", "project.assign", "project.costs.edit", "finance.view", "rates.view",

@@ -43,8 +43,6 @@ export const DailyLogInputSchema = z.object({
   activities: z.string().trim().max(2000).default(''),
   remarks: z.string().trim().max(2000).default(''),
   work: z.array(WorkLineSchema).default([]),
-  /** Who is saving the log. Comes from the signed-in user once login is added. */
-  createdById: z.uuid(),
 });
 
 export type DailyLogInput = z.infer<typeof DailyLogInputSchema>;

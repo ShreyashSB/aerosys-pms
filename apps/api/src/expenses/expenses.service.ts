@@ -1,5 +1,8 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq } from 'drizzle-orm';
+import type { CurrentUser } from '../auth/current-user.js';
+import { can } from '../auth/permissions.js';
+import { assertProjectAccess } from '../auth/project-access.js';
 import { todayIST } from '../common/dates.js';
 import { isForeignKeyViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
@@ -20,9 +23,13 @@ export class ExpensesService {
       .orderBy(desc(expenses.submittedAt));
   }
 
-  async create(input: ExpenseInput): Promise<Expense> {
+  async create(input: ExpenseInput, user: CurrentUser): Promise<Expense> {
     if (input.date > todayIST()) throw new BadRequestException('Expense date cannot be in the future');
+    if (input.employeeId !== user.employeeId && !can(user.role, 'expense.createForOthers')) {
+      throw new ForbiddenException('You can only submit your own expenses');
+    }
     await findProject(this.db, input.projectId);
+    await assertProjectAccess(this.db, user, input.projectId);
     try {
       // No code in the insert: the column default takes the next number from the sequence.
       const [row] = await this.db.insert(expenses).values(input).returning();
@@ -33,13 +40,13 @@ export class ExpensesService {
     }
   }
 
-  approve(id: string, input: ReviewInput): Promise<Expense> {
-    return this.review(id, 'approved', input);
+  approve(id: string, input: ReviewInput, reviewerId: string): Promise<Expense> {
+    return this.review(id, 'approved', input.note, reviewerId);
   }
 
-  reject(id: string, input: ReviewInput): Promise<Expense> {
+  reject(id: string, input: ReviewInput, reviewerId: string): Promise<Expense> {
     if (!input.note) throw new BadRequestException('Please provide a reason for rejection');
-    return this.review(id, 'rejected', input);
+    return this.review(id, 'rejected', input.note, reviewerId);
   }
 
   /**
@@ -47,7 +54,7 @@ export class ExpensesService {
    * the same moment, Postgres lets only one of them change the row; the
    * other gets nothing back and a clear message.
    */
-  private async review(id: string, status: 'approved' | 'rejected', { reviewerId, note }: ReviewInput): Promise<Expense> {
+  private async review(id: string, status: 'approved' | 'rejected', note: string, reviewerId: string): Promise<Expense> {
     let row: Expense | undefined;
     try {
       [row] = await this.db
@@ -65,15 +72,18 @@ export class ExpensesService {
     throw new BadRequestException(`Expense has already been ${existing.status}`);
   }
 
-  /** Only a pending expense can be withdrawn. */
-  async remove(id: string): Promise<void> {
+  /** Only a pending expense can be withdrawn: by the person who claimed it, or by someone who approves expenses on its project. */
+  async remove(id: string, user: CurrentUser): Promise<void> {
+    const [e] = await this.db.select().from(expenses).where(eq(expenses.id, id));
+    if (!e) throw new NotFoundException('Expense not found');
+    if (e.employeeId !== user.employeeId) {
+      if (!can(user.role, 'expense.approve')) throw new ForbiddenException('You can only withdraw your own expenses');
+      await assertProjectAccess(this.db, user, e.projectId);
+    }
     const [row] = await this.db
       .delete(expenses)
       .where(and(eq(expenses.id, id), eq(expenses.status, 'pending')))
       .returning({ id: expenses.id });
-    if (row) return;
-    const [existing] = await this.db.select({ id: expenses.id }).from(expenses).where(eq(expenses.id, id));
-    if (!existing) throw new NotFoundException('Expense not found');
-    throw new BadRequestException('Only pending expenses can be withdrawn');
+    if (!row) throw new BadRequestException('Only pending expenses can be withdrawn');
   }
 }

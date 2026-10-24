@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
+import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { EngineerReview } from '../db/schema.js';
 import { ReviewsInputSchema, type ReviewsInput } from './reviews.dto.js';
@@ -17,8 +19,14 @@ export class ReviewsController {
   }
 
   /** PUT /api/projects/:projectId/reviews */
+  @Allow('engineer.review')
+  @ProjectScope('projectId', 'projects')
   @Put('projects/:projectId/reviews')
-  save(@Param('projectId', ParseUUIDPipe) projectId: string, @Body(new ZodValidationPipe(ReviewsInputSchema)) body: ReviewsInput): Promise<EngineerReview[]> {
-    return this.reviews.saveForProject(projectId, body);
+  save(
+    @User() user: CurrentUser,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Body(new ZodValidationPipe(ReviewsInputSchema)) body: ReviewsInput,
+  ): Promise<EngineerReview[]> {
+    return this.reviews.saveForProject(projectId, body, user.employeeId);
   }
 }

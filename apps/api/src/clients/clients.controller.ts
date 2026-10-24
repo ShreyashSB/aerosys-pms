@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Allow } from '../auth/current-user.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Client } from '../db/schema.js';
 import { CreateClientSchema, type CreateClientDto } from './clients.dto.js';
@@ -17,6 +18,7 @@ export class ClientsController {
   }
 
   /** POST /api/clients  { "name": "Tata Projects" } */
+  @Allow('project.create')
   @Post()
   create(@Body(new ZodValidationPipe(CreateClientSchema)) body: CreateClientDto): Promise<Client> {
     return this.clients.create(body);

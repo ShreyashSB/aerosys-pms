@@ -1,13 +1,15 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { signIn, type Api } from './helpers.js';
 import { todayIST } from '../src/common/dates.js';
 
 /** Instruments and their deployments, project documents and PM reviews against a real Postgres. */
 describe('Instruments, documents and reviews (e2e)', () => {
   let app: INestApplication;
-  const api = () => request(app.getHttpServer());
+  let api: Api;
+  /** The signed-in Management user: recorded as reviewer, author and uploader. */
+  let adminId: string;
   const run = Date.now().toString(36);
   let pmId: string;
   let engineerId: string;
@@ -47,6 +49,7 @@ describe('Instruments, documents and reviews (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
+    ({ api, employeeId: adminId } = await signIn(app));
     pmId = await employee('Farhan Shaikh');
     engineerId = await employee('Karan Mehta');
     projectId = await newProject('Phoenix Mall');
@@ -99,7 +102,7 @@ describe('Instruments, documents and reviews (e2e)', () => {
 
   describe('documents', () => {
     it('records, lists and deletes project documents', async () => {
-      const doc = { name: 'WO-4471.pdf', type: 'Work Order', size: 240000, mimeType: 'application/pdf', uploadedById: pmId };
+      const doc = { name: 'WO-4471.pdf', type: 'Work Order', size: 240000, mimeType: 'application/pdf' };
       const { body } = await api().post(`/api/projects/${projectId}/documents`).send(doc).expect(201);
       expect(body).toMatchObject({ name: 'WO-4471.pdf', projectId });
       await api().post(`/api/projects/${projectId}/documents`).send({ ...doc, size: 30 * 1024 * 1024 }).expect(400);
@@ -111,7 +114,7 @@ describe('Instruments, documents and reviews (e2e)', () => {
   });
 
   describe('PM reviews', () => {
-    const reviews = (rating: number, comments = 'Good work') => ({ reviewerId: pmId, reviews: [{ employeeId: engineerId, rating, comments }] });
+    const reviews = (rating: number, comments = 'Good work') => ({ reviews: [{ employeeId: engineerId, rating, comments }] });
 
     it('waits until the project is completed', async () => {
       await api().put(`/api/projects/${projectId}/reviews`).send(reviews(4)).expect(400);
@@ -120,7 +123,7 @@ describe('Instruments, documents and reviews (e2e)', () => {
     it('saves a review, and updates it instead of adding a second', async () => {
       await api().patch(`/api/projects/${projectId}/status`).send({ status: 'completed' }).expect(200);
       const first = await api().put(`/api/projects/${projectId}/reviews`).send(reviews(4)).expect(200);
-      expect(first.body).toEqual([expect.objectContaining({ employeeId: engineerId, rating: 4, reviewerId: pmId })]);
+      expect(first.body).toEqual([expect.objectContaining({ employeeId: engineerId, rating: 4, reviewerId: adminId })]);
       const second = await api().put(`/api/projects/${projectId}/reviews`).send(reviews(5, 'Excellent')).expect(200);
       expect(second.body[0]).toMatchObject({ id: first.body[0].id, rating: 5, comments: 'Excellent' });
       const list = await api().get(`/api/engineer-reviews?employeeId=${engineerId}`).expect(200);
@@ -131,11 +134,11 @@ describe('Instruments, documents and reviews (e2e)', () => {
       await api().put(`/api/projects/${projectId}/reviews`).send(reviews(6)).expect(400);
       await api()
         .put(`/api/projects/${projectId}/reviews`)
-        .send({ reviewerId: pmId, reviews: [{ employeeId: engineerId, rating: 3 }, { employeeId: engineerId, rating: 4 }] })
+        .send({ reviews: [{ employeeId: engineerId, rating: 3 }, { employeeId: engineerId, rating: 4 }] })
         .expect(400);
       await api()
         .put(`/api/projects/${projectId}/reviews`)
-        .send({ reviewerId: pmId, reviews: [{ employeeId: '00000000-0000-4000-8000-000000000000', rating: 3 }] })
+        .send({ reviews: [{ employeeId: '00000000-0000-4000-8000-000000000000', rating: 3 }] })
         .expect(400);
     });
   });

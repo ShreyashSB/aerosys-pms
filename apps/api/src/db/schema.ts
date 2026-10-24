@@ -381,6 +381,30 @@ export const engineerReviews = pgTable(
   ],
 );
 
+/**
+ * Who can sign in, and with which role. One account per employee; the email
+ * is the employee's. Passwords are stored only as a scrypt hash.
+ */
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    employeeId: uuid('employee_id')
+      .notNull()
+      .unique()
+      .references(() => employees.id, { onDelete: 'cascade' }),
+    /** management, project_manager, site_engineer or accounts. */
+    role: text('role').notNull(),
+    passwordHash: text('password_hash').notNull(),
+    /** Set when an admin creates or resets the password: the person picks their own at next sign-in. */
+    mustChangePassword: boolean('must_change_password').notNull().default(true),
+    active: boolean('active').notNull().default(true),
+    lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [check('users_role_check', sql`${t.role} IN ('management', 'project_manager', 'site_engineer', 'accounts')`)],
+);
+
 /** Row types inferred from the tables: what a SELECT returns and what an INSERT accepts. */
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -402,3 +426,4 @@ export type InstrumentRow = typeof instruments.$inferSelect;
 export type InstrumentDeployment = typeof instrumentDeployments.$inferSelect;
 export type ProjectDocument = typeof projectDocuments.$inferSelect;
 export type EngineerReview = typeof engineerReviews.$inferSelect;
+export type UserRow = typeof users.$inferSelect;

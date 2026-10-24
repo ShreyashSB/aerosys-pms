@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Allow } from '../auth/current-user.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Settings } from '../db/schema.js';
 import { SettingsInputSchema, type SettingsInput } from './settings.dto.js';
@@ -15,6 +16,7 @@ export class SettingsController {
   }
 
   /** PUT /api/settings */
+  @Allow('settings.manage')
   @Put()
   update(@Body(new ZodValidationPipe(SettingsInputSchema)) body: SettingsInput): Promise<Settings> {
     return this.settings.update(body);

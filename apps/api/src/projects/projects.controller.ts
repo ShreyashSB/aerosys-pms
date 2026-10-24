@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Put } from '@nestjs/common';
+import { Allow } from '../auth/current-user.js';
+import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { ProjectInputSchema, ProjectStatusSchema, type ProjectDto, type ProjectInput } from './projects.dto.js';
 import { ProjectsService } from './projects.service.js';
@@ -20,12 +22,15 @@ export class ProjectsController {
   }
 
   /** POST /api/projects */
+  @Allow('project.create')
   @Post()
   create(@Body(new ZodValidationPipe(ProjectInputSchema)) body: ProjectInput): Promise<ProjectDto> {
     return this.projects.create(body);
   }
 
   /** PUT /api/projects/:id */
+  @Allow('project.edit')
+  @ProjectScope('id', 'projects')
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -35,6 +40,8 @@ export class ProjectsController {
   }
 
   /** PATCH /api/projects/:id/status  { "status": "on_hold" } */
+  @Allow('project.edit')
+  @ProjectScope('id', 'projects')
   @Patch(':id/status')
   setStatus(
     @Param('id', ParseUUIDPipe) id: string,
@@ -44,6 +51,8 @@ export class ProjectsController {
   }
 
   /** DELETE /api/projects/:id → 204 No Content */
+  @Allow('project.delete')
+  @ProjectScope('id', 'projects')
   @Delete(':id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

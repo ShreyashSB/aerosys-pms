@@ -17,6 +17,16 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  /**
+   * Signs login tokens. Anyone who knows it can sign in as anyone, so in
+   * production it must be a long random value (Render generates one).
+   */
+  JWT_SECRET: z.string().min(1).default('dev-only-secret-change-me'),
+  /** How long a login lasts, e.g. 12h or 7d. */
+  JWT_EXPIRES_IN: z.string().regex(/^\d+[smhd]$/, 'Use a number and s, m, h or d, e.g. 12h').default('12h'),
+}).refine((e) => e.NODE_ENV !== 'production' || (e.JWT_SECRET.length >= 32 && e.JWT_SECRET !== 'dev-only-secret-change-me'), {
+  path: ['JWT_SECRET'],
+  message: 'Set JWT_SECRET to a random value of at least 32 characters in production',
 });
 
 export type Env = z.infer<typeof EnvSchema>;
