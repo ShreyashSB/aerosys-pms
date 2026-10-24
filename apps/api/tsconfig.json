@@ -18,5 +18,7 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "types": ["vitest/globals", "node"]
-  }
+  },
+  // These load the web app's demo generator; tsconfig.scripts.json checks them.
+  "exclude": ["node_modules", "dist", "scripts", "test/seed.e2e-spec.ts"]
 }

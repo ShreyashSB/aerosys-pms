@@ -54,6 +54,17 @@ Data that must exist (like the five project types) goes in a **custom migration*
 
 Never edit a migration that has already run on a shared database. Add a new one instead.
 
+## Demo data: `pnpm db:seed`
+
+`pnpm db:seed -- --yes` empties the database and loads the demo: 34 employees, 12 projects, about a thousand daily logs, expenses, bills, instruments and reviews. It asks for `--yes` because it deletes everything first, so never point it at real company data.
+
+The data comes from the same generator the web app uses offline, `apps/web/src/api/seed.ts`. This is one payoff of the monorepo: the API's script (`apps/api/scripts/seed-demo.ts`) imports the web file directly, so both always show the same demo. Two details make that work:
+
+- The web code imports with `@/…` and no file extensions, like a bundler expects. `tsconfig.scripts.json` maps `@/*` to `../web/src/*`, and `tsx` (a TypeScript runner) reads it.
+- The demo uses ids like `prj_3`; the tables use uuids. The script gives each demo id one uuid and reuses it for every row that points at it.
+
+It all runs in one transaction, so a failure leaves the database as it was. `test/seed.e2e-spec.ts` loads the demo on every CI run, which proves every demo row passes the database's rules.
+
 ## Look at the data
 
 `pnpm --filter @aerosys/api db:studio` opens Drizzle Studio, a table browser in your browser. The Neon dashboard also has a SQL editor.

@@ -1,0 +1,15 @@
+{
+  // For the seed script: it reuses the web app's demo generator, which imports with "@/…".
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    // The web code imports without file extensions, like a bundler expects.
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "paths": { "@/*": ["../web/src/*"] }
+  },
+  "include": ["scripts", "src", "test"],
+  "exclude": ["node_modules", "dist"]
+}
