@@ -33,7 +33,7 @@ export function DailyLogTab({
         <p className="text-sm text-muted-foreground">
           Daily logs drive consumed man-days, idle days, wages and — through work lines — BOQ execution and progress.
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={onOpenAttendance}><CalendarDays /> View Attendance & Work Summary</Button>
           {canLog && <Button onClick={onNew}><Plus /> New daily log</Button>}
         </div>

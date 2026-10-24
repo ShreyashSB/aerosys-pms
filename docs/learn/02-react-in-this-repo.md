@@ -56,7 +56,21 @@ const { data: projects, isLoading, error } = useProjects();
 
 - It fetches once, caches by `queryKey`, and shares the result with every component that asks.
 - After a change (`useMutation` in `hooks/mutations.ts`), we **invalidate** the key and every screen showing projects refetches.
-- `projectService.list` reads mock data today. Switching to the API means changing that one function to `http.get("/api/projects")` (see `apps/web/src/api/http.ts`). The pages do not change. That is the migration plan, one service at a time.
+- Each service has two versions with exactly the same type: `services/demo.ts` (the in-browser demo data) and `services/api/index.ts` (`http.get("/api/projects")` and friends). `services/index.ts` picks one, and the pages never know which.
+
+## Demo data or the real API
+
+The switch is one environment variable, read when Vite builds the app:
+
+| `VITE_API_BASE_URL` | Data comes from |
+| --- | --- |
+| not set | the browser (`localStorage`), seeded from `api/seed.ts`. Works with no server, which is what the Vercel preview uses today. |
+| `http://localhost:3000` | your API in the Codespace |
+| `https://aerosys-api.onrender.com` | the API on Render, backed by Neon |
+
+To try it in a Codespace: start the API (`pnpm dev:api`), then run `VITE_API_BASE_URL=http://localhost:3000 pnpm dev:web`. Load the demo into the database first with `pnpm db:seed -- --yes`.
+
+Until login and roles are built on the server, API mode works out each person's role from their department, so a role picked in the employee form isn't saved yet. Notifications stay empty in API mode for the same reason.
 
 ## Where things live in apps/web/src
 
@@ -65,7 +79,7 @@ pages/        one file per route (Dashboard, Projects, ...)
 features/     forms and widgets for one area (projects, expenses, instruments)
 components/   ui/ = buttons, inputs, dialogs; common/ = tables, cards; layout/ = sidebar, top bar
 hooks/        useQuery / useMutation wrappers
-services/     data access, REST-shaped (mock today, API tomorrow)
+services/     data access: demo.ts (in-browser data) or api/ (the NestJS API), picked in index.ts
 domain/       KPI formulas (moving to packages/core so the API can share them)
 types/        the domain model
 ```
