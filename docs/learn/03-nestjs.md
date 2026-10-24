@@ -66,9 +66,16 @@ The pipe runs before the controller method and answers 400 with field errors if 
 
 ## The API so far
 
+Every route except the two marked needs `Authorization: Bearer <token>`; see [07 — Login and roles](07-login-and-roles.md).
+
+
 | Method and path | What it does |
 | --- | --- |
-| `GET /api/health` | Is the API up, and can it reach the database |
+| `GET /api/health` | Is the API up, and can it reach the database (no sign-in needed) |
+| `POST /api/auth/login` | Email + password → `{ token, user }` (no sign-in needed) |
+| `GET /api/auth/me`, `POST /api/auth/change-password` | Who am I; choose a new password |
+| `GET /api/users`, `POST /api/users` | List logins, or give an employee a login with a starting password |
+| `PUT /api/users/:id`, `POST /api/users/:id/reset-password` | Change role or switch a login off; set a new starting password |
 | `GET /api/lookups` | Client, site and project type names for the form dropdowns |
 | `GET /api/clients`, `POST /api/clients` | List or add a client |
 | `GET /api/employees`, `GET /api/employees/:id` | List or read employees |

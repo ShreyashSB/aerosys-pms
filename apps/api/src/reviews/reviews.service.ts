@@ -21,7 +21,7 @@ export class ReviewsService {
    * Reviewing the same engineer again on the same project changes the earlier
    * review instead of adding a second one.
    */
-  async saveForProject(projectId: string, { reviewerId, reviews }: ReviewsInput): Promise<EngineerReview[]> {
+  async saveForProject(projectId: string, { reviews }: ReviewsInput, reviewerId: string): Promise<EngineerReview[]> {
     const project = await findProject(this.db, projectId);
     if (project.status !== 'completed') throw new BadRequestException('Engineers are reviewed once the project is completed');
     try {
@@ -40,7 +40,7 @@ export class ReviewsService {
         })
         .returning();
     } catch (err) {
-      if (isForeignKeyViolation(err)) throw new BadRequestException('Engineer or reviewer not found');
+      if (isForeignKeyViolation(err)) throw new BadRequestException('Engineer not found');
       throw err;
     }
   }

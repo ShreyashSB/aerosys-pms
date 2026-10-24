@@ -1,6 +1,5 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
-import { isForeignKeyViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { projectDocuments, type ProjectDocument } from '../db/schema.js';
 import { findProject } from '../projects/find-project.js';
@@ -18,15 +17,11 @@ export class DocumentsService {
       .orderBy(desc(projectDocuments.uploadedAt));
   }
 
-  async create(projectId: string, input: DocumentInput): Promise<ProjectDocument> {
+  /** `actorId`: the signed-in employee uploading it. */
+  async create(projectId: string, input: DocumentInput, actorId: string): Promise<ProjectDocument> {
     await findProject(this.db, projectId);
-    try {
-      const [row] = await this.db.insert(projectDocuments).values({ ...input, projectId }).returning();
-      return row;
-    } catch (err) {
-      if (isForeignKeyViolation(err)) throw new BadRequestException('Employee not found');
-      throw err;
-    }
+    const [row] = await this.db.insert(projectDocuments).values({ ...input, projectId, uploadedById: actorId }).returning();
+    return row;
   }
 
   async remove(id: string): Promise<void> {

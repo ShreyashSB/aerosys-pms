@@ -8,7 +8,5 @@ export const DocumentInputSchema = z.object({
   type: z.enum(DOCUMENT_TYPES),
   size: z.number().int().nonnegative().max(25 * 1024 * 1024, 'Files must be smaller than 25 MB'),
   mimeType: z.string().trim().min(1).max(100),
-  /** Who uploaded it. Goes away once login exists. */
-  uploadedById: z.uuid(),
 });
 export type DocumentInput = z.infer<typeof DocumentInputSchema>;

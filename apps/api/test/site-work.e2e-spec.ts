@@ -1,12 +1,12 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { signIn, type Api } from './helpers.js';
 
 /** Assignments, BOQ, daily logs and settings against a real Postgres. */
 describe('Site work (e2e)', () => {
   let app: INestApplication;
-  const api = () => request(app.getHttpServer());
+  let api: Api;
   const run = Date.now().toString(36);
   let pmId: string;
   let engineerId: string;
@@ -33,7 +33,6 @@ describe('Site work (e2e)', () => {
 
   const log = (over: Record<string, unknown> = {}) => ({
     date: '2026-03-02',
-    createdById: pmId,
     attendance: [
       { employeeId: engineerId, status: 'on_site', idleHours: 2, idleReason: 'Material unavailable' },
       { employeeId: techId, status: 'leave' },
@@ -48,6 +47,7 @@ describe('Site work (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
+    ({ api } = await signIn(app));
     pmId = await employee('Farhan Shaikh', false);
     engineerId = await employee('Karan Mehta');
     techId = await employee('Suresh Yadav');

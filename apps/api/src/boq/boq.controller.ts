@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Allow } from '../auth/current-user.js';
+import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { BoqExecution, BoqItem } from '../db/schema.js';
 import { BoqItemInputSchema, ExecutionInputSchema, type BoqItemInput, type ExecutionInput } from './boq.dto.js';
@@ -17,6 +19,8 @@ export class BoqController {
   }
 
   /** POST /api/projects/:projectId/boq-items */
+  @Allow('boq.edit')
+  @ProjectScope('projectId', 'projects')
   @Post('projects/:projectId/boq-items')
   createItem(
     @Param('projectId', ParseUUIDPipe) projectId: string,
@@ -26,12 +30,16 @@ export class BoqController {
   }
 
   /** PUT /api/boq-items/:id */
+  @Allow('boq.edit')
+  @ProjectScope('id', 'boqItems')
   @Put('boq-items/:id')
   updateItem(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(BoqItemInputSchema)) body: BoqItemInput): Promise<BoqItem> {
     return this.boq.updateItem(id, body);
   }
 
   /** DELETE /api/boq-items/:id (204) */
+  @Allow('boq.edit')
+  @ProjectScope('id', 'boqItems')
   @Delete('boq-items/:id')
   @HttpCode(204)
   deleteItem(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
@@ -45,6 +53,8 @@ export class BoqController {
   }
 
   /** POST /api/boq-items/:id/executions */
+  @Allow('boq.edit')
+  @ProjectScope('id', 'boqItems')
   @Post('boq-items/:id/executions')
   addExecution(
     @Param('id', ParseUUIDPipe) id: string,
@@ -54,6 +64,8 @@ export class BoqController {
   }
 
   /** DELETE /api/boq-executions/:id (204) */
+  @Allow('boq.edit')
+  @ProjectScope('id', 'boqExecutions')
   @Delete('boq-executions/:id')
   @HttpCode(204)
   deleteExecution(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
@@ -61,6 +73,8 @@ export class BoqController {
   }
 
   /** POST /api/projects/:projectId/close-period (204) */
+  @Allow('boq.edit')
+  @ProjectScope('projectId', 'projects')
   @Post('projects/:projectId/close-period')
   @HttpCode(204)
   closePeriod(@Param('projectId', ParseUUIDPipe) projectId: string): Promise<void> {

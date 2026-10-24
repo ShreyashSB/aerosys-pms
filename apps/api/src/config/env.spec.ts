@@ -11,4 +11,11 @@ describe('loadEnv', () => {
   it('fails fast with a readable message when DATABASE_URL is missing', () => {
     expect(() => loadEnv({})).toThrow(/DATABASE_URL/);
   });
+
+  it('refuses to start in production without a long JWT_SECRET', () => {
+    expect(() => loadEnv({ DATABASE_URL: 'postgresql://localhost/db', NODE_ENV: 'production' })).toThrow(/JWT_SECRET/);
+    expect(() => loadEnv({ DATABASE_URL: 'postgresql://localhost/db', NODE_ENV: 'production', JWT_SECRET: 'short' })).toThrow(/JWT_SECRET/);
+    const env = loadEnv({ DATABASE_URL: 'postgresql://localhost/db', NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(48) });
+    expect(env.JWT_EXPIRES_IN).toBe('12h');
+  });
 });

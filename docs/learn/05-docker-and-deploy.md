@@ -46,6 +46,7 @@ To fill a new Neon database with the demo, run `pnpm db:migrate` and then `pnpm 
    - `DATABASE_URL`: the Neon string.
    - `WEB_ORIGIN`: the Vercel URL from step 3 (put `http://localhost:5173` for now and update it later).
 3. Deploy. Render builds the Docker image, starts it, runs migrations, and checks `/api/health`.
+   Render also generates `JWT_SECRET`, the random value that signs login tokens. The API refuses to start in production without a long one.
 4. Open `https://aerosys-api.onrender.com/api/health` (your name may differ). You should see `"database":"up"`.
 
 Free plan: the service sleeps after 15 minutes without requests; the first request after that takes about a minute. Fine for development, not for 60 daily users.

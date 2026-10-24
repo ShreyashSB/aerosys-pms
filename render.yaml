@@ -18,3 +18,5 @@ services:
         sync: false # your Vercel URL, e.g. https://aerosys-hvac.vercel.app
       - key: MIGRATE_ON_START
         value: "true"
+      - key: JWT_SECRET
+        generateValue: true # Render makes a random secret that signs login tokens

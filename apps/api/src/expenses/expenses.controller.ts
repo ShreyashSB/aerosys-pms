@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Expense } from '../db/schema.js';
 import {
@@ -22,27 +24,40 @@ export class ExpensesController {
   }
 
   /** POST /api/expenses */
+  @Allow('expense.create')
   @Post()
-  create(@Body(new ZodValidationPipe(ExpenseInputSchema)) body: ExpenseInput): Promise<Expense> {
-    return this.expenses.create(body);
+  create(@User() user: CurrentUser, @Body(new ZodValidationPipe(ExpenseInputSchema)) body: ExpenseInput): Promise<Expense> {
+    return this.expenses.create(body, user);
   }
 
   /** PATCH /api/expenses/:id/approve */
+  @Allow('expense.approve')
+  @ProjectScope('id', 'expenses')
   @Patch(':id/approve')
-  approve(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(ReviewInputSchema)) body: ReviewInput): Promise<Expense> {
-    return this.expenses.approve(id, body);
+  approve(
+    @User() user: CurrentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(ReviewInputSchema)) body: ReviewInput,
+  ): Promise<Expense> {
+    return this.expenses.approve(id, body, user.employeeId);
   }
 
   /** PATCH /api/expenses/:id/reject (a note is required) */
+  @Allow('expense.approve')
+  @ProjectScope('id', 'expenses')
   @Patch(':id/reject')
-  reject(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(ReviewInputSchema)) body: ReviewInput): Promise<Expense> {
-    return this.expenses.reject(id, body);
+  reject(
+    @User() user: CurrentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(ReviewInputSchema)) body: ReviewInput,
+  ): Promise<Expense> {
+    return this.expenses.reject(id, body, user.employeeId);
   }
 
   /** DELETE /api/expenses/:id → withdraw a pending expense (204) */
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.expenses.remove(id);
+  remove(@User() user: CurrentUser, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.expenses.remove(id, user);
   }
 }

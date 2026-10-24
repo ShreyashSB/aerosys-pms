@@ -29,14 +29,15 @@ export class DailyLogsService {
     return (await this.withAttendance([log]))[0];
   }
 
-  create(projectId: string, input: DailyLogInput): Promise<DailyLogDto> {
-    return this.save(projectId, input);
+  /** `actorId`: the signed-in employee, recorded as the log's author. */
+  create(projectId: string, input: DailyLogInput, actorId: string): Promise<DailyLogDto> {
+    return this.save(projectId, input, actorId);
   }
 
   async update(id: string, input: DailyLogInput): Promise<DailyLogDto> {
     const [log] = await this.db.select().from(dailyLogs).where(eq(dailyLogs.id, id));
     if (!log) throw new NotFoundException('Daily log not found');
-    return this.save(log.projectId, input, id);
+    return this.save(log.projectId, input, log.createdById, id);
   }
 
   /** Deleting a log also deletes its attendance and the BOQ quantities it recorded (ON DELETE CASCADE). */
@@ -49,7 +50,7 @@ export class DailyLogsService {
    * Saves the log, its attendance and its work lines in one transaction. On
    * edit, the old attendance and work rows are replaced with the new ones.
    */
-  private async save(projectId: string, input: DailyLogInput, logId?: string): Promise<DailyLogDto> {
+  private async save(projectId: string, input: DailyLogInput, actorId: string, logId?: string): Promise<DailyLogDto> {
     const project = await findProject(this.db, projectId);
     if (isClosed(project)) throw new BadRequestException('Project is closed for daily logging');
     if (input.date > todayIST()) throw new BadRequestException('Daily logs cannot be created for future dates');
@@ -77,7 +78,7 @@ export class DailyLogsService {
         } else {
           const [row] = await tx
             .insert(dailyLogs)
-            .values({ ...fields, projectId, createdById: input.createdById })
+            .values({ ...fields, projectId, createdById: actorId })
             .returning({ id: dailyLogs.id });
           id = row.id;
         }
@@ -119,7 +120,7 @@ export class DailyLogsService {
   }
 
   private async checkPeople(input: DailyLogInput) {
-    const ids = [...new Set([input.createdById, ...input.attendance.map((a) => a.employeeId)])];
+    const ids = [...new Set(input.attendance.map((a) => a.employeeId))];
     const found = await this.db.select({ id: employees.id }).from(employees).where(inArray(employees.id, ids));
     if (found.length !== ids.length) throw new BadRequestException('Unknown employee in the log');
   }

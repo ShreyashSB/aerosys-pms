@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Allow } from '../auth/current-user.js';
+import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Assignment } from '../db/schema.js';
 import { AssignmentInputSchema, type AssignmentInput } from './assignments.dto.js';
@@ -16,6 +18,8 @@ export class AssignmentsController {
   }
 
   /** POST /api/projects/:projectId/assignments */
+  @Allow('project.assign')
+  @ProjectScope('projectId', 'projects')
   @Post('projects/:projectId/assignments')
   assign(
     @Param('projectId', ParseUUIDPipe) projectId: string,
@@ -25,6 +29,8 @@ export class AssignmentsController {
   }
 
   /** DELETE /api/assignments/:id → release the engineer (204) */
+  @Allow('project.assign')
+  @ProjectScope('id', 'assignments')
   @Delete('assignments/:id')
   @HttpCode(204)
   release(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

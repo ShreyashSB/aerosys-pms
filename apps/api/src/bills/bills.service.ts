@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
-import { isForeignKeyViolation, isUniqueViolation } from '../common/pg-errors.js';
+import { isUniqueViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { projectBills, type ProjectBill } from '../db/schema.js';
 import { findProject } from '../projects/find-project.js';
@@ -19,10 +19,11 @@ export class BillsService {
       .orderBy(desc(projectBills.date));
   }
 
-  async create(projectId: string, input: BillInput): Promise<ProjectBill> {
+  /** `actorId`: the signed-in employee recording the bill. */
+  async create(projectId: string, input: BillInput, actorId: string): Promise<ProjectBill> {
     await findProject(this.db, projectId);
     return this.run(input, async () => {
-      const [row] = await this.db.insert(projectBills).values({ ...input, projectId }).returning();
+      const [row] = await this.db.insert(projectBills).values({ ...input, projectId, createdById: actorId }).returning();
       return row;
     });
   }
@@ -48,7 +49,6 @@ export class BillsService {
     } catch (err) {
       const label = input.kind === 'vendor_bill' ? 'vendor bill' : 'invoice';
       if (isUniqueViolation(err)) throw new ConflictException(`This ${label} number is already recorded on the project`);
-      if (isForeignKeyViolation(err)) throw new BadRequestException('Employee not found');
       throw err;
     }
   }
