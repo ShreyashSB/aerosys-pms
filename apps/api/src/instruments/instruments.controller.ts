@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ReadScopeService } from '../auth/read-scope.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { InstrumentDeployment } from '../db/schema.js';
 import {
@@ -17,18 +18,23 @@ import { InstrumentsService } from './instruments.service.js';
 
 @Controller()
 export class InstrumentsController {
-  constructor(private readonly instruments: InstrumentsService) {}
+  constructor(
+    private readonly instruments: InstrumentsService,
+    private readonly scopes: ReadScopeService,
+  ) {}
 
   /** GET /api/instruments */
   @Get('instruments')
-  list(): Promise<InstrumentDto[]> {
-    return this.instruments.list();
+  async list(@User() user: CurrentUser): Promise<InstrumentDto[]> {
+    const scope = await this.scopes.for(user);
+    return (await this.instruments.list()).map((i) => withoutValue(i, scope.finance));
   }
 
   /** GET /api/instruments/:id */
   @Get('instruments/:id')
-  get(@Param('id', ParseUUIDPipe) id: string): Promise<InstrumentDto> {
-    return this.instruments.get(id);
+  async get(@User() user: CurrentUser, @Param('id', ParseUUIDPipe) id: string): Promise<InstrumentDto> {
+    const scope = await this.scopes.for(user);
+    return withoutValue(await this.instruments.get(id), scope.finance);
   }
 
   /** POST /api/instruments */
@@ -72,7 +78,12 @@ export class InstrumentsController {
 
   /** GET /api/instrument-deployments?projectId=…&instrumentId=… */
   @Get('instrument-deployments')
-  listDeployments(@Query(new ZodValidationPipe(DeploymentQuerySchema)) q: DeploymentQuery): Promise<InstrumentDeployment[]> {
-    return this.instruments.listDeployments(q);
+  async listDeployments(@User() user: CurrentUser, @Query(new ZodValidationPipe(DeploymentQuerySchema)) q: DeploymentQuery): Promise<InstrumentDeployment[]> {
+    return (await this.scopes.for(user)).filter(await this.instruments.listDeployments(q));
   }
+}
+
+/** An instrument's asset value is blanked for roles without `finance.view`. */
+function withoutValue(i: InstrumentDto, finance: boolean): InstrumentDto {
+  return finance ? i : { ...i, assetValue: 0 };
 }

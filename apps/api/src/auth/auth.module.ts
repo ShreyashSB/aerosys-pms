@@ -6,6 +6,7 @@ import type { Env } from '../config/env.js';
 import { AuthController } from './auth.controller.js';
 import { AuthGuard } from './auth.guard.js';
 import { AuthService } from './auth.service.js';
+import { ReadScopeService } from './read-scope.js';
 
 /**
  * Sign-in and the guard that protects every route. APP_GUARD makes AuthGuard
@@ -21,7 +22,7 @@ import { AuthService } from './auth.service.js';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, { provide: APP_GUARD, useClass: AuthGuard }],
-  exports: [AuthService],
+  providers: [AuthService, ReadScopeService, { provide: APP_GUARD, useClass: AuthGuard }],
+  exports: [AuthService, ReadScopeService],
 })
 export class AuthModule {}

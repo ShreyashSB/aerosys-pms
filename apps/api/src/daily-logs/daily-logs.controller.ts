@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ReadScopeService } from '../auth/read-scope.js';
 import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { DailyLogInputSchema, type DailyLogDto, type DailyLogInput } from './daily-logs.dto.js';
@@ -7,18 +8,23 @@ import { DailyLogsService } from './daily-logs.service.js';
 
 @Controller()
 export class DailyLogsController {
-  constructor(private readonly logs: DailyLogsService) {}
+  constructor(
+    private readonly logs: DailyLogsService,
+    private readonly scopes: ReadScopeService,
+  ) {}
 
   /** GET /api/daily-logs?projectId=… */
   @Get('daily-logs')
-  list(@Query('projectId', new ParseUUIDPipe({ optional: true })) projectId?: string): Promise<DailyLogDto[]> {
-    return this.logs.list(projectId);
+  async list(@User() user: CurrentUser, @Query('projectId', new ParseUUIDPipe({ optional: true })) projectId?: string): Promise<DailyLogDto[]> {
+    return (await this.scopes.for(user)).filter(await this.logs.list(projectId));
   }
 
   /** GET /api/daily-logs/:id */
   @Get('daily-logs/:id')
-  get(@Param('id', ParseUUIDPipe) id: string): Promise<DailyLogDto> {
-    return this.logs.get(id);
+  async get(@User() user: CurrentUser, @Param('id', ParseUUIDPipe) id: string): Promise<DailyLogDto> {
+    const log = await this.logs.get(id);
+    (await this.scopes.for(user)).assertSees(log.projectId, 'Daily log');
+    return log;
   }
 
   /** POST /api/projects/:projectId/daily-logs */
