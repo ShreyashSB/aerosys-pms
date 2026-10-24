@@ -30,8 +30,8 @@ export async function seedDemo(db: Database) {
   const optId = (demoId: string | null) => (demoId ? id(demoId) : null);
 
   await db.transaction(async (tx) => {
-    // Clear the data tables. CASCADE follows foreign keys; project types stay.
-    await tx.execute(sql`TRUNCATE clients, sites, employees, projects, instruments, settings CASCADE`);
+    // Clear the data tables. CASCADE follows foreign keys (notification_reads goes with notifications); project types stay.
+    await tx.execute(sql`TRUNCATE clients, sites, employees, projects, instruments, settings, notifications CASCADE`);
 
     /** Insert in chunks: Postgres takes at most 65,535 parameters in one statement. */
     const insert = async <T extends PgTable>(table: T, rows: T['$inferInsert'][]) => {
@@ -202,6 +202,21 @@ export async function seedDemo(db: Database) {
         updatedAt: new Date(r.updatedAt),
       })),
     );
+
+    // Audience employee ids are an array, not a foreign key, so they are mapped by hand.
+    await insert(
+      s.notifications,
+      demo.notifications.map((n) => ({
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        link: n.link,
+        audienceRoles: n.audienceRoles,
+        audienceEmployeeIds: n.audienceEmployeeIds.map(id),
+        dedupeKey: n.dedupeKey ?? null,
+        createdAt: new Date(n.createdAt),
+      })),
+    );
   });
 
   return {
@@ -211,5 +226,6 @@ export async function seedDemo(db: Database) {
     dailyLogs: demo.dailyLogs.length,
     expenses: demo.expenses.length,
     instruments: demo.instruments.length,
+    notifications: demo.notifications.length,
   };
 }

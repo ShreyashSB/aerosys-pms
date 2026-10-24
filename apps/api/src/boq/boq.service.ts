@@ -4,12 +4,16 @@ import { todayIST } from '../common/dates.js';
 import { DB, type Database } from '../db/db.module.js';
 import { boqExecutions, boqItems, projects, type BoqExecution, type BoqItem } from '../db/schema.js';
 import { findProject } from '../projects/find-project.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import type { BoqItemInput, ExecutionInput } from './boq.dto.js';
 
 /** The Annexure (BOQ items) and the quantities executed against it. */
 @Injectable()
 export class BoqService {
-  constructor(@Inject(DB) private readonly db: Database) {}
+  constructor(
+    @Inject(DB) private readonly db: Database,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   listItems(projectId?: string): Promise<BoqItem[]> {
     return this.db
@@ -55,10 +59,12 @@ export class BoqService {
       .from(boqExecutions)
       .where(eq(boqExecutions.boqItemId, itemId));
     if ((executed ?? 0) + input.qty < 0) throw new BadRequestException('Correction would make executed quantity negative');
+    const before = await this.notifications.progressOf(item.projectId);
     const [row] = await this.db
       .insert(boqExecutions)
       .values({ ...input, boqItemId: itemId, projectId: item.projectId })
       .returning();
+    await this.notifications.progressMilestones(item.projectId, before);
     return row;
   }
 

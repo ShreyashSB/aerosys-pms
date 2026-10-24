@@ -12,6 +12,7 @@ Each guide maps the new tool to something you already know from Angular, Java, S
 | 05 | [Docker and free deployment](05-docker-and-deploy.md) | AWS, building a JAR | Images, containers, Compose, Neon / Render / Vercel |
 | 06 | [Views and themes](06-views-and-themes.md) | Angular services holding shared state, SCSS variables | React Context, CSS design tokens, switching layouts |
 | 07 | [Login and roles](07-login-and-roles.md) | Spring Security, `@PreAuthorize` | Password hashing, JWT, Nest guards, row-level rules |
+| 08 | [Notifications](08-notifications.md) | Spring `ApplicationEventPublisher`, `@Scheduled` | Postgres arrays and GIN indexes, `INSERT … SELECT`, `ON CONFLICT DO NOTHING`, a job without cron |
 
 ## The big picture
 

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, index, integer, jsonb, numeric, pgSequence, pgTable, text, timestamp, uniqueIndex, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, date, index, integer, jsonb, numeric, pgSequence, pgTable, primaryKey, text, timestamp, uniqueIndex, unique, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Database tables, written as TypeScript. Drizzle reads this file to
@@ -403,6 +403,49 @@ export const users = pgTable(
     ...timestamps,
   },
   (t) => [check('users_role_check', sql`${t.role} IN ('management', 'project_manager', 'site_engineer', 'accounts')`)],
+);
+
+/**
+ * Something someone should know about: an expense to approve, an engineer
+ * assigned, a deadline coming up. Who sees it is decided by role
+ * (`audience_roles`) and by person (`audience_employee_ids`), both stored as
+ * Postgres arrays so one row serves everyone it is meant for.
+ */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    type: text('type').notNull(),
+    title: text('title').notNull(),
+    message: text('message').notNull(),
+    link: text('link'),
+    audienceRoles: text('audience_roles').array().notNull().default(sql`'{}'`),
+    audienceEmployeeIds: uuid('audience_employee_ids').array().notNull().default(sql`'{}'`),
+    /** Alerts from the daily check ("deadline in 5 days") carry a key so they are raised once, not every day. */
+    dedupeKey: text('dedupe_key').unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('notifications_created_idx').on(t.createdAt),
+    // GIN indexes make "is my role / my id in this array?" fast.
+    index('notifications_roles_idx').using('gin', t.audienceRoles),
+    index('notifications_employees_idx').using('gin', t.audienceEmployeeIds),
+  ],
+);
+
+/** Who has read what: one row per (notification, login). */
+export const notificationReads = pgTable(
+  'notification_reads',
+  {
+    notificationId: uuid('notification_id')
+      .notNull()
+      .references(() => notifications.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    readAt: timestamp('read_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.notificationId, t.userId] })],
 );
 
 /** Row types inferred from the tables: what a SELECT returns and what an INSERT accepts. */

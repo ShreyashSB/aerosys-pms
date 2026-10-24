@@ -5,11 +5,11 @@
  *
  * The server works out "who did it" (author, reviewer, uploader) from the
  * sign-in token, so the actor ids the demo services take are not sent.
- * Notifications stay empty until the server sends them.
  */
 import { http } from "@/api/http";
 import { ApiError } from "@/api/mockDb";
 import type {
+  AppNotification,
   AppSettings,
   BoqExecution,
   BoqItem,
@@ -165,10 +165,17 @@ export const settingsService: Service<"settingsService"> = {
   },
 };
 
-/** Notifications need to know who is signed in, so they come with login and roles. */
+/**
+ * The server knows who is asking from the token, so the user arguments the
+ * demo needs are not sent. Deadline checks run on the server.
+ */
 export const notificationService: Service<"notificationService"> = {
-  listForUser: async () => [],
-  markRead: async () => {},
-  markAllRead: async () => {},
+  listForUser: () => http.get<AppNotification[]>("/api/notifications"),
+  markRead: async (id) => {
+    await http.post(`/api/notifications/${id}/read`);
+  },
+  markAllRead: async () => {
+    await http.post("/api/notifications/read-all");
+  },
   runScheduledChecks: async () => {},
 };

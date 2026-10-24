@@ -76,6 +76,8 @@ Every route except the two marked needs `Authorization: Bearer <token>`; see [07
 | `GET /api/auth/me`, `POST /api/auth/change-password` | Who am I; choose a new password |
 | `GET /api/users`, `POST /api/users` | List logins, or give an employee a login with a starting password |
 | `PUT /api/users/:id`, `POST /api/users/:id/reset-password` | Change role or switch a login off; set a new starting password |
+| `GET /api/notifications` | My notifications, newest first (at most 100), each with `readBy` = `[me]` once read |
+| `POST /api/notifications/:id/read`, `POST /api/notifications/read-all` | Mark one, or all of mine, as read (204) |
 | `GET /api/lookups` | Client, site and project type names for the form dropdowns |
 | `GET /api/clients`, `POST /api/clients` | List or add a client |
 | `GET /api/employees`, `GET /api/employees/:id` | List or read employees |
