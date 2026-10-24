@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ReadScopeService } from '../auth/read-scope.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Expense } from '../db/schema.js';
 import { ExpenseInputSchema, ExpenseQuerySchema, type ExpenseInput, type ExpenseQuery } from './expenses.dto.js';
@@ -12,12 +13,17 @@ import { ExpensesService } from './expenses.service.js';
  */
 @Controller('expenses')
 export class ExpensesController {
-  constructor(private readonly expenses: ExpensesService) {}
+  constructor(
+    private readonly expenses: ExpensesService,
+    private readonly scopes: ReadScopeService,
+  ) {}
 
   /** GET /api/expenses?projectId=… (optional) */
   @Get()
-  list(@Query(new ZodValidationPipe(ExpenseQuerySchema)) q: ExpenseQuery): Promise<Expense[]> {
-    return this.expenses.list(q);
+  async list(@User() user: CurrentUser, @Query(new ZodValidationPipe(ExpenseQuerySchema)) q: ExpenseQuery): Promise<Expense[]> {
+    const rows = await this.expenses.list(q);
+    // A site engineer sees only what was spent in their name.
+    return user.role === 'site_engineer' ? rows.filter((e) => e.employeeId === user.employeeId) : rows;
   }
 
   /** POST /api/expenses */

@@ -52,45 +52,47 @@ export function PerformanceTab({
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-5">
         {/* PPI panel */}
-        <Card className={cn("border-l-4 xl:col-span-2", TONE_CLASSES[rPpiH.tone].border)}>
-          <CardHeader>
-            <div>
-              <CardTitle>PPI vs Running PPI</CardTitle>
-              <CardDescription>Value earned per man-day — plan vs actual</CardDescription>
-            </div>
-            <HealthBadge health={rPpiH} />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-              <Metric label="PPI (baseline)" value={formatPerMd(p.ppi)} onClick={() => onExplain("ppi")} />
-              <Metric label="Running PPI" value={p.consumedManDays ? formatPerMd(p.runningPpi) : "—"} tone={rPpiH} onClick={() => onExplain("runningPpi")} />
-              <Metric label="Variance" value={p.consumedManDays ? `${p.ppiVariance >= 0 ? "+" : "−"}${formatPerMd(Math.abs(p.ppiVariance))}` : "—"} tone={rPpiH} />
-              <Metric label="Variance %" value={p.consumedManDays ? `${p.ppiVariancePct >= 0 ? "+" : ""}${formatPct(p.ppiVariancePct)}` : "—"} tone={rPpiH} />
-            </dl>
-            {p.consumedManDays > 0 && (
-              <div aria-hidden>
-                <div className="relative h-8">
-                  <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-muted" />
-                  <div className={cn("absolute top-3 h-2 rounded-full", TONE_CLASSES[rPpiH.tone].dot)} style={{ width: `${(p.runningPpi / scaleMax) * 100}%` }} />
-                  <div className="absolute top-0 h-8 w-0.5 bg-foreground" style={{ left: `${(p.ppi / scaleMax) * 100}%` }} />
-                </div>
-                <div className="relative h-4 text-[11px] text-muted-foreground">
-                  <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${(p.ppi / scaleMax) * 100}%` }}>Baseline {formatINRShort(p.ppi)}</span>
-                </div>
+        {showFinance && (
+          <Card className={cn("border-l-4 xl:col-span-2", TONE_CLASSES[rPpiH.tone].border)}>
+            <CardHeader>
+              <div>
+                <CardTitle>PPI vs Running PPI</CardTitle>
+                <CardDescription>Value earned per man-day — plan vs actual</CardDescription>
               </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {p.consumedManDays === 0
-                ? "No man-days consumed yet."
-                : p.ppiVariancePct >= 0
-                  ? `Each man-day is currently delivering ${formatINR(p.ppiVariance)} more work value than planned.`
-                  : `Each man-day is currently delivering ${formatINR(Math.abs(p.ppiVariance))} less work value than planned.`}
-            </p>
-          </CardContent>
-        </Card>
+              <HealthBadge health={rPpiH} />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <Metric label="PPI (baseline)" value={formatPerMd(p.ppi)} onClick={() => onExplain("ppi")} />
+                <Metric label="Running PPI" value={p.consumedManDays ? formatPerMd(p.runningPpi) : "—"} tone={rPpiH} onClick={() => onExplain("runningPpi")} />
+                <Metric label="Variance" value={p.consumedManDays ? `${p.ppiVariance >= 0 ? "+" : "−"}${formatPerMd(Math.abs(p.ppiVariance))}` : "—"} tone={rPpiH} />
+                <Metric label="Variance %" value={p.consumedManDays ? `${p.ppiVariancePct >= 0 ? "+" : ""}${formatPct(p.ppiVariancePct)}` : "—"} tone={rPpiH} />
+              </dl>
+              {p.consumedManDays > 0 && (
+                <div aria-hidden>
+                  <div className="relative h-8">
+                    <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-muted" />
+                    <div className={cn("absolute top-3 h-2 rounded-full", TONE_CLASSES[rPpiH.tone].dot)} style={{ width: `${(p.runningPpi / scaleMax) * 100}%` }} />
+                    <div className="absolute top-0 h-8 w-0.5 bg-foreground" style={{ left: `${(p.ppi / scaleMax) * 100}%` }} />
+                  </div>
+                  <div className="relative h-4 text-[11px] text-muted-foreground">
+                    <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${(p.ppi / scaleMax) * 100}%` }}>Baseline {formatINRShort(p.ppi)}</span>
+                  </div>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {p.consumedManDays === 0
+                  ? "No man-days consumed yet."
+                  : p.ppiVariancePct >= 0
+                    ? `Each man-day is currently delivering ${formatINR(p.ppiVariance)} more work value than planned.`
+                    : `Each man-day is currently delivering ${formatINR(Math.abs(p.ppiVariance))} less work value than planned.`}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Plan vs actual */}
-        <Card className="xl:col-span-3">
+        <Card className={showFinance ? "xl:col-span-3" : "xl:col-span-5"}>
           <CardHeader>
             <div>
               <CardTitle>Plan vs actual (to date)</CardTitle>
@@ -142,9 +144,13 @@ export function PerformanceTab({
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-3 lg:grid-cols-5">
-            <Metric label="PPI" value={formatPerMd(p.ppi)} onClick={() => onExplain("ppi")} />
-            <Metric label="Running PPI" value={p.consumedManDays ? formatPerMd(p.runningPpi) : "—"} tone={rPpiH} onClick={() => onExplain("runningPpi")} />
-            <Metric label="PPI variance" value={p.consumedManDays ? `${p.ppiVariancePct >= 0 ? "+" : ""}${formatPct(p.ppiVariancePct)}` : "—"} tone={rPpiH} />
+            {showFinance && (
+              <>
+                <Metric label="PPI" value={formatPerMd(p.ppi)} onClick={() => onExplain("ppi")} />
+                <Metric label="Running PPI" value={p.consumedManDays ? formatPerMd(p.runningPpi) : "—"} tone={rPpiH} onClick={() => onExplain("runningPpi")} />
+                <Metric label="PPI variance" value={p.consumedManDays ? `${p.ppiVariancePct >= 0 ? "+" : ""}${formatPct(p.ppiVariancePct)}` : "—"} tone={rPpiH} />
+              </>
+            )}
             <Metric label="Allotted MD" value={`${formatNumber(p.allottedManDays)} MD`} />
             <Metric label="Consumed MD" value={`${formatNumber(p.consumedManDays, 1)} MD`} tone={manDayHealth(p)} onClick={() => onExplain("manDays")} />
             <Metric label="Man-day utilisation" value={formatPct(p.manDayUtilisation * 100)} tone={manDayHealth(p)} />

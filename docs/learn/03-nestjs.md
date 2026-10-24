@@ -66,7 +66,7 @@ The pipe runs before the controller method and answers 400 with field errors if 
 
 ## The API so far
 
-Every route except the two marked needs `Authorization: Bearer <token>`; see [07 — Login and roles](07-login-and-roles.md).
+Every route except the two marked needs `Authorization: Bearer <token>`; see [07 — Login and roles](07-login-and-roles.md). GET routes also trim their answer to what the reader's role may see (a site engineer gets only their projects, with money blanked); see section 8 there.
 
 
 | Method and path | What it does |

@@ -475,9 +475,9 @@ function EngineerDashboard() {
           {myInstruments.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">No instruments issued.</p>
           ) : (
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
               {myInstruments.map((i) => (
-                <div key={i.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
+                <div key={i.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{i.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{i.code} · {data.projectById.get(i.assignedProjectId ?? "")?.name}</p>

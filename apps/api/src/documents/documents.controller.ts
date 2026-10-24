@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ReadScopeService } from '../auth/read-scope.js';
 import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { ProjectDocument } from '../db/schema.js';
@@ -8,12 +9,15 @@ import { DocumentsService } from './documents.service.js';
 
 @Controller()
 export class DocumentsController {
-  constructor(private readonly documents: DocumentsService) {}
+  constructor(
+    private readonly documents: DocumentsService,
+    private readonly scopes: ReadScopeService,
+  ) {}
 
   /** GET /api/documents?projectId=… */
   @Get('documents')
-  list(@Query('projectId', new ParseUUIDPipe({ optional: true })) projectId?: string): Promise<ProjectDocument[]> {
-    return this.documents.list(projectId);
+  async list(@User() user: CurrentUser, @Query('projectId', new ParseUUIDPipe({ optional: true })) projectId?: string): Promise<ProjectDocument[]> {
+    return (await this.scopes.for(user)).filter(await this.documents.list(projectId));
   }
 
   /** POST /api/projects/:projectId/documents */

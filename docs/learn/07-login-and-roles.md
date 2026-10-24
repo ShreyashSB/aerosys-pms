@@ -43,7 +43,7 @@ A role permission says *what kind* of change you may make. `@ProjectScope('id', 
 | Project manager | projects they manage |
 | Site engineer | projects they are assigned to |
 
-Some checks need the request body, so they live in the service. For example, an engineer can submit an expense only for themselves and only on their own project (`ExpensesService.create`).
+Some checks need the request body, so they live in the service. For example, an expense must name an employee who exists and a project that isn't archived (`ExpensesService.create`).
 
 ## 5. Who did it comes from the token
 
@@ -78,6 +78,32 @@ Two things to notice:
 - **React only hides; the server decides.** Hiding a button for a site engineer is about tidiness. The real rule is the `@Allow` on the route. Try it: sign in as an engineer and send a `POST /api/projects` with curl, and you get 403 whatever the UI shows.
 - **Demo mode is untouched.** Without `VITE_API_BASE_URL`, `AuthProvider` renders the old `DemoAuthProvider` (pick any person, no password), so the Vercel preview still works on its own.
 
+## 8. What each role may read
+
+Sections 3 and 4 protect *changes*. Reading needs a rule too: hiding the contract value on screen is no use if the phone still downloads it. Open DevTools → Network as a site engineer and look at `/api/projects`: every number the engineer may not see arrives as `0`.
+
+The rule lives in one place, `apps/api/src/auth/read-scope.ts`. A GET route asks for the reader's scope and trims its answer:
+
+```ts
+const scope = await this.readScope.for(user);
+const rows = scope.filter(await this.service.list());      // only visible projects
+return scope.finance ? rows : rows.map(withoutFinance);     // blank the money
+```
+
+| Role | Projects | Money (contract, budget, bills, other costs, asset values) | Daily rates | Engineer reviews |
+| --- | --- | --- | --- | --- |
+| Management, Accounts | all | yes | yes | yes |
+| Project manager | all | yes | yes | yes |
+| Site engineer | assigned ones only | no | no | no |
+
+Three choices worth understanding:
+
+- **Blank, don't remove.** A hidden number comes back as `0`, so the web app's types don't change and no screen crashes on a missing field. The screens that would show it are already hidden by role, and `overallHealth` (`apps/web/src/domain/health.ts`) skips the money signals when the contract value is `0`, so an engineer never sees a project marked "At Risk" because of a loss they can't see.
+- **Someone else's project looks missing.** `GET /api/daily-logs/:id` for another site's log returns 404, not 403. A 403 would confirm the log exists.
+- **BOQ rates stay.** Progress is the share of BOQ *value* executed, so an engineer's phone needs the rates to draw the progress bar. Those are the only money figures an engineer receives.
+
+Project managers see every project, not just their own, because staffing a site means seeing who is busy elsewhere. Their *changes* are still limited to their own projects (section 4).
+
 ## Try it
 
 ```bash
@@ -88,3 +114,5 @@ curl -s localhost:3000/api/projects -H "Authorization: Bearer $TOKEN" | jq lengt
 ```
 
 Paste the token into [jwt.io](https://jwt.io) to see what's inside it. Then change one character and send it again: 401.
+
+Now sign in as `deepak.gupta@aerosyshvac.in` the same way and compare: fewer projects, and `contractValue` is `0` on each.

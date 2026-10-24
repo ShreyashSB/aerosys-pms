@@ -83,10 +83,13 @@ const RANK: Record<Tone, number> = { neutral: 0, good: 1, warn: 2, bad: 3 };
 export function overallHealth(p: ProjectPerformance, project: Project, settings: Pick<AppSettings, "targetMarginPct">): Health {
   if (project.status === "planning") return neutral("Not started");
   if (project.status === "archived") return neutral("Archived");
-  const signals = [progressHealth(p, project), runningPpiHealth(p), manDayHealth(p), expenseHealth(p), idleHealth(p), profitHealth(p.finalMarginPct, settings)];
+  // A role without finance access gets the contract value as 0 from the API, so money signals would read as losses.
+  const hasFinance = project.contractValue > 0;
+  const signals = [progressHealth(p, project), manDayHealth(p), idleHealth(p)];
+  if (hasFinance) signals.push(runningPpiHealth(p), expenseHealth(p), profitHealth(p.finalMarginPct, settings));
   const worst = signals.reduce((w, h) => (RANK[h.tone] > RANK[w.tone] ? h : w), { tone: "good", label: "" } as Health);
   if (project.status === "completed")
-    return profitHealth(p.finalMarginPct, settings).tone === "good" ? { tone: "good", label: "Completed" } : { tone: "warn", label: "Completed · low margin" };
+    return !hasFinance || profitHealth(p.finalMarginPct, settings).tone === "good" ? { tone: "good", label: "Completed" } : { tone: "warn", label: "Completed · low margin" };
   if (worst.tone === "bad") return { tone: "bad", label: "At Risk" };
   if (worst.tone === "warn") return { tone: "warn", label: "Needs Attention" };
   return { tone: "good", label: "On Track" };

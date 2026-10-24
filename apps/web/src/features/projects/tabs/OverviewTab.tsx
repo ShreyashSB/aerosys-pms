@@ -42,14 +42,18 @@ export function OverviewTab({
     <div className="space-y-6">
       {/* KPI section */}
       <section aria-label="Key performance indicators" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="PPI (baseline)" value={formatPerMd(p.ppi)} sub="WO value ÷ allotted MD" onClick={() => onExplain("ppi")} />
-        <KpiCard
-          label="Running PPI"
-          value={p.consumedManDays ? formatPerMd(p.runningPpi) : "—"}
-          health={runningPpiHealth(p)}
-          sub={p.consumedManDays ? `${sign(p.ppiVariancePct)}${formatPct(Math.abs(p.ppiVariancePct), 0)} vs baseline` : undefined}
-          onClick={() => onExplain("runningPpi")}
-        />
+        {showFinance && (
+          <>
+          <KpiCard label="PPI (baseline)" value={formatPerMd(p.ppi)} sub="WO value ÷ allotted MD" onClick={() => onExplain("ppi")} />
+          <KpiCard
+            label="Running PPI"
+            value={p.consumedManDays ? formatPerMd(p.runningPpi) : "—"}
+            health={runningPpiHealth(p)}
+            sub={p.consumedManDays ? `${sign(p.ppiVariancePct)}${formatPct(Math.abs(p.ppiVariancePct), 0)} vs baseline` : undefined}
+            onClick={() => onExplain("runningPpi")}
+          />
+          </>
+        )}
         <KpiCard
           label="Progress"
           value={formatPct(p.progress * 100)}
@@ -169,7 +173,8 @@ export function OverviewTab({
             <Progress value={p.progress * 100} tone={p.progress >= 1 ? "success" : "primary"} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Executed {formatINR(p.executedValue)} of {formatINR(p.boqValue)} BOQ value. {project.description}
+            {showFinance && <>Executed {formatINR(p.executedValue)} of {formatINR(p.boqValue)} BOQ value. </>}
+            {project.description}
           </p>
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
-import { Allow } from '../auth/current-user.js';
+import { Allow, User, type CurrentUser } from '../auth/current-user.js';
+import { ReadScopeService } from '../auth/read-scope.js';
 import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { BoqExecution, BoqItem } from '../db/schema.js';
@@ -10,12 +11,15 @@ const optionalUuid = new ParseUUIDPipe({ optional: true });
 
 @Controller()
 export class BoqController {
-  constructor(private readonly boq: BoqService) {}
+  constructor(
+    private readonly boq: BoqService,
+    private readonly scopes: ReadScopeService,
+  ) {}
 
   /** GET /api/boq-items?projectId=… */
   @Get('boq-items')
-  listItems(@Query('projectId', optionalUuid) projectId?: string): Promise<BoqItem[]> {
-    return this.boq.listItems(projectId);
+  async listItems(@User() user: CurrentUser, @Query('projectId', optionalUuid) projectId?: string): Promise<BoqItem[]> {
+    return (await this.scopes.for(user)).filter(await this.boq.listItems(projectId));
   }
 
   /** POST /api/projects/:projectId/boq-items */
@@ -48,8 +52,8 @@ export class BoqController {
 
   /** GET /api/boq-executions?projectId=… */
   @Get('boq-executions')
-  listExecutions(@Query('projectId', optionalUuid) projectId?: string): Promise<BoqExecution[]> {
-    return this.boq.listExecutions(projectId);
+  async listExecutions(@User() user: CurrentUser, @Query('projectId', optionalUuid) projectId?: string): Promise<BoqExecution[]> {
+    return (await this.scopes.for(user)).filter(await this.boq.listExecutions(projectId));
   }
 
   /** POST /api/boq-items/:id/executions */
