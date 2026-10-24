@@ -20,3 +20,11 @@ services:
         value: "true"
       - key: JWT_SECRET
         generateValue: true # Render makes a random secret that signs login tokens
+      # The first Management login, created only while the database has no logins at all.
+      # Their password must be changed at first sign-in, so this one stops working after that.
+      - key: FIRST_ADMIN_NAME
+        sync: false
+      - key: FIRST_ADMIN_EMAIL
+        sync: false
+      - key: FIRST_ADMIN_PASSWORD
+        sync: false
