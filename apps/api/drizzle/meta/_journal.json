@@ -29,6 +29,13 @@
       "when": 1792849163082,
       "tag": "0003_site_work",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792849515198,
+      "tag": "0004_money",
+      "breakpoints": true
     }
   ]
 }

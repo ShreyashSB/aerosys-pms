@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, index, integer, numeric, pgTable, text, timestamp, uniqueIndex, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, date, index, integer, jsonb, numeric, pgSequence, pgTable, text, timestamp, uniqueIndex, unique, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Database tables, written as TypeScript. Drizzle reads this file to
@@ -205,6 +205,92 @@ export const settings = pgTable(
   (t) => [check('settings_single_row', sql`${t.id} = 1`)],
 );
 
+/**
+ * A file attached to a row. For now only the details are stored; the file
+ * itself moves to object storage in a later step.
+ */
+export interface Attachment {
+  fileName: string;
+  size: number;
+  mimeType: string;
+}
+
+/** Postgres hands out expense numbers 1001, 1002, … even when two people submit at once. */
+export const expenseCodeSeq = pgSequence('expense_code_seq', { startWith: 1001 });
+
+/** Site expenses an engineer pays for and claims back. Each one waits in an approval queue. */
+export const expenses = pgTable(
+  'expenses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: text('code')
+      .notNull()
+      .unique()
+      .default(sql`'EXP-' || nextval('expense_code_seq')`),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    employeeId: uuid('employee_id').notNull().references(() => employees.id),
+    /** Travel, Accommodation, Food, Local Conveyance, Site Material, Tools & Consumables or Other. */
+    category: text('category').notNull(),
+    amount: amount('amount').notNull(),
+    date: date('date', { mode: 'string' }).notNull(),
+    description: text('description').notNull().default(''),
+    receipt: jsonb('receipt').$type<Attachment>(),
+    /** pending, approved or rejected. */
+    status: text('status').notNull().default('pending'),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
+    reviewedById: uuid('reviewed_by_id').references(() => employees.id),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    reviewNote: text('review_note').notNull().default(''),
+    ...timestamps,
+  },
+  (t) => [
+    index('expenses_project_idx').on(t.projectId),
+    index('expenses_status_idx').on(t.status),
+    check('expenses_amount_positive', sql`${t.amount} > 0`),
+  ],
+);
+
+/** Vendor bills (a cost) and client invoices (billed revenue) recorded by Accounts. */
+export const projectBills = pgTable(
+  'project_bills',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    /** vendor_bill or client_invoice. */
+    kind: text('kind').notNull(),
+    number: text('number').notNull(),
+    party: text('party').notNull(),
+    amount: amount('amount').notNull(),
+    date: date('date', { mode: 'string' }).notNull(),
+    attachment: jsonb('attachment').$type<Attachment>(),
+    notes: text('notes').notNull().default(''),
+    createdById: uuid('created_by_id').notNull().references(() => employees.id),
+    ...timestamps,
+  },
+  (t) => [
+    index('project_bills_project_idx').on(t.projectId),
+    // An index on an expression: "INV-7" and "inv-7" count as the same number.
+    uniqueIndex('project_bills_number_idx').on(t.projectId, t.kind, sql`lower(${t.number})`),
+    check('project_bills_amount_positive', sql`${t.amount} > 0`),
+  ],
+);
+
+/** Other direct costs: sub-contract labour, equipment hire and the like. */
+export const projectCosts = pgTable(
+  'project_costs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    /** subcontract, hire or other. */
+    type: text('type').notNull(),
+    description: text('description').notNull(),
+    amount: amount('amount').notNull(),
+    date: date('date', { mode: 'string' }).notNull(),
+    ...timestamps,
+  },
+  (t) => [index('project_costs_project_idx').on(t.projectId), check('project_costs_amount_positive', sql`${t.amount} > 0`)],
+);
+
 /** Row types inferred from the tables: what a SELECT returns and what an INSERT accepts. */
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -219,3 +305,6 @@ export type BoqExecution = typeof boqExecutions.$inferSelect;
 export type DailyLogRow = typeof dailyLogs.$inferSelect;
 export type AttendanceRow = typeof attendanceEntries.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
+export type Expense = typeof expenses.$inferSelect;
+export type ProjectBill = typeof projectBills.$inferSelect;
+export type ProjectCost = typeof projectCosts.$inferSelect;
