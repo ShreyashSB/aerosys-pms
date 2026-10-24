@@ -53,6 +53,7 @@ Free plan: the service sleeps after 15 minutes without requests; the first reque
 1. [vercel.com](https://vercel.com) -> **Add New -> Project** -> import this repository.
 2. Leave **Root Directory** empty. The root `vercel.json` tells Vercel to install the whole workspace with pnpm, build only `@aerosys/web`, and publish `apps/web/dist`.
 3. Deploy. Every push to a branch gets its own preview URL.
+4. To use the real API instead of the in-browser demo, add the environment variable `VITE_API_BASE_URL` = your Render URL (Settings -> Environment Variables) and redeploy. Then put the Vercel URL in Render's `WEB_ORIGIN`, so the API accepts requests from it.
 
 Vercel's free Hobby plan is for non-commercial use, so it is right for development and demos. Production moves to AWS Mumbai with the same Docker image.
 

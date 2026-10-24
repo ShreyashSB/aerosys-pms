@@ -133,14 +133,14 @@ export function OverviewTab({
       )}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-wrap">
           <div>
             <CardTitle>Daily activity summary</CardTitle>
             <CardDescription>
               {p.logCount} daily logs · last update {p.lastLogDate ? formatDate(p.lastLogDate) : "—"}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={onOpenAttendance}>
               <CalendarDays /> View Attendance & Work Summary
             </Button>
