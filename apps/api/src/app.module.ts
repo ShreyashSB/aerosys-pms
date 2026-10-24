@@ -6,12 +6,15 @@ import { ClientsModule } from './clients/clients.module.js';
 import { ConfigModule } from './config/config.module.js';
 import { DailyLogsModule } from './daily-logs/daily-logs.module.js';
 import { DbModule } from './db/db.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
 import { EmployeesModule } from './employees/employees.module.js';
 import { ExpensesModule } from './expenses/expenses.module.js';
 import { HealthModule } from './health/health.module.js';
+import { InstrumentsModule } from './instruments/instruments.module.js';
 import { LookupsModule } from './lookups/lookups.module.js';
 import { ProjectCostsModule } from './project-costs/project-costs.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
+import { ReviewsModule } from './reviews/reviews.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 
 /** The root module: Nest starts here and wires every imported module together. */
@@ -31,6 +34,9 @@ import { SettingsModule } from './settings/settings.module.js';
     ExpensesModule,
     BillsModule,
     ProjectCostsModule,
+    InstrumentsModule,
+    DocumentsModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}

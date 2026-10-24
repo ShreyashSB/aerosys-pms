@@ -291,6 +291,96 @@ export const projectCosts = pgTable(
   (t) => [index('project_costs_project_idx').on(t.projectId), check('project_costs_amount_positive', sql`${t.amount} > 0`)],
 );
 
+/** A calibration certificate: the file details plus how long it is valid. */
+export interface Calibration extends Attachment {
+  validUntil: string | null;
+}
+
+/**
+ * Company instruments. `status` holds available, maintenance or retired;
+ * "assigned" is not stored but worked out from an open deployment, so it can
+ * never disagree with the deployment history.
+ */
+export const instruments = pgTable(
+  'instruments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: text('code').notNull().unique(), // INS-001
+    name: text('name').notNull(),
+    serialNumber: text('serial_number').notNull(),
+    /** Measurement, Refrigerant Handling, Air Balancing, Electrical Testing, Power Tools or Safety. */
+    category: text('category').notNull(),
+    assetValue: amount('asset_value').notNull(),
+    purchaseDate: date('purchase_date', { mode: 'string' }).notNull(),
+    endOfLifeDate: date('end_of_life_date', { mode: 'string' }).notNull(),
+    currentLocation: text('current_location').notNull().default(''),
+    calibration: jsonb('calibration').$type<Calibration>(),
+    status: text('status').notNull().default('available'),
+    notes: text('notes').notNull().default(''),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('instruments_serial_idx').on(sql`lower(${t.serialNumber})`),
+    check('instruments_asset_value_positive', sql`${t.assetValue} > 0`),
+    check('instruments_life_check', sql`${t.endOfLifeDate} > ${t.purchaseDate}`),
+  ],
+);
+
+/** Each time an instrument goes out to a project. Drives the instrument cost on the project. */
+export const instrumentDeployments = pgTable(
+  'instrument_deployments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    instrumentId: uuid('instrument_id').notNull().references(() => instruments.id, { onDelete: 'cascade' }),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    engineerId: uuid('engineer_id').references(() => employees.id),
+    assignedAt: date('assigned_at', { mode: 'string' }).notNull(),
+    returnedAt: date('returned_at', { mode: 'string' }),
+    ...timestamps,
+  },
+  (t) => [
+    index('instrument_deployments_project_idx').on(t.projectId),
+    // An instrument can be out on only one project at a time.
+    uniqueIndex('instrument_deployments_one_open_idx').on(t.instrumentId).where(sql`${t.returnedAt} IS NULL`),
+  ],
+);
+
+/** Files on a project (work order, drawings, …). Only the details for now; the bytes go to object storage later. */
+export const projectDocuments = pgTable(
+  'project_documents',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    /** Work Order, Annexure / BOQ, Drawing, Measurement Sheet, Correspondence or Other. */
+    type: text('type').notNull(),
+    size: integer('size').notNull(),
+    mimeType: text('mime_type').notNull(),
+    uploadedById: uuid('uploaded_by_id').notNull().references(() => employees.id),
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('project_documents_project_idx').on(t.projectId)],
+);
+
+/** The PM's rating of an engineer when a project closes. One per engineer per project. */
+export const engineerReviews = pgTable(
+  'engineer_reviews',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    employeeId: uuid('employee_id').notNull().references(() => employees.id),
+    reviewerId: uuid('reviewer_id').notNull().references(() => employees.id),
+    rating: integer('rating').notNull(),
+    comments: text('comments').notNull().default(''),
+    ...timestamps,
+  },
+  (t) => [
+    unique('engineer_reviews_project_employee_unique').on(t.projectId, t.employeeId),
+    index('engineer_reviews_employee_idx').on(t.employeeId),
+    check('engineer_reviews_rating_check', sql`${t.rating} BETWEEN 1 AND 5`),
+  ],
+);
+
 /** Row types inferred from the tables: what a SELECT returns and what an INSERT accepts. */
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -308,3 +398,7 @@ export type Settings = typeof settings.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type ProjectBill = typeof projectBills.$inferSelect;
 export type ProjectCost = typeof projectCosts.$inferSelect;
+export type InstrumentRow = typeof instruments.$inferSelect;
+export type InstrumentDeployment = typeof instrumentDeployments.$inferSelect;
+export type ProjectDocument = typeof projectDocuments.$inferSelect;
+export type EngineerReview = typeof engineerReviews.$inferSelect;
