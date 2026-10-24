@@ -1,0 +1,22 @@
+// GitHub Codespaces / Dev Containers: a ready-made cloud dev machine with
+// Node, pnpm, Docker and a Postgres database. Nothing is installed on your computer.
+// Open the repo on GitHub -> Code -> Codespaces -> Create codespace.
+{
+  "name": "Aerosys HVAC",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [5173, 3000],
+  "portsAttributes": {
+    "5173": { "label": "Web (Vite)" },
+    "3000": { "label": "API (NestJS)" }
+  },
+  "postCreateCommand": "npm install -g pnpm@10.28.0 && pnpm install && cp -n apps/api/.env.codespaces apps/api/.env",
+  "postStartCommand": "docker compose up -d db",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "bradlc.vscode-tailwindcss", "cweijan.vscode-postgresql-client2"]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+# Runs the API and a local Postgres together:  docker compose up --build
+# Then open http://localhost:3000/api/health
+# The web app is run separately with `pnpm dev:web` (it does not need Docker).
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: aerosys
+      POSTGRES_PASSWORD: aerosys
+      POSTGRES_DB: aerosys
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "aerosys"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://aerosys:aerosys@db:5432/aerosys
+      WEB_ORIGIN: http://localhost:5173
+      MIGRATE_ON_START: "true"
+    ports: ["3000:3000"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

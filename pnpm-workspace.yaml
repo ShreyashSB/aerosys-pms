@@ -1,0 +1,10 @@
+# Every folder listed here is a "workspace package": it has its own package.json,
+# and pnpm installs all of them together with one lockfile at the repo root.
+packages:
+  - apps/*
+  - packages/*
+
+# Packages allowed to run install scripts (pnpm blocks them by default).
+onlyBuiltDependencies:
+  - "@nestjs/core"
+  - esbuild

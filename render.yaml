@@ -1,0 +1,20 @@
+# Render Blueprint: Render reads this file and creates the API service.
+# Render dashboard -> New -> Blueprint -> pick this repo.
+# Free plan: the service sleeps after ~15 minutes idle and takes ~1 minute to wake.
+services:
+  - type: web
+    name: aerosys-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false # you paste the Neon connection string in the dashboard
+      - key: WEB_ORIGIN
+        sync: false # your Vercel URL, e.g. https://aerosys-hvac.vercel.app
+      - key: MIGRATE_ON_START
+        value: "true"
