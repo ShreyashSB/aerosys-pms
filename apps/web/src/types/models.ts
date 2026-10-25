@@ -62,8 +62,8 @@ export interface Project {
   workOrderNo: string;
   /** Client's purchase order number. */
   poNo: string;
-  /** Operational cost in ₹ per calendar day of the project. Replaces the management charge. */
-  operationalCostPerDay: number;
+  /** Operational cost in ₹ per man-day logged on the project. Replaces the management charge. */
+  operationalCostPerManDay: number;
   /** Man-days allotted in the estimate – the PPI baseline. */
   allottedManDays: number;
   /** Budget for site expenses (travel, stay, consumables…). */

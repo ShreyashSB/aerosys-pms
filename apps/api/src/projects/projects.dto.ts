@@ -31,7 +31,7 @@ export const ProjectInputSchema = z
     estimatedCost: money,
     allottedManDays: z.number().positive('Allotted man-days must be greater than zero'),
     allottedExpenses: money.default(0),
-    operationalCostPerDay: money.default(150),
+    operationalCostPerManDay: money.default(150),
     startDate: isoDate,
     endDate: isoDate,
     description: z.string().trim().max(2000).default(''),
@@ -58,7 +58,7 @@ export interface ProjectDto {
   estimatedCost: number;
   allottedManDays: number;
   allottedExpenses: number;
-  operationalCostPerDay: number;
+  operationalCostPerManDay: number;
   startDate: string;
   endDate: string;
   periodStart: string;

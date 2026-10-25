@@ -71,6 +71,13 @@
       "when": 1792863219188,
       "tag": "0009_settings_without_overhead",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792927337639,
+      "tag": "0010_operation_cost_per_man_day",
+      "breakpoints": true
     }
   ]
 }

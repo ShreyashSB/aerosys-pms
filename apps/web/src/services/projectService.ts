@@ -8,7 +8,7 @@ import { pushNotification } from "./notificationService";
 export type ProjectInput = Pick<
   Project,
   | "name" | "clientName" | "site" | "projectType" | "workOrderNo" | "poNo" | "managerId" | "contractValue" | "estimatedCost"
-  | "allottedManDays" | "allottedExpenses" | "operationalCostPerDay" | "startDate" | "endDate" | "description" | "status"
+  | "allottedManDays" | "allottedExpenses" | "operationalCostPerManDay" | "startDate" | "endDate" | "description" | "status"
 > & { /** Project ID; generated when left blank. */ code?: string };
 
 function validate(input: ProjectInput) {
@@ -17,7 +17,7 @@ function validate(input: ProjectInput) {
   if (input.endDate < input.startDate) throw new ApiError("Expected completion must be after start date");
   if (!(input.allottedManDays > 0)) throw new ApiError("Allotted man-days must be greater than zero");
   if (input.allottedExpenses < 0) throw new ApiError("Allotted expenses cannot be negative");
-  if (input.operationalCostPerDay < 0) throw new ApiError("Operational cost cannot be negative");
+  if (input.operationalCostPerManDay < 0) throw new ApiError("Operational cost cannot be negative");
   if (!input.projectType.trim()) throw new ApiError("Project type is required");
 }
 
