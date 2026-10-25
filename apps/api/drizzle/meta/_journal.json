@@ -64,6 +64,13 @@
       "when": 1792852932381,
       "tag": "0008_expenses_without_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792863219188,
+      "tag": "0009_settings_without_overhead",
+      "breakpoints": true
     }
   ]
 }

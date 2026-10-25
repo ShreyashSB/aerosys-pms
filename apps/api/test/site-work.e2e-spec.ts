@@ -62,7 +62,7 @@ describe('Site work (e2e)', () => {
   it('reads and updates settings', async () => {
     const s = await api().get('/api/settings').expect(200);
     expect(s.body).toMatchObject({ hoursPerManDay: 8, projectionMethod: 'performance' });
-    await api().put('/api/settings').send({ ...s.body, overheadPctOfWages: 101 }).expect(400);
+    await api().put('/api/settings').send({ ...s.body, targetMarginPct: 101 }).expect(400);
   });
 
   it('assigns an engineer once, and releases them', async () => {

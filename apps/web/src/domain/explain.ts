@@ -4,7 +4,7 @@
  * explanation can never disagree with the number on screen.
  */
 import { formatINR, formatNumber, formatPct } from "@/lib/format";
-import type { AppSettings, Employee } from "@/types/models";
+import type { Employee } from "@/types/models";
 import { HEALTH_THRESHOLDS, MIN_PROGRESS_FOR_PERFORMANCE_PROJECTION, PROJECTION_LABEL } from "./assumptions";
 import type { PortfolioPerformance, ProjectPerformance } from "./performance";
 
@@ -126,18 +126,6 @@ export function explainWages(p: ProjectPerformance, employeeById: Map<string, Em
     subtitle: "Consumed man-days × each person's Daily Cost",
     steps,
     notes: ["Daily Cost is an internal costing rate maintained on the employee profile — not derived from salary or CTC.", "Demo assumption: the current Daily Cost applies to all man-days, so rate changes re-price the project."],
-  };
-}
-
-export function explainOverhead(p: ProjectPerformance, s: AppSettings): Explanation {
-  return {
-    title: "Overhead",
-    steps: [
-      { label: "Wages", value: formatINR(p.costs.wages) },
-      { op: "×", label: "Overhead rate", value: formatPct(s.overheadPctOfWages) },
-      { op: "=", label: "Overhead", value: formatINR(p.costs.overhead), strong: true },
-    ],
-    notes: ["Demo assumption: overhead is a % of wages. Rate is set in Settings; method to be confirmed by Aerosys."],
   };
 }
 

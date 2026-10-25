@@ -33,7 +33,6 @@ import {
   instrumentPerDayValue,
   operationalCost,
   operationalDays,
-  overheadCost,
   ppi as calcPpi,
   progressFromBoq,
   projectFinalCost,
@@ -146,7 +145,6 @@ export function boqRows(items: BoqItem[], executions: BoqExecution[], periodStar
 export interface CostHeads {
   wages: number;
   expenses: number;
-  overhead: number;
   instruments: number;
   operational: number;
   /** Vendor bills entered by Accounts. */
@@ -293,10 +291,9 @@ export function computeProjectPerformance(
     if (x.kind === "vendor_bill") bills += x.amount;
     else invoiced += x.amount;
   }
-  const overhead = overheadCost(wages, settings);
   const opDays = operationalDays(project.startDate, project.status === "completed" ? minDate(project.endDate, asOf) : asOf);
   const operational = operationalCost(opDays, project.operationalCostPerDay);
-  const total = wages + consumedExpenses + overhead + instruments + operational + bills + other;
+  const total = wages + consumedExpenses + instruments + operational + bills + other;
 
   // Schedule & plan
   const totalDays = Math.max(1, daysBetween(project.startDate, project.endDate));
@@ -348,7 +345,7 @@ export function computeProjectPerformance(
     consumedExpenses,
     plannedExpensesToDate: project.allottedExpenses * expected,
     expenseUtilisation: project.allottedExpenses > 0 ? consumedExpenses / project.allottedExpenses : 0,
-    costs: { wages, expenses: consumedExpenses, overhead, instruments, operational, bills, other, total },
+    costs: { wages, expenses: consumedExpenses, instruments, operational, bills, other, total },
     budget: project.estimatedCost,
     budgetUtilisation: project.estimatedCost > 0 ? total / project.estimatedCost : 0,
     contribution: earned - total,
@@ -418,7 +415,7 @@ export function summarisePortfolio(projects: Project[], perf: Map<string, Projec
     // PPI is only meaningful where man-days have been consumed
     ppiContract: 0, ppiAllotted: 0, ppiEarned: 0, ppiConsumed: 0,
   };
-  const costs: CostHeads = { wages: 0, expenses: 0, overhead: 0, instruments: 0, operational: 0, bills: 0, other: 0, total: 0 };
+  const costs: CostHeads = { wages: 0, expenses: 0, instruments: 0, operational: 0, bills: 0, other: 0, total: 0 };
   for (const p of live) {
     const f = perf.get(p.id);
     if (!f) continue;

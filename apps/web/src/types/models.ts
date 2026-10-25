@@ -327,8 +327,6 @@ export interface AppSettings {
   deadlineAlertDays: number;
   /** Working hours in one man-day – converts idle man-hours to idle man-days. */
   hoursPerManDay: number;
-  /** Overhead charged as a % of wages (demo assumption). */
-  overheadPctOfWages: number;
   /** How remaining cost is projected. */
   projectionMethod: ProjectionMethod;
   /** Margin below which projected profit is flagged. */

@@ -109,11 +109,6 @@ export function expectedProgress(elapsedDays: number, totalDays: number) {
  */
 export const WAGE_RATE_MODE = "current-daily-cost" as const;
 
-/** DEMO ASSUMPTION: Overhead = x% of wages (x from Settings). */
-export function overheadCost(wages: number, s: Pick<AppSettings, "overheadPctOfWages">) {
-  return (wages * s.overheadPctOfWages) / 100;
-}
-
 /**
  * Operational charges = calendar days the project has run × the project's operational cost per day.
  * Days count from the start date up to today, or up to the completion date once the project is completed.
@@ -202,7 +197,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   companyName: "Aerosys HVAC Solutions Pvt Ltd",
   deadlineAlertDays: 14,
   hoursPerManDay: 8,
-  overheadPctOfWages: 20,
   projectionMethod: "performance",
   targetMarginPct: 15,
 };

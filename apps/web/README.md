@@ -91,7 +91,6 @@ and explanations from `src/domain/explain.ts`, so the calculation drawers can ne
 | Idle days | Σ idle person-days + partial idle hours ÷ *working hours per man-day* (Settings) | |
 | Wages | Consumed MD × employee **Daily Cost** (current rate; not derived from salary or CTC) | Demo assumption |
 | Expenses | Approved expenses only (pending ones are shown separately) | |
-| Overhead | *x*% of wages (Settings, default 20%) | Demo assumption |
 | Instrument charges | Per-day value × days deployed; per-day value = asset value ÷ days from purchase to end of life | From Aerosys costing sheet |
 | Operational charges | Calendar days from start to today (or completion) × the project's operational cost per day (default ₹150) | Confirmed by Aerosys |
 | Vendor bills | Σ vendor bills entered by Accounts on the project | |
