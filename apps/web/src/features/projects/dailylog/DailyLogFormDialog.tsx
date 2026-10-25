@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Plus, Trash2, UserPlus } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ import { useSaveDailyLog } from "@/hooks/mutations";
 import { ATTENDANCE_LABEL, IDLE_REASONS, MAN_DAY_WEIGHT } from "@/domain/assumptions";
 import { summariseLog } from "@/domain/performance";
 import { parseISODate, todayISO } from "@/lib/dates";
-import { formatINR, formatNumber, formatPct } from "@/lib/format";
+import { formatDate, formatINR, formatNumber, formatPct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { AttendanceEntry, AttendanceStatus, DailyLog, IdleReason, Project } from "@/types/models";
 
@@ -58,8 +58,27 @@ export function DailyLogFormDialog({
     return m;
   }, [data.boqExecutions, project.id, log?.id]);
 
+  /** The people on the project's team on that day (assignments can end), all on site, or on weekly off for a Sunday. */
+  const teamOn = (d: string): AttendanceEntry[] => {
+    const sunday = !!d && parseISODate(d).getDay() === 0;
+    return data.assignments
+      .filter((a) => a.projectId === project.id && (!d ? !a.endDate : a.startDate <= d && (!a.endDate || a.endDate >= d)))
+      .map((a) => ({ employeeId: a.employeeId, status: sunday ? "weekly_off" : "on_site", idleHours: 0, idleReason: null }));
+  };
+  // A new log's attendance follows the date until someone edits the list.
+  const rowsEdited = useRef(false);
+  const editRows: typeof setRows = (u) => {
+    rowsEdited.current = true;
+    setRows(u);
+  };
+  const changeDate = (d: string) => {
+    setDate(d);
+    if (!log && !rowsEdited.current) setRows(teamOn(d));
+  };
+
   useEffect(() => {
     if (!open) return;
+    rowsEdited.current = false;
     setSubmitted(false);
     setAddPerson("");
     if (log) {
@@ -73,12 +92,7 @@ export function DailyLogFormDialog({
     const logged = new Set(data.dailyLogs.filter((l) => l.projectId === project.id).map((l) => l.date));
     const d = logged.has(todayISO()) ? "" : todayISO();
     setDate(d);
-    const sunday = d && parseISODate(d).getDay() === 0;
-    setRows(
-      data.assignments
-        .filter((a) => a.projectId === project.id && !a.endDate)
-        .map((a) => ({ employeeId: a.employeeId, status: sunday ? "weekly_off" : "on_site", idleHours: 0, idleReason: null })),
-    );
+    setRows(teamOn(d));
     setWork([{ boqItemId: "", qty: "", remarks: "" }]);
     setActivities("");
     setRemarks("");
@@ -99,7 +113,7 @@ export function DailyLogFormDialog({
     !!errors.date || !!errors.rows || rows.some((r) => rowError(r)) || work.some((w) => workError(w));
 
   const setRow = (i: number, patch: Partial<AttendanceEntry>) =>
-    setRows((rs) =>
+    editRows((rs) =>
       rs.map((r, k) => {
         if (k !== i) return r;
         const next = { ...r, ...patch };
@@ -157,8 +171,8 @@ export function DailyLogFormDialog({
       >
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Date" htmlFor="dl-date" required error={submitted || dateTaken ? errors.date : undefined}>
-              <Input id="dl-date" type="date" value={date} max={todayISO()} min={project.startDate} onChange={(e) => setDate(e.target.value)} aria-invalid={!!errors.date && submitted} />
+            <Field label="Date" htmlFor="dl-date" required error={submitted || dateTaken ? errors.date : undefined} hint={log ? undefined : `Any day from ${formatDate(project.startDate)} to today`}>
+              <Input id="dl-date" type="date" value={date} max={todayISO()} min={project.startDate} onChange={(e) => changeDate(e.target.value)} aria-invalid={!!errors.date && submitted} />
             </Field>
             {/* Live impact preview – shows how the log feeds the project */}
             <div className="grid grid-cols-3 gap-2 rounded-lg border bg-primary-soft/40 p-3 text-center sm:col-span-2">
@@ -215,7 +229,7 @@ export function DailyLogFormDialog({
                         </td>
                         {showCost && <td className="px-3 py-2 text-right text-xs tabular">{formatINR(MAN_DAY_WEIGHT[r.status] * (e?.dailyCost ?? 0))}</td>}
                         <td className="px-2 py-2">
-                          <Button variant="ghost" size="icon-sm" onClick={() => setRows((rs) => rs.filter((_, k) => k !== i))} aria-label={`Remove ${e?.name}`}><Trash2 className="text-muted-foreground" /></Button>
+                          <Button variant="ghost" size="icon-sm" onClick={() => editRows((rs) => rs.filter((_, k) => k !== i))} aria-label={`Remove ${e?.name}`}><Trash2 className="text-muted-foreground" /></Button>
                         </td>
                       </tr>
                     );
@@ -228,7 +242,7 @@ export function DailyLogFormDialog({
                 <option value="">Add another person…</option>
                 {candidates.map((e) => (<option key={e.id} value={e.id}>{e.name} — {e.designation}</option>))}
               </Select>
-              <Button variant="outline" size="sm" disabled={!addPerson} onClick={() => { setRows((rs) => [...rs, { employeeId: addPerson, status: "on_site", idleHours: 0, idleReason: null }]); setAddPerson(""); }}>
+              <Button variant="outline" size="sm" disabled={!addPerson} onClick={() => { editRows((rs) => [...rs, { employeeId: addPerson, status: "on_site", idleHours: 0, idleReason: null }]); setAddPerson(""); }}>
                 <UserPlus /> Add
               </Button>
               <span className="ml-auto text-xs text-muted-foreground">
