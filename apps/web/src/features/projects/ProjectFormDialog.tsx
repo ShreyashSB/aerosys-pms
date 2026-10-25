@@ -24,7 +24,7 @@ type Values = {
   projectType: string;
   workOrderNo: string;
   poNo: string;
-  operationalCostPerDay: string;
+  operationalCostPerManDay: string;
   managerId: string;
   contractValue: string;
   estimatedCost: string;
@@ -45,7 +45,7 @@ function toValues(p?: Project): Values {
     projectType: p?.projectType ?? "",
     workOrderNo: p?.workOrderNo ?? "",
     poNo: p?.poNo ?? "",
-    operationalCostPerDay: p ? String(p.operationalCostPerDay) : "150",
+    operationalCostPerManDay: p ? String(p.operationalCostPerManDay) : "150",
     managerId: p?.managerId ?? "",
     contractValue: p ? String(p.contractValue) : "",
     estimatedCost: p ? String(p.estimatedCost) : "",
@@ -66,7 +66,7 @@ function validate(v: Values): Errors<Values> {
   if (!v.site.trim()) e.site = "Site / location is required";
   if (!v.projectType.trim()) e.projectType = "Select a project type";
   if (v.code.trim() && !/^[A-Za-z0-9/_-]+$/.test(v.code.trim())) e.code = "Use letters, numbers, - / or _ only";
-  if (v.operationalCostPerDay !== "" && !(Number(v.operationalCostPerDay) >= 0)) e.operationalCostPerDay = "Enter a valid amount";
+  if (v.operationalCostPerManDay !== "" && !(Number(v.operationalCostPerManDay) >= 0)) e.operationalCostPerManDay = "Enter a valid amount";
   if (!v.managerId) e.managerId = "Select a project manager";
   const cv = Number(v.contractValue);
   if (!v.contractValue || !(cv > 0)) e.contractValue = "Enter a contract value greater than 0";
@@ -111,7 +111,7 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
       projectType: vals.projectType.trim(),
       workOrderNo: vals.workOrderNo.trim(),
       poNo: vals.poNo.trim(),
-      operationalCostPerDay: vals.operationalCostPerDay ? Number(vals.operationalCostPerDay) : 0,
+      operationalCostPerManDay: vals.operationalCostPerManDay ? Number(vals.operationalCostPerManDay) : 0,
       managerId: vals.managerId,
       contractValue: Number(vals.contractValue),
       estimatedCost: vals.estimatedCost ? Number(vals.estimatedCost) : Math.round(Number(vals.contractValue) * 0.78),
@@ -233,12 +233,12 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
             <Input id="p-ax" type="number" min={0} step={1000} value={v.allottedExpenses} onChange={(e) => set("allottedExpenses", e.target.value)} aria-invalid={!!errors.allottedExpenses} />
           </Field>
           <Field
-            label="Operational cost per day (₹)"
+            label="Operational cost per man-day (₹)"
             htmlFor="p-op"
-            error={errors.operationalCostPerDay}
-            hint={`Charged for each calendar day of the project${Number(v.operationalCostPerDay) > 0 ? ` · ${formatINR(Number(v.operationalCostPerDay))} / day` : ""}`}
+            error={errors.operationalCostPerManDay}
+            hint={`Charged for each man-day logged on the project${Number(v.operationalCostPerManDay) > 0 ? ` · ${formatINR(Number(v.operationalCostPerManDay))} / man-day` : ""}`}
           >
-            <Input id="p-op" type="number" min={0} step={10} value={v.operationalCostPerDay} onChange={(e) => set("operationalCostPerDay", e.target.value)} aria-invalid={!!errors.operationalCostPerDay} />
+            <Input id="p-op" type="number" min={0} step={10} value={v.operationalCostPerManDay} onChange={(e) => set("operationalCostPerManDay", e.target.value)} aria-invalid={!!errors.operationalCostPerManDay} />
           </Field>
           <Field label="Start date" htmlFor="p-start" required error={errors.startDate}>
             <Input id="p-start" type="date" value={v.startDate} onChange={(e) => set("startDate", e.target.value)} aria-invalid={!!errors.startDate} />

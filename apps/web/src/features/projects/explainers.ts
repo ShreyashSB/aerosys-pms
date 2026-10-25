@@ -28,7 +28,7 @@ export function explainMetric(key: MetricKey, p: ProjectPerformance, s: AppSetti
     case "expenses": return explainExpenses(p);
     case "wages": return explainWages(p, employeeById);
     case "instruments": return explainInstruments(p);
-    case "operational": return explainOperational(p, p.operationalCostPerDay);
+    case "operational": return explainOperational(p, p.operationalCostPerManDay);
     case "projectedProfit": return explainProjectedProfit(p);
     case "bills": return { title: "Vendor bills", steps: [{ label: "Σ vendor bills entered by Accounts (Bills & invoices tab)", value: "", strong: true }] };
     case "other": return { title: "Other direct costs", steps: [{ label: "Σ direct cost entries (Costs tab)", value: "", strong: true }] };
