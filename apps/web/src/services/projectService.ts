@@ -7,7 +7,7 @@ import { pushNotification } from "./notificationService";
 
 export type ProjectInput = Pick<
   Project,
-  | "name" | "clientName" | "site" | "projectType" | "workOrderNo" | "poNo" | "managerId" | "contractValue" | "estimatedCost"
+  | "name" | "clientName" | "site" | "projectType" | "workOrderNo" | "poNo" | "poDate" | "managerId" | "contractValue" | "estimatedCost"
   | "allottedManDays" | "allottedExpenses" | "operationalCostPerDay" | "startDate" | "endDate" | "description" | "status"
 > & { /** Project ID; generated when left blank. */ code?: string };
 

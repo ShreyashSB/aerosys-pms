@@ -26,6 +26,7 @@ type Values = {
   projectType: string;
   workOrderNo: string;
   poNo: string;
+  poDate: string;
   operationalCostPerDay: string;
   managerId: string;
   contractValue: string;
@@ -47,6 +48,7 @@ function toValues(p?: Project): Values {
     projectType: p?.projectType ?? "",
     workOrderNo: p?.workOrderNo ?? "",
     poNo: p?.poNo ?? "",
+    poDate: p?.poDate ?? "",
     operationalCostPerDay: p ? String(p.operationalCostPerDay) : "150",
     managerId: p?.managerId ?? "",
     contractValue: p ? String(p.contractValue) : "",
@@ -120,6 +122,7 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
       projectType: vals.projectType.trim(),
       workOrderNo: vals.workOrderNo.trim(),
       poNo: vals.poNo.trim(),
+      poDate: vals.poDate || null,
       operationalCostPerDay: vals.operationalCostPerDay ? Number(vals.operationalCostPerDay) : 0,
       managerId: vals.managerId,
       contractValue: Number(vals.contractValue),
@@ -198,6 +201,9 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
           </Field>
           <Field label="Client PO no." htmlFor="p-po">
             <Input id="p-po" value={v.poNo} onChange={(e) => set("poNo", e.target.value)} placeholder="e.g. PO-450012" />
+          </Field>
+          <Field label="Client PO date" htmlFor="p-po-date">
+            <Input id="p-po-date" type="date" value={v.poDate} onChange={(e) => set("poDate", e.target.value)} />
           </Field>
           <Field label="Project manager" htmlFor="p-mgr" required error={errors.managerId} hint={lockManager ? "Only management can reassign the project manager" : undefined}>
             <Select id="p-mgr" value={v.managerId} onChange={(e) => set("managerId", e.target.value)} aria-invalid={!!errors.managerId} disabled={lockManager}>

@@ -62,6 +62,8 @@ export interface Project {
   workOrderNo: string;
   /** Client's purchase order number. */
   poNo: string;
+  /** Date on the client's purchase order; null until the PO arrives. */
+  poDate: ISODate | null;
   /** Operational cost in ₹ per calendar day of the project. Replaces the management charge. */
   operationalCostPerDay: number;
   /** Man-days allotted in the estimate – the PPI baseline. */

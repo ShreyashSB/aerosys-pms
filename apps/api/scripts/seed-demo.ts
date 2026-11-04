@@ -76,6 +76,7 @@ export async function seedDemo(db: Database) {
         managerId: id(p.managerId),
         workOrderNo: p.workOrderNo,
         poNo: p.poNo,
+        poDate: p.poDate,
         contractValue: p.contractValue,
         estimatedCost: p.estimatedCost,
         allottedManDays: p.allottedManDays,

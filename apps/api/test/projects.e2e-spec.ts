@@ -60,6 +60,22 @@ describe('Employees and projects (e2e)', () => {
       .expect(409);
   });
 
+  it('saves the client PO date and clears it when sent blank', async () => {
+    const created = await api()
+      .post('/api/projects')
+      .send(project({ name: `PO dated ${run}`, poNo: 'PO-450012', poDate: '2026-10-20' }))
+      .expect(201);
+    expect(created.body).toMatchObject({ poNo: 'PO-450012', poDate: '2026-10-20' });
+
+    const updated = await api()
+      .put(`/api/projects/${created.body.id}`)
+      .send(project({ name: `PO dated ${run}`, code: created.body.code, poNo: 'PO-450012', poDate: '' }))
+      .expect(200);
+    expect(updated.body.poDate).toBeNull();
+
+    await api().post('/api/projects').send(project({ name: `Bad PO date ${run}`, poDate: '20/10/2026' })).expect(400);
+  });
+
   it('creates a project, adding a new client and site to the dropdown lists', async () => {
     const res = await api().post('/api/projects').send(project()).expect(201);
     expect(res.body).toMatchObject({
@@ -70,6 +86,7 @@ describe('Employees and projects (e2e)', () => {
       operationalCostPerDay: 150,
       periodStart: '2026-11-01',
       status: 'planning',
+      poDate: null,
     });
 
     const lookups = await api().get('/api/lookups').expect(200);

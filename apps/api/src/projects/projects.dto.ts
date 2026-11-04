@@ -26,6 +26,8 @@ export const ProjectInputSchema = z
     projectType: z.string().trim().min(2, 'Project type is required').max(80),
     workOrderNo: z.string().trim().max(60).default(''),
     poNo: z.string().trim().max(60).default(''),
+    /** Leave out, or send null or "", when there is no PO yet. */
+    poDate: z.preprocess((v) => (v === '' ? null : v), isoDate.nullable()).default(null),
     managerId: z.uuid('Select a project manager'),
     contractValue: z.number().positive('Work order value must be greater than zero'),
     estimatedCost: money,
@@ -53,6 +55,7 @@ export interface ProjectDto {
   projectType: string;
   workOrderNo: string;
   poNo: string;
+  poDate: string | null;
   managerId: string;
   contractValue: number;
   estimatedCost: number;
