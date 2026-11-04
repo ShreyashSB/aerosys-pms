@@ -14,7 +14,9 @@ import { PROJECT_STATUS } from "@/components/common/StatusBadges";
 import { addDays, todayISO } from "@/lib/dates";
 import { formatINR, formatINRShort, formatPerMd } from "@/lib/format";
 import { ppi } from "@/domain/assumptions";
-import type { Project, ProjectStatus } from "@/types/models";
+import type { Department, Project, ProjectStatus } from "@/types/models";
+
+const MANAGER_DEPARTMENTS: Department[] = ["Management", "Projects", "Engineering", "Service"];
 
 type Values = {
   code: string;
@@ -94,7 +96,14 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
     if (open) form.reset(toValues(project));
   }, [open, project?.id]);
 
-  const managers = employees.filter((e) => e.department === "Projects" || e.department === "Management");
+  // Anyone who can run a site: management, project, engineering and service staff plus site engineers.
+  // Accounts and office Admin are left out, as are inactive employees. The current manager always stays
+  // listed so editing an older project never blanks the field.
+  const managers = employees.filter(
+    (e) =>
+      e.id === project?.managerId ||
+      (e.status !== "inactive" && (MANAGER_DEPARTMENTS.includes(e.department) || e.isSiteEngineer)),
+  );
   const lookups = useLookups().data;
   const clients = lookups?.clients ?? [];
   const sites = lookups?.sites ?? [];
