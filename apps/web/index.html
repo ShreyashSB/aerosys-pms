@@ -14,7 +14,10 @@
         if (theme === "system") theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         var root = document.documentElement;
         root.dataset.theme = theme;
-        root.dataset.view = a.view || "classic";
+        var view = a.view || "auto";
+        if (a.v !== 2 && view === "classic") view = "auto";
+        if (view === "auto") view = matchMedia("(max-width: 767.98px), (hover: none) and (pointer: coarse)").matches ? "field" : "classic";
+        root.dataset.view = view;
         root.dataset.density = a.density || "default";
       })();
     </script>
