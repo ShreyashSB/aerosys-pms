@@ -19,7 +19,7 @@ export function AppShell() {
   const qc = useQueryClient();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { view } = useAppearance();
+  const { resolvedView: view } = useAppearance();
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0");

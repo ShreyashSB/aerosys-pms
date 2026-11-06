@@ -12,6 +12,7 @@ import {
   type Density,
   type ThemePref,
   type View,
+  type ViewPref,
 } from "@/appearance/AppearanceContext";
 
 /**
@@ -97,16 +98,24 @@ function MiniScreen({ bg, surface, side, text, accent }: (typeof THEME_SWATCH)["
 }
 
 /** Line drawings of each navigation layout, drawn with the current theme's tokens. */
-function ViewPreview({ view }: { view: View }) {
+function ViewPreview({ view }: { view: ViewPref }) {
+  if (view === "auto") {
+    // Classic on the laptop, Field on the phone.
+    return <ViewPreviewParts laptop="classic" phone="field" />;
+  }
+  return <ViewPreviewParts laptop={view} phone={view} />;
+}
+
+function ViewPreviewParts({ laptop, phone }: { laptop: View; phone: View }) {
   const bar = "bg-foreground/25";
   return (
     <div className="flex h-16 gap-1.5">
       {/* Laptop */}
       <div className="flex flex-[3] overflow-hidden rounded-md border bg-background">
-        {view !== "topnav" && <div className="w-3 bg-sidebar" />}
+        {laptop !== "topnav" && <div className="w-3 bg-sidebar" />}
         <div className="flex flex-1 flex-col">
           <div className="h-2 border-b bg-surface" />
-          {view === "topnav" && <div className="flex h-2 gap-0.5 border-b bg-surface px-1 py-0.5">{[0, 1, 2, 3].map((i) => <div key={i} className={cn("w-2 rounded-sm", i === 0 ? "bg-primary" : bar)} />)}</div>}
+          {laptop === "topnav" && <div className="flex h-2 gap-0.5 border-b bg-surface px-1 py-0.5">{[0, 1, 2, 3].map((i) => <div key={i} className={cn("w-2 rounded-sm", i === 0 ? "bg-primary" : bar)} />)}</div>}
           <div className="flex-1 p-1"><div className="h-full rounded-sm border bg-surface" /></div>
         </div>
       </div>
@@ -114,7 +123,7 @@ function ViewPreview({ view }: { view: View }) {
       <div className="flex w-7 flex-col overflow-hidden rounded-md border bg-background">
         <div className="h-2 border-b bg-surface" />
         <div className="flex-1 p-0.5"><div className="h-full rounded-sm border bg-surface" /></div>
-        {view === "field" && <div className="flex h-2.5 items-center justify-around border-t bg-surface px-0.5">{[0, 1, 2].map((i) => <div key={i} className={cn("size-1 rounded-full", i === 0 ? "bg-primary" : bar)} />)}</div>}
+        {phone === "field" && <div className="flex h-2.5 items-center justify-around border-t bg-surface px-0.5">{[0, 1, 2].map((i) => <div key={i} className={cn("size-1 rounded-full", i === 0 ? "bg-primary" : bar)} />)}</div>}
       </div>
     </div>
   );
@@ -155,7 +164,7 @@ export function AppearanceCard() {
         </CardHeader>
         <CardContent className="space-y-6">
           <OptionTiles name="theme" legend="Theme" value={theme} options={THEME_OPTIONS} onChange={(v) => set({ theme: v })} preview={(v) => <ThemePreview theme={v} />} columns="sm:grid-cols-4" />
-          <OptionTiles name="view" legend="View" value={view} options={VIEW_OPTIONS} onChange={(v) => set({ view: v })} preview={(v) => <ViewPreview view={v} />} />
+          <OptionTiles name="view" legend="View" value={view} options={VIEW_OPTIONS} onChange={(v) => set({ view: v })} preview={(v) => <ViewPreview view={v} />} columns="sm:grid-cols-4" />
           <OptionTiles name="density" legend="Size" value={density} options={DENSITY_OPTIONS} onChange={(v) => set({ density: v })} preview={(v) => <DensityPreview density={v} />} />
           <Button variant="outline" size="sm" onClick={reset}>
             <RotateCcw /> Back to original look

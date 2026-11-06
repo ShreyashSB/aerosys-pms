@@ -8,7 +8,9 @@
  * 3. src/index.css has CSS rules for each attribute value (e.g. [data-theme="dark"] swaps the colour tokens).
  *    Because every component uses those tokens (bg-surface, text-foreground, ...), the whole app restyles
  *    itself without any component needing to know which theme is active.
- * 4. The view is the only setting that also changes which components render (sidebar vs. top bar vs. bottom
+ * 4. View "Match device" (the default) picks Field on phones and tablets and Classic on laptops, and follows
+ *    the screen live (e.g. when a phone is rotated). Picking Classic, Top bar or Field by hand always wins.
+ * 5. The view is the only setting that also changes which components render (sidebar vs. top bar vs. bottom
  *    tabs), so AppShell reads it with the useAppearance() hook.
  *
  * index.html has a tiny inline script that applies the saved attributes before React starts, so the page
@@ -18,18 +20,29 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 export type ThemePref = "system" | "light" | "dark" | "sunlight";
 export type ResolvedTheme = Exclude<ThemePref, "system">;
-export type View = "classic" | "topnav" | "field";
+export type ViewPref = "auto" | "classic" | "topnav" | "field";
+export type View = Exclude<ViewPref, "auto">;
 export type Density = "compact" | "default" | "comfortable";
 
 export interface Appearance {
   theme: ThemePref;
-  view: View;
+  view: ViewPref;
   density: Density;
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { theme: "light", view: "classic", density: "default" };
+export const DEFAULT_APPEARANCE: Appearance = { theme: "light", view: "auto", density: "default" };
 
 const STORAGE_KEY = "aerosys.appearance";
+/** Bumped when "Match device" was added. Older saves always stored the then-default "classic" view, even when
+ * nobody picked it, so a v1 "classic" is read as "Match device" so phones get Field view. */
+const STORAGE_VERSION = 2;
+
+/**
+ * A phone or tablet: a narrow screen, or a touch screen with no mouse (this also catches a phone held sideways,
+ * which can be wider than 768px). Screen size and pointer type rather than the browser's user-agent string,
+ * which is unreliable. Keep in sync with the copy in index.html.
+ */
+export const MOBILE_QUERY = "(max-width: 767.98px), (hover: none) and (pointer: coarse)";
 
 /** Labels and one-line descriptions, shared by the quick switcher in the top bar and the Settings page. */
 export const THEME_OPTIONS: Array<{ value: ThemePref; label: string; hint: string }> = [
@@ -39,7 +52,8 @@ export const THEME_OPTIONS: Array<{ value: ThemePref; label: string; hint: strin
   { value: "system", label: "Match device", hint: "Follows your phone or laptop setting" },
 ];
 
-export const VIEW_OPTIONS: Array<{ value: View; label: string; hint: string }> = [
+export const VIEW_OPTIONS: Array<{ value: ViewPref; label: string; hint: string }> = [
+  { value: "auto", label: "Match device", hint: "Field on phones and tablets, Classic on laptops" },
   { value: "classic", label: "Classic", hint: "Side menu (the original layout)" },
   { value: "topnav", label: "Top bar", hint: "Menu across the top, more width for tables" },
   { value: "field", label: "Field", hint: "Thumb-friendly tabs at the bottom on phones" },
@@ -58,6 +72,7 @@ function isOneOf<T extends string>(v: unknown, options: Array<{ value: T }>): v 
 function load(): Appearance {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+    if (saved.v !== STORAGE_VERSION && saved.view === "classic") saved.view = "auto";
     return {
       theme: isOneOf(saved.theme, THEME_OPTIONS) ? saved.theme : DEFAULT_APPEARANCE.theme,
       view: isOneOf(saved.view, VIEW_OPTIONS) ? saved.view : DEFAULT_APPEARANCE.view,
@@ -69,10 +84,26 @@ function load(): Appearance {
 }
 
 const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
+const mobileQuery = () => window.matchMedia(MOBILE_QUERY);
+
+/** Live result of a media query. */
+function useMediaQuery(get: () => MediaQueryList) {
+  const [matches, setMatches] = useState(() => get().matches);
+  useEffect(() => {
+    const mq = get();
+    const onChange = () => setMatches(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [get]);
+  return matches;
+}
 
 interface AppearanceContextValue extends Appearance {
   /** The theme actually shown: "system" resolved to light or dark. */
   resolvedTheme: ResolvedTheme;
+  /** The layout actually shown: "Match device" resolved to field or classic. */
+  resolvedView: View;
   set: (patch: Partial<Appearance>) => void;
   reset: () => void;
 }
@@ -81,39 +112,35 @@ const AppearanceContext = createContext<AppearanceContextValue | null>(null);
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [appearance, setAppearance] = useState<Appearance>(load);
-  const [systemDark, setSystemDark] = useState(() => darkQuery().matches);
-
-  // Track the device's light/dark setting so "Match device" updates live.
-  useEffect(() => {
-    const mq = darkQuery();
-    const onChange = () => setSystemDark(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  // Track the device's light/dark setting and screen type so "Match device" updates live.
+  const systemDark = useMediaQuery(darkQuery);
+  const isMobile = useMediaQuery(mobileQuery);
 
   const resolvedTheme: ResolvedTheme = appearance.theme === "system" ? (systemDark ? "dark" : "light") : appearance.theme;
+  const resolvedView: View = appearance.view === "auto" ? (isMobile ? "field" : "classic") : appearance.view;
 
   // Push the choices onto <html> (see the comment at the top of this file) and remember them.
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = resolvedTheme;
-    root.dataset.view = appearance.view;
+    root.dataset.view = resolvedView;
     root.dataset.density = appearance.density;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...appearance, v: STORAGE_VERSION }));
     } catch {
       // Private browsing can block storage; the choice still applies for this visit.
     }
-  }, [appearance, resolvedTheme]);
+  }, [appearance, resolvedTheme, resolvedView]);
 
   const value = useMemo<AppearanceContextValue>(
     () => ({
       ...appearance,
       resolvedTheme,
+      resolvedView,
       set: (patch) => setAppearance((a) => ({ ...a, ...patch })),
       reset: () => setAppearance(DEFAULT_APPEARANCE),
     }),
-    [appearance, resolvedTheme],
+    [appearance, resolvedTheme, resolvedView],
   );
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
