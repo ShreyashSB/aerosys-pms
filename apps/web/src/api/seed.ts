@@ -366,6 +366,7 @@ export function buildSeed(): Database {
       projectType: typeByProject[pi] ?? COMM,
       workOrderNo: `WO/${s.client.split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()}/${parseISODate(startDate).getFullYear()}/${String(41 + pi * 7).padStart(3, "0")}`,
       poNo: s.status === "planning" ? "" : `PO-${450000 + pi * 1137}`,
+      poDate: s.status === "planning" ? null : addDays(startDate, -12),
       operationalCostPerManDay: 150,
       managerId: E(s.manager),
       contractValue: s.value,

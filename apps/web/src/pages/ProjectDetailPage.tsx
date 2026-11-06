@@ -91,6 +91,7 @@ export function ProjectDetailPage() {
     ["Project manager", manager?.name ?? "—"],
     ["Work order no.", project.workOrderNo || "—"],
     ["PO no.", project.poNo || "—"],
+    ["PO date", project.poDate ? formatDate(project.poDate) : "—"],
     ...(showFinance ? ([["Work order value", <span title={formatINR(project.contractValue)}>{formatINRShort(project.contractValue)}</span>]] as Array<[string, React.ReactNode]>) : []),
     ["Start date", formatDate(project.startDate)],
     ["Expected completion", formatDate(project.endDate)],

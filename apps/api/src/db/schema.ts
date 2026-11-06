@@ -77,6 +77,8 @@ export const projects = pgTable(
     managerId: uuid('manager_id').notNull().references(() => employees.id),
     workOrderNo: text('work_order_no').notNull().default(''),
     poNo: text('po_no').notNull().default(''),
+    /** Date on the client's purchase order; empty until the PO arrives. */
+    poDate: date('po_date', { mode: 'string' }),
     contractValue: amount('contract_value').notNull(),
     estimatedCost: amount('estimated_cost').notNull(),
     allottedManDays: amount('allotted_man_days').notNull(),

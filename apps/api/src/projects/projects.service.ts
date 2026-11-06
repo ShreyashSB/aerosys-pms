@@ -31,6 +31,7 @@ export class ProjectsService {
         projectType: projectTypes.name,
         workOrderNo: projects.workOrderNo,
         poNo: projects.poNo,
+        poDate: projects.poDate,
         managerId: projects.managerId,
         contractValue: projects.contractValue,
         estimatedCost: projects.estimatedCost,
