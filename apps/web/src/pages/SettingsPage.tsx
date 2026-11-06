@@ -143,10 +143,10 @@ export function SettingsPage() {
                 <div className="rounded-md border border-dashed bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
                   <p className="mb-1 font-medium text-foreground">Formulas in use (defined once in src/domain/assumptions.ts)</p>
                   <ul className="list-disc space-y-0.5 pl-4">
-                    <li>PPI = Work Order Value ÷ Allotted Man-Days (working hypothesis)</li>
-                    <li>Progress = Executed BOQ Value ÷ Total BOQ Value; Earned Value = Work Order Value × Progress</li>
-                    <li>Running PPI = Earned Value ÷ Consumed Man-Days</li>
-                    <li>Wages = Consumed Man-Days × employee Daily Cost; Idle Days = Σ idle person-days</li>
+                    <li>PPI = work order value ÷ allotted man-days (working hypothesis)</li>
+                    <li>Progress = executed BOQ value ÷ total BOQ value; earned value = work order value × progress</li>
+                    <li>Running PPI = earned value ÷ consumed man-days</li>
+                    <li>Wages = consumed man-days × each person's daily cost; idle man-days = Σ idle person-days</li>
                     <li>Operational charges = Man-days consumed × the project's operational cost per man-day</li>
                     <li>Cost to date = Wages + Expenses + Instrument + Operational (+ other direct costs)</li>
                   </ul>

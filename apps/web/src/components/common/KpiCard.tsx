@@ -32,9 +32,12 @@ export function KpiCard({
 }) {
   const tone = health?.tone ?? "neutral";
   const c = TONE_CLASSES[tone];
+  // Only amber and red get a coloured edge, so the cards that need attention stand out. Green keeps
+  // its green number and badge but no edge.
+  const edge = tone === "warn" || tone === "bad" ? c.border : "border-l-transparent";
   const Comp = onClick ? "button" : "div";
   return (
-    <Card className={cn("relative overflow-hidden border-l-4 text-left", c.border, onClick && "transition-shadow hover:shadow-md", className)}>
+    <Card className={cn("relative overflow-hidden border-l-4 text-left", edge, onClick && "transition-shadow hover:shadow-md", className)}>
       <Comp
         {...(onClick ? { type: "button" as const, onClick, "aria-label": `${label} – show calculation` } : {})}
         className={cn("group block h-full w-full p-4 text-left", onClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}

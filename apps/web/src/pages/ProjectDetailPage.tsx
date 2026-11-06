@@ -138,7 +138,7 @@ export function ProjectDetailPage() {
           {facts.map(([label, value]) => (
             <div key={label} className="min-w-0">
               <dt className="text-xs text-muted-foreground">{label}</dt>
-              <dd className="mt-0.5 truncate font-medium">{value}</dd>
+              <dd className="mt-0.5 break-words font-medium">{value}</dd>
             </div>
           ))}
         </dl>
@@ -159,7 +159,7 @@ export function ProjectDetailPage() {
           <TabsTrigger value="overview"><LayoutGrid /> Overview</TabsTrigger>
           <TabsTrigger value="performance"><BarChart3 /> Performance</TabsTrigger>
           <TabsTrigger value="boq"><FileSpreadsheet /> Annexure / BOQ</TabsTrigger>
-          <TabsTrigger value="log"><Activity /> Daily Work Log</TabsTrigger>
+          <TabsTrigger value="log"><Activity /> Daily work log</TabsTrigger>
           <TabsTrigger value="team"><Users /> Team</TabsTrigger>
           <TabsTrigger value="expenses">
             <Receipt /> Expenses

@@ -123,7 +123,7 @@ export function explainWages(p: ProjectPerformance, employeeById: Map<string, Em
   steps.push({ op: "=", label: "Wages", value: formatINR(p.costs.wages), strong: true });
   return {
     title: "Wages",
-    subtitle: "Consumed man-days × each person's Daily Cost",
+    subtitle: "Consumed man-days × each person's daily cost",
     steps,
     notes: ["Daily Cost is an internal costing rate maintained on the employee profile — not derived from salary or CTC.", "Demo assumption: the current Daily Cost applies to all man-days, so rate changes re-price the project."],
   };

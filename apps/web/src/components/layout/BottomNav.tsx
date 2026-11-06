@@ -15,7 +15,7 @@ export function BottomNav({ onOpenMore }: { onOpenMore: () => void }) {
   const { user, can } = useAuth();
   const items = NAV_ITEMS.filter((i) => i.to !== "/settings" && (!i.permission || can(i.permission))).slice(0, TAB_COUNT);
 
-  const tab = "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium leading-none";
+  const tab = "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 px-1 text-xs font-medium leading-none";
 
   return (
     <nav

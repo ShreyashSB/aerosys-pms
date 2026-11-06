@@ -57,7 +57,39 @@ export function CostsTab({
           </div>
         </CardHeader>
         <CardContent className="px-0">
-          <div className="overflow-x-auto">
+          {/* Phones: one block per line, so nothing scrolls sideways. */}
+          <ul className="divide-y md:hidden">
+            {budgetRows.map((r) => {
+              const util = r.allotted ? (r.consumed / r.allotted) * 100 : 0;
+              const left = r.allotted - r.consumed;
+              return (
+                <li key={r.label} className="space-y-1.5 px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    {r.key ? <button className="font-medium hover:text-primary hover:underline cursor-pointer" onClick={() => onExplain(r.key!)}>{r.label}</button> : <span className="font-medium">{r.label}</span>}
+                    <HealthBadge health={r.health} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Progress value={Math.min(100, util)} tone={r.health.tone === "bad" ? "warning" : "primary"} />
+                    <span className="w-10 text-right text-xs tabular">{formatPct(util, 0)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground tabular">
+                    <span className="font-medium text-foreground">{r.fmt(r.consumed)}</span> of {r.fmt(r.allotted)} ·{" "}
+                    <span className={cn(left < 0 && "text-danger")}>{left < 0 ? `${r.fmt(-left)} over` : `${r.fmt(left)} left`}</span>
+                  </p>
+                </li>
+              );
+            })}
+            <li className="space-y-1 bg-muted/30 px-4 py-3 text-sm">
+              <p className="font-medium">Projected final cost <span className="text-xs font-normal text-muted-foreground">(estimate)</span></p>
+              <p className="text-xs text-muted-foreground tabular">
+                <span className="font-medium text-foreground">{formatINR(p.finalCost)}</span> against a budget of {formatINR(p.budget)}
+              </p>
+              <p className={cn("text-xs font-medium tabular", p.budget - p.finalCost < 0 ? "text-danger" : "text-success")}>
+                {p.budget - p.finalCost >= 0 ? "Under by " : "Over by "}{formatINR(Math.abs(p.budget - p.finalCost))}
+              </p>
+            </li>
+          </ul>
+          <div className="scroll-shadow-x hidden overflow-x-auto md:block">
             <table className="w-full min-w-[720px] text-sm">
               <thead className="text-xs uppercase tracking-wide text-muted-foreground">
                 <tr className="border-b">
@@ -114,7 +146,7 @@ export function CostsTab({
             </div>
           </CardHeader>
           <CardContent>
-            <CostBreakdown costs={p.costs} budget={p.budget} onSelect={(h) => onExplain(h as MetricKey)} />
+            <CostBreakdown exact costs={p.costs} budget={p.budget} onSelect={(h) => onExplain(h as MetricKey)} />
           </CardContent>
         </Card>
         <Card>

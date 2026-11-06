@@ -18,11 +18,12 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline px-0 h-auto",
       },
       size: {
-        default: "h-9 px-4",
-        sm: "h-8 px-3 text-xs",
-        lg: "h-10 px-5",
-        icon: "size-9",
-        "icon-sm": "size-8",
+        // Phones get 40px controls (easier to hit with a thumb); laptops keep the tighter sizes.
+        default: "h-10 px-4 md:h-9",
+        sm: "h-9 px-3 text-xs md:h-8",
+        lg: "h-11 px-5 md:h-10",
+        icon: "size-10 md:size-9",
+        "icon-sm": "size-10 md:size-8",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

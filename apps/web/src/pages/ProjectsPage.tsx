@@ -25,6 +25,9 @@ import { runningPpiHealth, TONE_CLASSES } from "@/domain/health";
 import { HealthBadge } from "@/components/common/Health";
 import type { Project, ProjectStatus } from "@/types/models";
 
+/** Projects where work is under way, so a health reading is meaningful. */
+const isRunning = (p: Project) => p.status === "active" || p.status === "on_hold";
+
 export function ProjectsPage() {
   const { user } = useCurrentUser();
   const data = useScopedData();
@@ -66,10 +69,12 @@ export function ProjectsPage() {
         <div className="min-w-48">
           <p className="font-medium text-foreground">{p.name}</p>
           <p className="text-xs text-muted-foreground">{p.code} · {p.projectType}</p>
+          {/* Client has its own column only on extra-wide screens. */}
+          <p className="text-xs text-muted-foreground 2xl:hidden">{p.clientName}</p>
         </div>
       ),
     },
-    { key: "client", header: "Client", sortValue: (p) => p.clientName, cell: (p) => p.clientName, hideOnMobile: true },
+    { key: "client", header: "Client", sortValue: (p) => p.clientName, cell: (p) => p.clientName, className: "hidden 2xl:table-cell" },
     { key: "site", header: "Site", sortValue: (p) => p.site, cell: (p) => <span className="text-muted-foreground">{p.site}</span>, className: "hidden 2xl:table-cell" },
     { key: "manager", header: "Manager", sortValue: (p) => data.employeeById.get(p.managerId)?.name ?? "", cell: (p) => data.employeeById.get(p.managerId)?.name ?? "—", hideOnMobile: true },
     ...(showFinance
@@ -89,7 +94,7 @@ export function ProjectsPage() {
               return (
                 <span className={cn("tabular", TONE_CLASSES[h.tone].text)} title={`${h.label} · baseline ${formatPerMd(f.ppi)}`}>
                   {formatINRShort(f.runningPpi)}
-                  <span className="block text-[11px]">{f.ppiVariancePct >= 0 ? "+" : ""}{formatPct(f.ppiVariancePct, 0)}</span>
+                  <span className="block text-xs">{f.ppiVariancePct >= 0 ? "+" : ""}{formatPct(f.ppiVariancePct, 0)}</span>
                 </span>
               );
             },
@@ -110,7 +115,17 @@ export function ProjectsPage() {
         );
       },
     },
-    { key: "health", header: "Health", sortValue: (p) => data.health.get(p.id)?.tone ?? "", cell: (p) => { const h = data.health.get(p.id); return h ? <HealthBadge health={h} /> : null; } },
+    {
+      key: "health",
+      header: "Health",
+      sortValue: (p) => (isRunning(p) ? data.health.get(p.id)?.tone ?? "" : "~"),
+      // Health only means something while work is under way; for finished or not-yet-started projects
+      // it repeated the Status column ("Completed, Completed").
+      cell: (p) => {
+        const h = data.health.get(p.id);
+        return h && isRunning(p) ? <HealthBadge health={h} /> : <span className="text-muted-foreground">—</span>;
+      },
+    },
     { key: "status", header: "Status", sortValue: (p) => p.status, cell: (p) => <ProjectStatusBadge status={p.status} /> },
     {
       key: "actions",
@@ -174,7 +189,7 @@ export function ProjectsPage() {
         }
       />
 
-      <FilterBar onReset={filters.reset} showReset={filters.active}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : projects.filter((p) => p.status !== "archived").length}>
         <SearchInput value={q} onChange={(v) => filters.set("q", v)} placeholder="Search project, ID, WO no., client…" />
         <Select value={status} onChange={(e) => filters.set("status", e.target.value)} className="w-auto min-w-36" aria-label="Filter by status">
           <option value="">All statuses</option>
@@ -211,6 +226,35 @@ export function ProjectsPage() {
         loading={data.isLoading}
         onRowClick={(p) => navigate(`/projects/${p.id}`)}
         initialSort={{ key: "name", dir: "asc" }}
+        mobileCard={(p) => {
+          const pr = (data.perf.get(p.id)?.progress ?? 0) * 100;
+          const h = data.health.get(p.id);
+          return (
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground">{p.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{p.code} · {p.clientName}</p>
+                </div>
+                <ProjectStatusBadge status={p.status} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Progress value={pr} tone={pr >= 100 ? "success" : "primary"} />
+                <span className="w-9 shrink-0 text-right text-xs tabular">{formatPct(pr, 0)}</span>
+              </div>
+              {(showFinance || (h && isRunning(p))) && (
+                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                  {h && isRunning(p) ? <HealthBadge health={h} /> : <span />}
+                  {showFinance && (
+                    <span>
+                      Cost <Money value={data.perf.get(p.id)?.costs.total ?? 0} className="text-foreground" /> of <Money value={p.contractValue} className="text-foreground" />
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        }}
         empty={
           <EmptyState
             icon={<FolderKanban />}

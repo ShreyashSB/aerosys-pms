@@ -64,7 +64,7 @@ export function PnlStatement({ data, settings }: { data: PnlData; settings: AppS
 
       <section>
         <p className="mb-1 flex items-center gap-2 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Projection <span className="rounded bg-warning-soft px-1.5 py-0.5 text-[10px] normal-case text-warning">Estimate</span>
+          Projection <span className="rounded bg-warning-soft px-1.5 py-0.5 text-xs normal-case text-warning">Estimate</span>
         </p>
         <Row label="Actual cost to date" value={c.total} />
         <Row label="Projected remaining cost" value={data.remainingCost} op="+" />

@@ -41,7 +41,7 @@ export function OverviewTab({
   return (
     <div className="space-y-6">
       {/* KPI section */}
-      <section aria-label="Key performance indicators" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section aria-label="Key performance indicators" className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
         {showFinance && (
           <>
           <KpiCard label="PPI (baseline)" value={formatPerMd(p.ppi)} sub="WO value ÷ allotted MD" onClick={() => onExplain("ppi")} />
@@ -61,42 +61,38 @@ export function OverviewTab({
           sub={project.status === "completed" ? undefined : `${formatPct(p.expectedProgress * 100, 0)} expected`}
           onClick={() => onExplain("progress")}
         />
-        <KpiCard label="Allotted Man Days" value={`${formatNumber(p.allottedManDays)} MD`} sub={`${formatNumber(p.plannedManDaysToDate, 0)} MD planned by today`} />
+        {/* Allotted and consumed sit in one card each ("218 MD of 515 allotted"), and the cost heads
+            (wages, instrument and operational charges) live in "Where the money is going" below,
+            so the overview fits on one row of cards. */}
         <KpiCard
-          label="Consumed Man Days"
+          label="Man-days consumed"
           value={`${formatNumber(p.consumedManDays, 1)} MD`}
           health={manDayHealth(p)}
-          sub={`${formatPct(p.manDayUtilisation * 100, 0)} of allotted`}
+          sub={`of ${formatNumber(p.allottedManDays)} allotted · ${formatNumber(p.plannedManDaysToDate, 0)} planned by today`}
           onClick={() => onExplain("manDays")}
         />
         <KpiCard
-          label="Idle Days"
+          label="Idle man-days"
           value={`${formatNumber(p.idleManDays, 1)} MD`}
           health={idleHealth(p)}
           sub={p.consumedManDays ? `${formatPct(idleShare, 0)} of consumed` : undefined}
           onClick={() => onExplain("idle")}
         />
         {showFinance && (
-          <>
-            <KpiCard label="Allotted Expenses" value={formatINRShort(p.allottedExpenses)} sub={`${formatINRShort(p.allottedExpenses - p.consumedExpenses)} remaining`} />
-            <KpiCard
-              label="Consumed Expenses"
-              value={formatINRShort(p.consumedExpenses)}
-              health={expenseHealth(p)}
-              sub={`${formatPct(p.expenseUtilisation * 100, 0)} of allotted`}
-              onClick={() => onExplain("expenses")}
-            />
-            <KpiCard label="Wages" value={formatINRShort(p.costs.wages)} sub="MD × daily cost" onClick={() => onExplain("wages")} />
-            <KpiCard label="Instrument Charges" value={formatINRShort(p.costs.instruments)} sub="Deployment usage" onClick={() => onExplain("instruments")} />
-            <KpiCard label="Operational Charges" value={formatINRShort(p.costs.operational)} sub={`${formatINR(p.operationalCostPerManDay)}/man-day × ${formatNumber(p.consumedManDays, 1)} MD`} onClick={() => onExplain("operational")} />
-          </>
+          <KpiCard
+            label="Expenses consumed"
+            value={formatINRShort(p.consumedExpenses)}
+            health={expenseHealth(p)}
+            sub={`of ${formatINRShort(p.allottedExpenses)} allotted · ${formatINRShort(p.allottedExpenses - p.consumedExpenses)} left`}
+            onClick={() => onExplain("expenses")}
+          />
         )}
       </section>
 
       {showFinance && (
         <div className="grid gap-6 xl:grid-cols-5">
           {/* Financial health – clickable P&L */}
-          <Card className={cn("border-l-4 xl:col-span-2", TONE_CLASSES[profit.tone].border)}>
+          <Card className={cn("border-l-4 self-start xl:col-span-2", profit.tone === "good" ? "border-l-transparent" : TONE_CLASSES[profit.tone].border)}>
             <button type="button" onClick={onOpenPnl} className="group block w-full p-5 text-left cursor-pointer" aria-label="Open profit and loss breakdown">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -145,7 +141,7 @@ export function OverviewTab({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={onOpenAttendance}>
-              <CalendarDays /> View Attendance & Work Summary
+              <CalendarDays /> Attendance & work summary
             </Button>
             <Button variant="ghost" size="sm" onClick={() => onGoTab("log")}>All logs</Button>
           </div>
@@ -171,10 +167,8 @@ export function OverviewTab({
             <div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Work complete (BOQ value)</span><span>{formatPct(p.progress * 100, 1)}</span></div>
             <Progress value={p.progress * 100} tone={p.progress >= 1 ? "success" : "primary"} />
           </div>
-          <p className="text-xs text-muted-foreground">
-            {showFinance && <>Executed {formatINR(p.executedValue)} of {formatINR(p.boqValue)} BOQ value. </>}
-            {project.description}
-          </p>
+          {/* The project description already sits in the page header, so it isn't repeated here. */}
+          {showFinance && <p className="text-xs text-muted-foreground">Executed {formatINR(p.executedValue)} of {formatINR(p.boqValue)} BOQ value.</p>}
         </CardContent>
       </Card>
     </div>

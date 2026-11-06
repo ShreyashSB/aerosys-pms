@@ -27,6 +27,11 @@ interface DataTableProps<T> {
   initialSort?: { key: string; dir: "asc" | "desc" };
   footer?: ReactNode;
   className?: string;
+  /**
+   * Phones only: render each row as a small card instead of a table row, so nothing scrolls sideways.
+   * Laptops keep the table. Without it, phones get the table with a scroll shadow on the edge.
+   */
+  mobileCard?: (row: T) => ReactNode;
 }
 
 export function DataTable<T>({
@@ -40,6 +45,7 @@ export function DataTable<T>({
   initialSort,
   footer,
   className,
+  mobileCard,
 }: DataTableProps<T>) {
   const [sort, setSort] = useState(initialSort ?? null);
   const [page, setPage] = useState(0);
@@ -69,8 +75,42 @@ export function DataTable<T>({
 
   return (
     <div className={cn("overflow-hidden rounded-lg border bg-surface", className)}>
-      {/* "relative" keeps visually hidden (sr-only) header text inside the scroll area; without it the page scrolls sideways on phones. */}
-      <div className="relative overflow-x-auto">
+      {mobileCard && (
+        <ul className="divide-y md:hidden">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <li key={i} className="space-y-2 px-4 py-3">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </li>
+              ))
+            : visible.map((row) => (
+                <li key={rowKey(row)}>
+                  {onRowClick ? (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onRowClick(row)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onRowClick(row);
+                        }
+                      }}
+                      className="block w-full cursor-pointer px-4 py-3 text-left text-sm transition-colors hover:bg-muted/50 active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    >
+                      {mobileCard(row)}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 text-sm">{mobileCard(row)}</div>
+                  )}
+                </li>
+              ))}
+        </ul>
+      )}
+      {/* "relative" keeps visually hidden (sr-only) header text inside the scroll area; without it the page scrolls sideways on phones.
+          "scroll-shadow-x" shows a soft shadow on whichever edge has more columns to scroll to. */}
+      <div className={cn("scroll-shadow-x relative overflow-x-auto", mobileCard && "hidden md:block")}>
         <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -78,7 +118,7 @@ export function DataTable<T>({
                 <th
                   key={c.key}
                   scope="col"
-                  className={cn("px-4 py-2.5 font-medium whitespace-nowrap", alignCls(c.align), c.hideOnMobile && "hidden md:table-cell", c.className)}
+                  className={cn("px-3 py-2.5 font-medium whitespace-nowrap first:pl-4 last:pr-4 2xl:px-4", alignCls(c.align), c.hideOnMobile && "hidden md:table-cell", c.className)}
                 >
                   {c.sortValue ? (
                     <button
@@ -118,7 +158,7 @@ export function DataTable<T>({
                     className={cn("transition-colors hover:bg-muted/50", onRowClick && "cursor-pointer")}
                   >
                     {columns.map((c) => (
-                      <td key={c.key} className={cn("px-4 py-3 align-middle", alignCls(c.align), c.hideOnMobile && "hidden md:table-cell", c.className)}>
+                      <td key={c.key} className={cn("px-3 py-3 align-middle first:pl-4 last:pr-4 2xl:px-4", alignCls(c.align), c.hideOnMobile && "hidden md:table-cell", c.className)}>
                         {c.cell(row)}
                       </td>
                     ))}
@@ -138,7 +178,7 @@ export function DataTable<T>({
             <Button variant="outline" size="icon-sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)} aria-label="Previous page">
               <ChevronLeft />
             </Button>
-            <span className="px-2">
+            <span className="px-2 whitespace-nowrap">
               Page {safePage + 1} / {pageCount}
             </span>
             <Button variant="outline" size="icon-sm" disabled={safePage >= pageCount - 1} onClick={() => setPage(safePage + 1)} aria-label="Next page">

@@ -75,7 +75,7 @@ export function PerformanceTab({
                     <div className={cn("absolute top-3 h-2 rounded-full", TONE_CLASSES[rPpiH.tone].dot)} style={{ width: `${(p.runningPpi / scaleMax) * 100}%` }} />
                     <div className="absolute top-0 h-8 w-0.5 bg-foreground" style={{ left: `${(p.ppi / scaleMax) * 100}%` }} />
                   </div>
-                  <div className="relative h-4 text-[11px] text-muted-foreground">
+                  <div className="relative h-4 text-xs text-muted-foreground">
                     <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${(p.ppi / scaleMax) * 100}%` }}>Baseline {formatINRShort(p.ppi)}</span>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export function PerformanceTab({
                     <span className="h-2.5 rounded-sm bg-muted"><span className={cn("block h-full rounded-r-[4px]", TONE_CLASSES[r.health.tone === "neutral" ? "neutral" : r.health.tone].dot)} style={{ width: `${(r.actual / max) * 100}%` }} /></span>
                     <span className="text-right font-medium tabular">
                       {r.fmt(r.actual)}{" "}
-                      <span className="block text-[11px] font-normal text-muted-foreground">
+                      <span className="block text-xs font-normal text-muted-foreground">
                         {diff >= 0 ? "+" : "−"}{r.fmt(Math.abs(diff))}
                       </span>
                     </span>
@@ -238,7 +238,7 @@ function Metric({ label, value, tone, onClick }: { label: string; value: string;
         {onClick && <Calculator className="size-3 opacity-60" aria-hidden />}
       </dt>
       <dd className={cn("mt-0.5 font-semibold tabular", cls)}>{value}</dd>
-      {tone && tone.label && tone.tone !== "neutral" && <dd className={cn("text-[11px]", cls)}>{tone.label}</dd>}
+      {tone && tone.label && tone.tone !== "neutral" && <dd className={cn("text-xs", cls)}>{tone.label}</dd>}
     </>
   );
   return onClick ? (

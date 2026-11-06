@@ -184,12 +184,48 @@ export function DailyLogFormDialog({
 
           {/* Attendance */}
           <section>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
               <h3 className="text-sm font-semibold">Team / attendance</h3>
               <span className="text-xs text-muted-foreground">{hours} working hours = 1 man-day (Settings)</span>
             </div>
             {submitted && errors.rows && <p className="mb-2 text-xs text-danger">{errors.rows}</p>}
-            <div className="overflow-x-auto rounded-md border">
+            {/* Phones: one stacked card per person, so every control is full width and nothing is cut off. */}
+            <ul className="space-y-2 md:hidden">
+              {rows.map((r, i) => {
+                const e = data.employeeById.get(r.employeeId);
+                const err = submitted ? rowError(r) : undefined;
+                const works = MAN_DAY_WEIGHT[r.status] > 0;
+                const showIdle = r.status === "idle" || works;
+                return (
+                  <li key={r.employeeId} className={cn("space-y-2 rounded-md border p-3", r.status === "idle" && "border-warning/60")}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium">{e?.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {e?.designation}
+                          {showCost && <> · {formatINR(MAN_DAY_WEIGHT[r.status] * (e?.dailyCost ?? 0))}</>}
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="icon-sm" className="-mr-2 -mt-1" onClick={() => editRows((rs) => rs.filter((_, k) => k !== i))} aria-label={`Remove ${e?.name}`}><Trash2 className="text-muted-foreground" /></Button>
+                    </div>
+                    <Select value={r.status} onChange={(ev) => setRow(i, { status: ev.target.value as AttendanceStatus })} className={cn(r.status === "idle" && "border-warning bg-warning-soft")} aria-label={`Status for ${e?.name}`}>
+                      {STATUSES.map((s) => (<option key={s} value={s}>{ATTENDANCE_LABEL[s]}</option>))}
+                    </Select>
+                    {showIdle && (
+                      <div className="grid grid-cols-[6rem_1fr] gap-2">
+                        <Input type="number" inputMode="decimal" min={0} max={hours} step={0.5} value={r.status === "idle" ? hours : r.idleHours || ""} disabled={!works || r.status === "idle"} onChange={(ev) => setRow(i, { idleHours: Number(ev.target.value) || 0 })} aria-label={`Idle hours for ${e?.name}`} placeholder="Idle hrs" />
+                        <Select value={r.idleReason ?? ""} disabled={r.status !== "idle" && !r.idleHours} onChange={(ev) => setRow(i, { idleReason: (ev.target.value || null) as IdleReason | null })} aria-invalid={!!err} aria-label={`Idle reason for ${e?.name}`}>
+                          <option value="">Idle reason…</option>
+                          {IDLE_REASONS.map((x) => (<option key={x}>{x}</option>))}
+                        </Select>
+                      </div>
+                    )}
+                    {err && <p className="text-xs text-danger">{err}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="scroll-shadow-x hidden overflow-x-auto rounded-md border md:block">
               <table className="w-full min-w-[640px] text-sm">
                 <thead className="bg-muted/60 text-xs text-muted-foreground">
                   <tr>
@@ -213,19 +249,19 @@ export function DailyLogFormDialog({
                           <p className="text-xs text-muted-foreground">{e?.designation}</p>
                         </td>
                         <td className="px-3 py-2">
-                          <Select value={r.status} onChange={(ev) => setRow(i, { status: ev.target.value as AttendanceStatus })} className={cn("h-8 text-xs", r.status === "idle" && "border-warning bg-warning-soft")} aria-label={`Status for ${e?.name}`}>
+                          <Select value={r.status} onChange={(ev) => setRow(i, { status: ev.target.value as AttendanceStatus })} className={cn("md:h-8 md:text-xs", r.status === "idle" && "border-warning bg-warning-soft")} aria-label={`Status for ${e?.name}`}>
                             {STATUSES.map((s) => (<option key={s} value={s}>{ATTENDANCE_LABEL[s]}</option>))}
                           </Select>
                         </td>
                         <td className="px-3 py-2">
-                          <Input type="number" min={0} max={hours} step={0.5} className="h-8 text-xs" value={r.status === "idle" ? hours : r.idleHours || ""} disabled={!works || r.status === "idle"} onChange={(ev) => setRow(i, { idleHours: Number(ev.target.value) || 0 })} aria-label={`Idle hours for ${e?.name}`} placeholder="0" />
+                          <Input type="number" min={0} max={hours} step={0.5} className="md:h-8 md:text-xs" value={r.status === "idle" ? hours : r.idleHours || ""} disabled={!works || r.status === "idle"} onChange={(ev) => setRow(i, { idleHours: Number(ev.target.value) || 0 })} aria-label={`Idle hours for ${e?.name}`} placeholder="0" />
                         </td>
                         <td className="px-3 py-2">
-                          <Select value={r.idleReason ?? ""} disabled={r.status !== "idle" && !r.idleHours} onChange={(ev) => setRow(i, { idleReason: (ev.target.value || null) as IdleReason | null })} className="h-8 text-xs" aria-invalid={!!err} aria-label={`Idle reason for ${e?.name}`}>
+                          <Select value={r.idleReason ?? ""} disabled={r.status !== "idle" && !r.idleHours} onChange={(ev) => setRow(i, { idleReason: (ev.target.value || null) as IdleReason | null })} className="md:h-8 md:text-xs" aria-invalid={!!err} aria-label={`Idle reason for ${e?.name}`}>
                             <option value="">—</option>
                             {IDLE_REASONS.map((x) => (<option key={x}>{x}</option>))}
                           </Select>
-                          {err && <p className="mt-0.5 text-[11px] text-danger">{err}</p>}
+                          {err && <p className="mt-0.5 text-xs text-danger">{err}</p>}
                         </td>
                         {showCost && <td className="px-3 py-2 text-right text-xs tabular">{formatINR(MAN_DAY_WEIGHT[r.status] * (e?.dailyCost ?? 0))}</td>}
                         <td className="px-2 py-2">
@@ -238,14 +274,14 @@ export function DailyLogFormDialog({
               </table>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Select value={addPerson} onChange={(e) => setAddPerson(e.target.value)} className="h-8 w-auto max-w-72 text-xs" aria-label="Add person">
+              <Select value={addPerson} onChange={(e) => setAddPerson(e.target.value)} className="w-full sm:w-auto sm:max-w-72 md:h-8 md:text-xs" aria-label="Add person">
                 <option value="">Add another person…</option>
                 {candidates.map((e) => (<option key={e.id} value={e.id}>{e.name} — {e.designation}</option>))}
               </Select>
               <Button variant="outline" size="sm" disabled={!addPerson} onClick={() => { editRows((rs) => [...rs, { employeeId: addPerson, status: "on_site", idleHours: 0, idleReason: null }]); setAddPerson(""); }}>
                 <UserPlus /> Add
               </Button>
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="w-full text-xs text-muted-foreground sm:ml-auto sm:w-auto">
                 {summary.people} people · {formatNumber(summary.workingManDays, 1)} working MD · {formatNumber(summary.idleManDays, 1)} idle MD
                 {showCost && ` · wages ${formatINR(summary.wages)}`}
               </span>
@@ -267,7 +303,7 @@ export function DailyLogFormDialog({
                   return (
                     <div key={i} className="grid grid-cols-12 items-start gap-2">
                       <div className="col-span-12 sm:col-span-6">
-                        <Select value={w.boqItemId} onChange={(e) => setWork((ws) => ws.map((x, k) => (k === i ? { ...x, boqItemId: e.target.value } : x)))} className="h-8 text-xs" aria-label="BOQ item" aria-invalid={!!err}>
+                        <Select value={w.boqItemId} onChange={(e) => setWork((ws) => ws.map((x, k) => (k === i ? { ...x, boqItemId: e.target.value } : x)))} className="md:h-8 md:text-xs" aria-label="BOQ item" aria-invalid={!!err}>
                           <option value="">Select BOQ item…</option>
                           {items.map((b) => (
                             <option key={b.id} value={b.id}>
@@ -277,16 +313,16 @@ export function DailyLogFormDialog({
                         </Select>
                       </div>
                       <div className="col-span-4 sm:col-span-2">
-                        <Input type="number" min={0} step="any" value={w.qty} onChange={(e) => setWork((ws) => ws.map((x, k) => (k === i ? { ...x, qty: e.target.value } : x)))} className="h-8 text-xs" placeholder={it ? `Qty (${it.uom})` : "Qty"} aria-label="Quantity" aria-invalid={!!err} />
+                        <Input type="number" min={0} step="any" value={w.qty} onChange={(e) => setWork((ws) => ws.map((x, k) => (k === i ? { ...x, qty: e.target.value } : x)))} className="md:h-8 md:text-xs" placeholder={it ? `Qty (${it.uom})` : "Qty"} aria-label="Quantity" aria-invalid={!!err} />
                       </div>
                       <div className="col-span-7 sm:col-span-3">
-                        <Input value={w.remarks} onChange={(e) => setWork((ws) => ws.map((x, k) => (k === i ? { ...x, remarks: e.target.value } : x)))} className="h-8 text-xs" placeholder="Location / remarks" aria-label="Work remarks" />
+                        <Input value={w.remarks} onChange={(e) => setWork((ws) => ws.map((x, k) => (k === i ? { ...x, remarks: e.target.value } : x)))} className="md:h-8 md:text-xs" placeholder="Location / remarks" aria-label="Work remarks" />
                       </div>
                       <div className="col-span-1 flex justify-end">
                         <Button variant="ghost" size="icon-sm" onClick={() => setWork((ws) => ws.filter((_, k) => k !== i))} aria-label="Remove work line"><Trash2 className="text-muted-foreground" /></Button>
                       </div>
                       {(err || over) && (
-                        <p className={cn("col-span-12 -mt-1 text-[11px]", err ? "text-danger" : "text-warning")}>
+                        <p className={cn("col-span-12 -mt-1 text-xs", err ? "text-danger" : "text-warning")}>
                           {err ?? <><AlertTriangle className="mr-1 inline size-3" />Exceeds balance quantity ({formatNumber(balance, 2)} {it?.uom}) – allowed, but check for a variation.</>}
                         </p>
                       )}
@@ -316,9 +352,9 @@ export function DailyLogFormDialog({
 function Preview({ label, value, sub, warn }: { label: string; value: string; sub?: string; warn?: boolean }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className={cn("text-base font-semibold tabular", warn && "text-warning")}>{value}</p>
-      {sub && <p className="text-[11px] text-success">{sub}</p>}
+      {sub && <p className="text-xs text-success">{sub}</p>}
     </div>
   );
 }

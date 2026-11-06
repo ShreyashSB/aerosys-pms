@@ -41,7 +41,27 @@ export function DailyActivitySummary({
   if (!all.length) return <EmptyState icon={<ClipboardList />} title="No daily logs yet" description="Daily logs record attendance, man-days, idle time and work done against the BOQ." />;
 
   return (
-    <div className="overflow-x-auto">
+    <div>
+      {/* Phones: one card per day, so nothing scrolls sideways. */}
+      <ul className="divide-y md:hidden">
+        {rows.map(({ log, s, work }) => (
+          <li key={log.id}>
+            <button type="button" onClick={() => onOpen(log.id)} className="block w-full cursor-pointer px-4 py-3 text-left text-sm hover:bg-muted/50 active:bg-muted">
+              <span className="flex items-baseline justify-between gap-3">
+                <span className="font-medium">{formatDate(log.date)}</span>
+                {showCost && <span className="tabular text-muted-foreground">{formatINR(s.wages)}</span>}
+              </span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {s.people} people · {formatNumber(s.workingManDays, 1)} working MD
+                {s.idleManDays > 0 && <span className="font-medium text-warning"> · {formatNumber(s.idleManDays, 1)} idle MD</span>}
+              </span>
+              <span className="mt-1 line-clamp-2 block">{work.length ? work.join("; ") : <span className="text-muted-foreground">{log.activities || "No work lines"}</span>}</span>
+              {log.remarks && <span className="mt-0.5 block truncate text-xs text-muted-foreground">{log.remarks}</span>}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="scroll-shadow-x hidden overflow-x-auto md:block">
       <table className="w-full min-w-[760px] text-sm">
         <thead className="text-xs uppercase tracking-wide text-muted-foreground">
           <tr className="border-b">
@@ -70,6 +90,7 @@ export function DailyActivitySummary({
           ))}
         </tbody>
       </table>
+      </div>
       {!limit && all.length > rows.length && (
         <div className="border-t px-5 py-2 text-center">
           <Button variant="ghost" size="sm" onClick={() => setPageSize((n) => n + 30)}>

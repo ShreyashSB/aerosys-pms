@@ -64,12 +64,14 @@ export function InstrumentsPage() {
           <p className="font-medium">{i.name}</p>
           <p className="text-xs text-muted-foreground">
             {i.code} · SN <span className="font-mono">{i.serialNumber}</span>
+            {/* Category has its own column only on extra-wide screens. */}
+            <span className="2xl:hidden"> · {i.category}</span>
           </p>
           {i.calibration && <CalibrationLine validUntil={i.calibration.validUntil} />}
         </div>
       ),
     },
-    { key: "category", header: "Category", sortValue: (i) => i.category, cell: (i) => i.category, hideOnMobile: true, className: "whitespace-nowrap" },
+    { key: "category", header: "Category", sortValue: (i) => i.category, cell: (i) => i.category, className: "hidden whitespace-nowrap 2xl:table-cell" },
     ...(can(user.role, "finance.view") || manage
       ? [
           {
@@ -93,18 +95,23 @@ export function InstrumentsPage() {
       key: "project",
       header: "Assigned project",
       sortValue: (i) => data.projectById.get(i.assignedProjectId ?? "")?.name ?? "~",
-      cell: (i) =>
-        i.assignedProjectId ? (
-          <Link to={`/projects/${i.assignedProjectId}?tab=instruments`} className="hover:text-primary hover:underline">{data.projectById.get(i.assignedProjectId)?.name}</Link>
-        ) : (
-          <span className="text-muted-foreground">{i.notes || "—"}</span>
-        ),
+      cell: (i) => (
+        <div>
+          {i.assignedProjectId ? (
+            <Link to={`/projects/${i.assignedProjectId}?tab=instruments`} className="hover:text-primary hover:underline">{data.projectById.get(i.assignedProjectId)?.name}</Link>
+          ) : (
+            <span className="text-muted-foreground">{i.notes || "—"}</span>
+          )}
+          {/* Location has its own column only on extra-wide screens. */}
+          <p className="text-xs text-muted-foreground 2xl:hidden">{locationOf(i)}</p>
+        </div>
+      ),
     },
     {
       key: "location",
       header: "Location",
       sortValue: (i) => locationOf(i),
-      hideOnMobile: true,
+      className: "hidden 2xl:table-cell",
       cell: (i) => (i.assignedProjectId ? <span>{locationOf(i)}</span> : <span className="text-muted-foreground">{locationOf(i)}</span>),
     },
     ...(manage
@@ -175,7 +182,7 @@ export function InstrumentsPage() {
           <StatCard label="Retired" value={count("retired")} loading={data.isLoading} />
         </div>
       )}
-      <FilterBar onReset={filters.reset} showReset={filters.active}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : base.length}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search name, ID, serial, engineer…" />
         <Select value={f.status} onChange={(e) => filters.set("status", e.target.value)} className="w-auto" aria-label="Filter by status">
           <option value="">All statuses</option>
@@ -198,6 +205,26 @@ export function InstrumentsPage() {
         rowKey={(i) => i.id}
         loading={data.isLoading}
         initialSort={{ key: "name", dir: "asc" }}
+        mobileCard={(i) => {
+          const engineer = data.employeeById.get(i.assignedEngineerId ?? "")?.name;
+          const project = i.assignedProjectId ? data.projectById.get(i.assignedProjectId)?.name : null;
+          return (
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{i.name}</p>
+                  <p className="text-xs text-muted-foreground">{i.code} · {i.category}</p>
+                  {i.calibration && <CalibrationLine validUntil={i.calibration.validUntil} />}
+                </div>
+                <InstrumentStatusBadge status={i.status} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {project ? <>{engineer ?? "—"} · {project}</> : locationOf(i)}
+              </p>
+              {manage && <div className="flex justify-end">{columns.find((c) => c.key === "actions")?.cell(i)}</div>}
+            </div>
+          );
+        }}
         empty={<EmptyState icon={<Wrench />} title={isEngineer ? "No instruments issued to you" : "No instruments found"} description={filters.active ? "Try changing the filters." : undefined} />}
       />
       <InstrumentFormDialog open={formOpen} onOpenChange={setFormOpen} instrument={editing} />
