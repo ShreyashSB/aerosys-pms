@@ -73,7 +73,7 @@ The React app does the same thing in a few small pieces. Each is worth opening:
 | 401 handler | `http.ts` (`setUnauthorizedHandler`) | Any 401 (token expired, login switched off) calls `logout()`, which clears the token and every cached query, and you land on the login page. |
 | Who am I | `apps/web/src/auth/AuthContext.tsx` (`ApiAuthProvider`) | A TanStack Query for `GET /api/auth/me`, keyed by the token. Signing in puts the login response straight into that cache, so there is no extra request. |
 | First sign-in | `features/auth/FirstPasswordScreen.tsx` | While `mustChangePassword` is true the app shows only this screen. The server refuses everything else anyway (403), so the UI just follows the server. |
-| Accounts | `features/employees/EmployeeFormDialog.tsx` + `services/api/index.ts` (`syncLogin`) | "System access" on the employee form creates the login (with a starting password), changes its role, switches it off ("No login") or resets the password. |
+| Accounts | `features/employees/EmployeeFormDialog.tsx` + `services/api/index.ts` (`syncLogin`) | "App access → Can sign in as" on the employee form creates the login (with a starting password), changes its role, switches it off ("No login") or resets the password. Picking a department fills it in from `DEPARTMENT_DEFAULTS` (Accounts → Accounts, Engineering → Site Engineer, Admin → No login…) until you choose by hand. Department is where someone sits in the company; the role is what the app lets them do, and only the role is checked. |
 
 Two things to notice:
 
