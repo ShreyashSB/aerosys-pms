@@ -1,5 +1,5 @@
 {
-  "id": "c9ab337d-0fd1-46fe-8f09-a7ad2a598303",
+  "id": "e1226a81-726d-42fd-b1cf-b6f9818c3c3a",
   "prevId": "2a534dd6-ac4b-4935-995e-71258cccd8b2",
   "version": "7",
   "dialect": "postgresql",
@@ -1997,12 +1997,6 @@
           "notNull": true,
           "default": "''"
         },
-        "po_date": {
-          "name": "po_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
         "contract_value": {
           "name": "contract_value",
           "type": "numeric(14, 2)",
@@ -2027,13 +2021,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "operational_cost_per_day": {
-          "name": "operational_cost_per_day",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 150
         },
         "start_date": {
           "name": "start_date",
@@ -2080,6 +2067,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "operational_cost_per_man_day": {
+          "name": "operational_cost_per_man_day",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 150
         }
       },
       "indexes": {
@@ -2226,7 +2220,7 @@
           "type": "numeric(5, 2)",
           "primaryKey": false,
           "notNull": true,
-          "default": 15
+          "default": 20
         },
         "created_at": {
           "name": "created_at",

@@ -92,7 +92,7 @@ and explanations from `src/domain/explain.ts`, so the calculation drawers can ne
 | Wages | Consumed MD × employee **Daily Cost** (current rate; not derived from salary or CTC) | Demo assumption |
 | Expenses | Approved expenses only (pending ones are shown separately) | |
 | Instrument charges | Per-day value × days deployed; per-day value = asset value ÷ days from purchase to end of life | From Aerosys costing sheet |
-| Operational charges | Calendar days from start to today (or completion) × the project's operational cost per day (default ₹150) | Confirmed by Aerosys |
+| Operational charges | Man-days consumed × the project's operational cost per man-day (default ₹150), as in the costing sheet | Aerosys costing sheet |
 | Vendor bills | Σ vendor bills entered by Accounts on the project | |
 | Projected final cost | *Performance:* cost to date ÷ progress, or *budget:* cost to date + budget × (1 − progress) (Settings). Uses the budget method below 10% progress. | Estimate |
 | Plan to date | Linear between start and expected completion (drives expected progress and planned MD/expenses) | Demo assumption |

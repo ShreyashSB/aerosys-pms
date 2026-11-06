@@ -59,7 +59,7 @@ export interface Database {
   settings: AppSettings;
 }
 
-export const DB_VERSION = 7;
+export const DB_VERSION = 8;
 
 /** Deterministic PRNG so the seed is identical on every fresh load. */
 function mulberry32(seed: number) {
@@ -367,7 +367,7 @@ export function buildSeed(): Database {
       workOrderNo: `WO/${s.client.split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()}/${parseISODate(startDate).getFullYear()}/${String(41 + pi * 7).padStart(3, "0")}`,
       poNo: s.status === "planning" ? "" : `PO-${450000 + pi * 1137}`,
       poDate: s.status === "planning" ? null : addDays(startDate, -12),
-      operationalCostPerDay: 150,
+      operationalCostPerManDay: 150,
       managerId: E(s.manager),
       contractValue: s.value,
       estimatedCost: round(s.value * 0.78, 10000),
