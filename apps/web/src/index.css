@@ -130,6 +130,24 @@ html[data-density="comfortable"] { font-size: 17.5px; }
   [data-view="field"] main { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 }
 
+/* Scroll shadows: a soft shadow appears on the left or right edge of a wide table while there are more
+ * columns to scroll to, and disappears at the end. The surface-coloured "covers" scroll with the content
+ * (background-attachment: local) and hide the shadows once you reach that edge. */
+.scroll-shadow-x {
+  --shadow: color-mix(in srgb, var(--color-foreground) 16%, transparent);
+  background:
+    linear-gradient(to right, var(--color-surface) 30%, transparent) left center / 40px 100% no-repeat local,
+    linear-gradient(to left, var(--color-surface) 30%, transparent) right center / 40px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--shadow), transparent) left center / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--shadow), transparent) right center / 14px 100% no-repeat scroll;
+  background-color: var(--color-surface);
+}
+/* Same idea for a row of tabs, done with a fade mask so it works over any background. */
+.scroll-fade-x {
+  scrollbar-width: none;
+}
+.scroll-fade-x::-webkit-scrollbar { display: none; }
+
 @keyframes fade-in {
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }

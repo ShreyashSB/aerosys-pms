@@ -20,7 +20,19 @@ export const COST_HEADS: Array<{ key: CostHead; label: string; hint: string }> =
  * with the exact numeric table alongside. Hover links bar and row; clicking
  * opens the detail/calculation for that head.
  */
-export function CostBreakdown({ costs, onSelect, budget }: { costs: CostHeads; onSelect?: (head: CostHead) => void; budget?: number }) {
+export function CostBreakdown({
+  costs,
+  onSelect,
+  budget,
+  exact,
+}: {
+  costs: CostHeads;
+  onSelect?: (head: CostHead) => void;
+  budget?: number;
+  /** Full rupees (₹5,92,800) instead of lakhs (₹5.93 L), for pages like Costs whose other tables use full rupees. */
+  exact?: boolean;
+}) {
+  const fmt = exact ? formatINR : formatINRShort;
   const [hover, setHover] = useState<CostHead | null>(null);
   const heads = COST_HEADS.filter((h) => (h.key !== "other" && h.key !== "bills") || costs[h.key] > 0);
   const max = Math.max(1, ...heads.map((h) => costs[h.key]));
@@ -65,7 +77,7 @@ export function CostBreakdown({ costs, onSelect, budget }: { costs: CostHeads; o
                   </div>
                 </td>
                 <td className="whitespace-nowrap py-2.5 text-right font-medium tabular">
-                  <span title={formatINR(v)}>{formatINRShort(v)}</span>
+                  <span title={formatINR(v)}>{fmt(v)}</span>
                 </td>
                 <td className="py-2.5 text-right text-xs text-muted-foreground tabular">{formatPct((v / total) * 100)}</td>
                 {onSelect && (
@@ -81,7 +93,7 @@ export function CostBreakdown({ costs, onSelect, budget }: { costs: CostHeads; o
           <tr className="border-t-2 font-semibold">
             <td className="py-2.5">Total cost to date</td>
             <td className="hidden sm:table-cell" />
-            <td className="whitespace-nowrap py-2.5 text-right tabular" title={formatINR(costs.total)}>{formatINRShort(costs.total)}</td>
+            <td className="whitespace-nowrap py-2.5 text-right tabular" title={formatINR(costs.total)}>{fmt(costs.total)}</td>
             <td className="py-2.5 text-right text-xs tabular">100%</td>
             {onSelect && <td />}
           </tr>
@@ -89,7 +101,7 @@ export function CostBreakdown({ costs, onSelect, budget }: { costs: CostHeads; o
             <tr className="text-xs text-muted-foreground">
               <td className="pb-1">Budgeted total cost</td>
               <td className="hidden sm:table-cell" />
-              <td className="pb-1 text-right tabular">{formatINRShort(budget)}</td>
+              <td className="whitespace-nowrap pb-1 text-right tabular" title={formatINR(budget)}>{fmt(budget)}</td>
               <td className="pb-1 text-right tabular">{formatPct((costs.total / budget) * 100, 0)} used</td>
               {onSelect && <td />}
             </tr>

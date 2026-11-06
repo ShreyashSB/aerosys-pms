@@ -6,6 +6,7 @@ import { useScopedData } from "@/hooks/useAppData";
 import { Kbd } from "@/components/ui/misc";
 import { formatINR } from "@/lib/format";
 import { cn, includesText } from "@/lib/utils";
+import { useIsWide } from "@/hooks/useMediaQuery";
 
 interface Result {
   id: string;
@@ -21,6 +22,8 @@ export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // A phone header has room for one word; the long hint was cut to "Search pr".
+  const wide = useIsWide();
   const navigate = useNavigate();
   const { can } = useAuth();
   const data = useScopedData();
@@ -108,8 +111,8 @@ export function GlobalSearch() {
           } else if (e.key === "Enter" && results[active]) go(results[active]);
           else if (e.key === "Escape") inputRef.current?.blur();
         }}
-        placeholder="Search projects, people, instruments, expenses…"
-        className="h-9 w-full rounded-md border border-input bg-muted/50 pl-9 pr-14 text-sm placeholder:text-muted-foreground focus:bg-surface focus:outline-none focus:ring-2 focus:ring-ring/30"
+        placeholder={wide ? "Search projects, people, instruments, expenses…" : "Search"}
+        className="h-10 w-full rounded-md border border-input bg-muted/50 pl-9 pr-3 text-base sm:pr-14 md:h-9 md:text-sm placeholder:text-muted-foreground focus:bg-surface focus:outline-none focus:ring-2 focus:ring-ring/30"
         aria-label="Global search"
       />
       <span className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 sm:block">
@@ -125,7 +128,7 @@ export function GlobalSearch() {
               lastGroup = r.group;
               return (
                 <div key={`${r.group}-${r.id}`}>
-                  {header && <p className="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{header}</p>}
+                  {header && <p className="px-2 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{header}</p>}
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => go(r)}

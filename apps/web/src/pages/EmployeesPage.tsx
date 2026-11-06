@@ -59,16 +59,17 @@ export function EmployeesPage() {
           <Avatar name={e.name} />
           <div>
             <p className="font-medium">{e.name}</p>
-            <p className="text-xs text-muted-foreground">{e.email}</p>
+            {/* The ID column is hidden on narrower laptops, so the ID moves under the name there. */}
+            <p className="text-xs text-muted-foreground"><span className="2xl:hidden">{e.code} · </span>{e.email}</p>
           </div>
         </div>
       ),
     },
-    { key: "code", header: "Employee ID", sortValue: (e) => e.code, cell: (e) => <span className="text-muted-foreground">{e.code}</span> },
+    { key: "code", header: "Employee ID", sortValue: (e) => e.code, cell: (e) => <span className="text-muted-foreground">{e.code}</span>, className: "hidden 2xl:table-cell" },
     { key: "dept", header: "Department", sortValue: (e) => e.department, cell: (e) => e.department, hideOnMobile: true },
     { key: "desig", header: "Designation", sortValue: (e) => e.designation, cell: (e) => e.designation },
-    ...(showRates ? [{ key: "rate", header: "Daily cost", align: "right" as const, sortValue: (e: Employee) => e.dailyCost, cell: (e: Employee) => <span className="tabular">{formatINR(e.dailyCost)}<span className="text-xs text-muted-foreground"> /day</span></span> }] : []),
-    { key: "join", header: "Joining date", sortValue: (e) => e.joiningDate, cell: (e) => formatDate(e.joiningDate), hideOnMobile: true },
+    ...(showRates ? [{ key: "rate", header: "Daily cost", align: "right" as const, sortValue: (e: Employee) => e.dailyCost, cell: (e: Employee) => <span className="tabular whitespace-nowrap">{formatINR(e.dailyCost)}<span className="text-xs text-muted-foreground"> /day</span></span> }] : []),
+    { key: "join", header: "Joining date", sortValue: (e) => e.joiningDate, cell: (e) => <span className="whitespace-nowrap">{formatDate(e.joiningDate)}</span>, className: "hidden 2xl:table-cell" },
     { key: "access", header: "System access", hideOnMobile: true, cell: (e) => { const r = roleOf(e.id); return r ? <Badge tone="info">{ROLE_LABELS[r]}</Badge> : <span className="text-xs text-muted-foreground">—</span>; } },
     { key: "status", header: "Status", sortValue: (e) => e.status, cell: (e) => <EmployeeStatusBadge status={e.status} /> },
     ...(canManage
@@ -103,7 +104,7 @@ export function EmployeesPage() {
     <div>
       <PageHeader
         title="Employees"
-        description="Employee directory. Each person's Daily Cost is the internal rate used to cost man-days on projects — this is not a payroll system."
+        description="Employee directory. Each person's daily cost is the internal rate used to cost man-days on projects — this is not a payroll system."
         breadcrumbs={[{ label: "Dashboard", to: "/" }, { label: "Employees" }]}
         actions={
           <>
@@ -125,7 +126,7 @@ export function EmployeesPage() {
           />
         )}
       </div>
-      <FilterBar onReset={filters.reset} showReset={filters.active}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : data.employees.length}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search name, ID, email…" />
         <Select value={f.department} onChange={(e) => filters.set("department", e.target.value)} className="w-auto" aria-label="Filter by department">
           <option value="">All departments</option>
@@ -140,6 +141,19 @@ export function EmployeesPage() {
         rows={rows}
         columns={columns}
         rowKey={(e) => e.id}
+        mobileCard={(e) => (
+          <div className="flex items-center gap-3">
+            <Avatar name={e.name} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{e.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{e.designation} · {e.code}</p>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <EmployeeStatusBadge status={e.status} />
+              {showRates && <span className="text-xs tabular text-muted-foreground">{formatINR(e.dailyCost)}/day</span>}
+            </div>
+          </div>
+        )}
         loading={data.isLoading}
         pageSize={12}
         initialSort={{ key: "code", dir: "asc" }}

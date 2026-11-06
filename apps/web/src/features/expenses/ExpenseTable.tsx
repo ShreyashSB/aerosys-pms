@@ -98,6 +98,29 @@ export function ExpenseTable({
         loading={loading}
         pageSize={pageSize}
         initialSort={{ key: "date", dir: "desc" }}
+        mobileCard={(e) => (
+          <div className="flex items-start gap-2">
+            <button type="button" className="min-w-0 flex-1 cursor-pointer text-left" onClick={() => setViewing(e)}>
+              <span className="flex items-start justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-1.5 font-medium">
+                  <span className="truncate">{e.description}</span>
+                  {e.receipt && <Paperclip className="size-3.5 shrink-0 text-muted-foreground" aria-label="Has receipt" />}
+                </span>
+                <span className="shrink-0 tabular font-semibold">{formatINR(e.amount)}</span>
+              </span>
+              <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                {formatDate(e.date)} · {e.category}
+                {!hideEmployee && <> · {employeeById.get(e.employeeId)?.name ?? "—"}</>}
+                {!hideProject && <> · {projectById.get(e.projectId)?.name ?? "—"}</>}
+              </span>
+            </button>
+            {canDelete && (
+              <Button size="icon-sm" variant="ghost" className="-mr-2 text-danger" onClick={() => setDeleting(e)} aria-label={`Delete ${e.code}`} title="Delete">
+                <Trash2 />
+              </Button>
+            )}
+          </div>
+        )}
         empty={<EmptyState icon={<ReceiptIcon />} title="No expenses found" description="Expenses matching your filters will appear here." action={emptyAction} />}
       />
 

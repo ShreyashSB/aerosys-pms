@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export function Money({ value, className, signed }: { value: number; className?: string; signed?: boolean }) {
   return (
     <span
-      className={cn("tabular", signed && value < 0 && "text-danger", signed && value > 0 && "text-success", className)}
+      className={cn("tabular whitespace-nowrap", signed && value < 0 && "text-danger", signed && value > 0 && "text-success", className)}
       title={formatINR(value)}
     >
       {formatINRShort(value)}

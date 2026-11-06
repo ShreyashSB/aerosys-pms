@@ -95,7 +95,7 @@ export function ExpensesPage() {
         <StatCard label="Largest category" value={byCategory[0] ? formatINR(byCategory[0][1]) : "—"} hint={byCategory[0]?.[0]} loading={data.isLoading} />
       </div>
 
-      <FilterBar onReset={filters.reset} showReset={filters.active}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : base.length}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search ID, description…" />
         <Select value={f.project} onChange={(e) => filters.set("project", e.target.value)} className="w-auto max-w-56" aria-label="Filter by project">
           <option value="">All projects</option>

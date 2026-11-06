@@ -98,7 +98,7 @@ function PortfolioDashboard() {
             <Progress value={r.f.progress * 100} tone={r.f.progress >= 1 ? "success" : "primary"} />
             <span className="w-9 text-right text-xs tabular">{formatPct(r.f.progress * 100, 0)}</span>
           </div>
-          {r.p.status === "active" && <p className="text-[11px] text-muted-foreground">plan {formatPct(r.f.expectedProgress * 100, 0)}</p>}
+          {r.p.status === "active" && <p className="text-xs text-muted-foreground">plan {formatPct(r.f.expectedProgress * 100, 0)}</p>}
         </div>
       ),
     },
@@ -110,7 +110,7 @@ function PortfolioDashboard() {
       cell: (r) => (
         <span className="tabular">
           {formatNumber(r.f.consumedManDays, 0)}
-          <span className="block text-[11px] text-muted-foreground">of {formatNumber(r.f.allottedManDays)}</span>
+          <span className="block text-xs text-muted-foreground">of {formatNumber(r.f.allottedManDays)}</span>
         </span>
       ),
     },
@@ -126,7 +126,7 @@ function PortfolioDashboard() {
         return (
           <span className={cn("tabular font-medium", TONE_CLASSES[h.tone].text)} title={h.label}>
             {formatINRShort(r.f.runningPpi)}
-            <span className="block text-[11px] font-normal">{r.f.ppiVariancePct >= 0 ? "+" : ""}{formatPct(r.f.ppiVariancePct, 0)}</span>
+            <span className="block text-xs font-normal">{r.f.ppiVariancePct >= 0 ? "+" : ""}{formatPct(r.f.ppiVariancePct, 0)}</span>
           </span>
         );
       },
@@ -143,7 +143,7 @@ function PortfolioDashboard() {
               return (
                 <span className="tabular">
                   {formatINRShort(r.f.consumedExpenses)}
-                  <span className={cn("block text-[11px]", h.tone === "neutral" ? "text-muted-foreground" : TONE_CLASSES[h.tone].text)}>{formatPct(r.f.expenseUtilisation * 100, 0)} of allotted</span>
+                  <span className={cn("block text-xs", h.tone === "neutral" ? "text-muted-foreground" : TONE_CLASSES[h.tone].text)}>{formatPct(r.f.expenseUtilisation * 100, 0)} of allotted</span>
                 </span>
               );
             },
@@ -159,7 +159,7 @@ function PortfolioDashboard() {
               return (
                 <span className={cn("tabular font-medium", TONE_CLASSES[h.tone].text)}>
                   {formatINRShort(r.f.finalProfit)}
-                  <span className="block text-[11px] font-normal">{formatPct(r.f.finalMarginPct)} margin</span>
+                  <span className="block text-xs font-normal">{formatPct(r.f.finalMarginPct)} margin</span>
                 </span>
               );
             },
@@ -216,7 +216,7 @@ function PortfolioDashboard() {
       )}
 
       {/* Execution KPIs */}
-      <section aria-label="Execution overview" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section aria-label="Execution overview" className={cn("grid grid-cols-2 gap-3 md:grid-cols-3", showFinance ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         <KpiCard
           label="Portfolio running PPI"
           value={s.consumedManDays ? formatPerMd(s.runningPpi) : "—"}
@@ -231,9 +231,8 @@ function PortfolioDashboard() {
           <KpiCard label="Expense utilisation" value={formatPct(s.expenseUtilisation * 100, 0)} health={expH} sub={`${formatINRShort(s.consumedExpenses)} of ${formatINRShort(s.allottedExpenses)}`} loading={isLoading} />
         )}
         <KpiCard label="Project completion" value={formatPct(s.progress * 100, 0)} sub={`${s.activeCount} active · ${s.completedCount} completed`} loading={isLoading} />
-        <CountCard label="Projects at risk" count={atRisk.length} active={filter === "risk"} onClick={() => setFilter(filter === "risk" ? "all" : "risk")} loading={isLoading} />
-        <CountCard label="Over budget" count={overBudget.length} active={filter === "budget"} onClick={() => setFilter(filter === "budget" ? "all" : "budget")} loading={isLoading} />
-        <CountCard label="Below PPI baseline" count={lowPpi.length} active={filter === "ppi"} onClick={() => setFilter(filter === "ppi" ? "all" : "ppi")} loading={isLoading} />
+        {/* At risk / Over budget / Below baseline counts live on the filter chips of the
+            "Project financial health" table below, so they no longer need cards of their own. */}
       </section>
 
       {/* Attention required */}
@@ -376,20 +375,6 @@ function PortfolioDashboard() {
         }
       />
     </div>
-  );
-}
-
-function CountCard({ label, count, active, onClick, loading }: { label: string; count: number; active: boolean; onClick: () => void; loading?: boolean }) {
-  const h: Health = count === 0 ? { tone: "good", label: "None" } : { tone: count > 2 ? "bad" : "warn", label: active ? "Filtered below" : "Show in table" };
-  return (
-    <KpiCard
-      label={label}
-      value={count}
-      health={h}
-      onClick={onClick}
-      loading={loading}
-      className={cn(active && "ring-2 ring-primary")}
-    />
   );
 }
 

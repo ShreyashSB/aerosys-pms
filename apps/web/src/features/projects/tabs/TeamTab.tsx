@@ -56,7 +56,7 @@ export function TeamTab({
           <EmptyState
             icon={<HardHat />}
             title="No engineers assigned"
-            description={closed ? "This project is closed." : "Assign site engineers; their daily attendance is then recorded in the Daily Work Log."}
+            description={closed ? "This project is closed." : "Assign site engineers; their daily attendance is then recorded in the daily work log."}
             action={canAssign && !closed ? <Button variant="outline" onClick={() => setOpen(true)}><UserPlus /> Assign engineer</Button> : undefined}
           />
         </Card>

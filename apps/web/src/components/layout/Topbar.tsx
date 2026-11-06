@@ -58,7 +58,7 @@ export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view:
       {/* Demo role switcher (demo data only: on the live database your login decides your role) */}
       {!USE_API && (
       <div className="hidden items-center gap-2 rounded-md border border-dashed border-primary/40 bg-primary-soft/50 py-1 pl-2.5 pr-1 md:flex">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Demo role</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-primary">Demo role</span>
         <select
           value={user.role}
           onChange={(e) => {

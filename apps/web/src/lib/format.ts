@@ -4,8 +4,8 @@ const inr = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 export function formatINRShort(value: number): string {
   const sign = value < 0 ? "-" : "";
   const v = Math.abs(value);
-  if (v >= 1e7) return `${sign}₹${trim(v / 1e7)} Cr`;
-  if (v >= 1e5) return `${sign}₹${trim(v / 1e5)} L`;
+  if (v >= 1e7) return `${sign}₹${trim(v / 1e7)}\u00a0Cr`; // non-breaking space: "Cr" never wraps onto its own line
+  if (v >= 1e5) return `${sign}₹${trim(v / 1e5)}\u00a0L`;
   return `${sign}₹${inr.format(Math.round(v))}`;
 }
 

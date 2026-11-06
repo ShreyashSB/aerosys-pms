@@ -78,7 +78,7 @@ export function AttendanceSummaryDialog({
             <span className="text-muted-foreground">
               {view.logs} logs · <strong className="text-foreground">{formatNumber(view.totalMd, 1)}</strong> man-days · <strong className="text-warning">{formatNumber(view.totalIdle, 1)}</strong> idle man-days
             </span>
-            <span className="ml-auto flex flex-wrap gap-2 text-[11px]">
+            <span className="ml-auto flex flex-wrap gap-2 text-xs">
               {(Object.keys(STATUS_STYLE) as AttendanceStatus[]).map((s) => (
                 <span key={s} className="flex items-center gap-1"><span className={cn("rounded px-1", STATUS_STYLE[s].cls)}>{STATUS_STYLE[s].code}</span>{ATTENDANCE_LABEL[s]}</span>
               ))}
