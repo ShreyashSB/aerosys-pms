@@ -54,6 +54,8 @@ Data that must exist (like the five project types) goes in a **custom migration*
 
 Never edit a migration that has already run on a shared database. Add a new one instead.
 
+**Renaming a column keeps its data.** If you rename `operational_cost_per_day` in `schema.ts`, `db:generate` stops and asks whether this is a rename or a drop-and-add. Drop-and-add would lose every project's rate, so answer *rename*. The SQL it should end up with is `ALTER TABLE ... RENAME COLUMN`, as in `0010_operation_cost_per_man_day.sql`, which also moves existing settings from the old 15% margin target to the sheet's 20% with a plain `UPDATE`.
+
 ## Demo data: `pnpm db:seed`
 
 `pnpm db:seed -- --yes` empties the database and loads the demo: 34 employees, 12 projects, about a thousand daily logs, expenses, bills, instruments and reviews. It asks for `--yes` because it deletes everything first, so never point it at real company data.

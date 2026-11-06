@@ -80,7 +80,7 @@ export async function seedDemo(db: Database) {
         estimatedCost: p.estimatedCost,
         allottedManDays: p.allottedManDays,
         allottedExpenses: p.allottedExpenses,
-        operationalCostPerDay: p.operationalCostPerDay,
+        operationalCostPerManDay: p.operationalCostPerManDay,
         startDate: p.startDate,
         endDate: p.endDate,
         periodStart: p.periodStart,

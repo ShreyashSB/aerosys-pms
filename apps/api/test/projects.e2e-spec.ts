@@ -67,7 +67,7 @@ describe('Employees and projects (e2e)', () => {
       clientName: `Lotus Infra ${run}`,
       site: `Baner ${run}`,
       projectType: 'TAB (Testing, Adjusting, Balancing)',
-      operationalCostPerDay: 150,
+      operationalCostPerManDay: 150,
       periodStart: '2026-11-01',
       status: 'planning',
     });
@@ -106,9 +106,9 @@ describe('Employees and projects (e2e)', () => {
 
     const updated = await api()
       .put(`/api/projects/${id}`)
-      .send(project({ name: `Edited ${run}`, projectType: `Retro-commissioning ${run}`, operationalCostPerDay: 200 }))
+      .send(project({ name: `Edited ${run}`, projectType: `Retro-commissioning ${run}`, operationalCostPerManDay: 200 }))
       .expect(200);
-    expect(updated.body).toMatchObject({ name: `Edited ${run}`, projectType: `Retro-commissioning ${run}`, operationalCostPerDay: 200, code: created.body.code });
+    expect(updated.body).toMatchObject({ name: `Edited ${run}`, projectType: `Retro-commissioning ${run}`, operationalCostPerManDay: 200, code: created.body.code });
 
     await api().patch(`/api/projects/${id}/status`).send({ status: 'active' }).expect(200);
     expect((await api().get(`/api/projects/${id}`).expect(200)).body.status).toBe('active');

@@ -36,7 +36,7 @@ export class ProjectsService {
         estimatedCost: projects.estimatedCost,
         allottedManDays: projects.allottedManDays,
         allottedExpenses: projects.allottedExpenses,
-        operationalCostPerDay: projects.operationalCostPerDay,
+        operationalCostPerManDay: projects.operationalCostPerManDay,
         startDate: projects.startDate,
         endDate: projects.endDate,
         periodStart: projects.periodStart,

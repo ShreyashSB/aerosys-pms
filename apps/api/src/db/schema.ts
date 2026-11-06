@@ -82,7 +82,7 @@ export const projects = pgTable(
     allottedManDays: amount('allotted_man_days').notNull(),
     allottedExpenses: amount('allotted_expenses').notNull().default(0),
     /** ₹ per calendar day of the project. */
-    operationalCostPerDay: amount('operational_cost_per_day').notNull().default(150),
+    operationalCostPerManDay: amount('operational_cost_per_man_day').notNull().default(150),
     startDate: date('start_date', { mode: 'string' }).notNull(),
     endDate: date('end_date', { mode: 'string' }).notNull(),
     /** Start of the current measurement (RA bill) period. */
@@ -198,7 +198,7 @@ export const settings = pgTable(
     hoursPerManDay: numeric('hours_per_man_day', { precision: 4, scale: 2, mode: 'number' }).notNull().default(8),
     /** performance or budget. */
     projectionMethod: text('projection_method').notNull().default('performance'),
-    targetMarginPct: numeric('target_margin_pct', { precision: 5, scale: 2, mode: 'number' }).notNull().default(15),
+    targetMarginPct: numeric('target_margin_pct', { precision: 5, scale: 2, mode: 'number' }).notNull().default(20),
     ...timestamps,
   },
   (t) => [check('settings_single_row', sql`${t.id} = 1`)],

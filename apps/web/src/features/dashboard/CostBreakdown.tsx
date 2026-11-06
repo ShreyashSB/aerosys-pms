@@ -10,7 +10,7 @@ export const COST_HEADS: Array<{ key: CostHead; label: string; hint: string }> =
   { key: "wages", label: "Wages", hint: "Man-days × daily cost" },
   { key: "expenses", label: "Expenses", hint: "Site expenses recorded by Accounts" },
   { key: "instruments", label: "Instrument charges", hint: "Usage charge on deployments" },
-  { key: "operational", label: "Operational charges", hint: "Project days × operational cost per day" },
+  { key: "operational", label: "Operational charges", hint: "Man-days × operational cost per man-day" },
   { key: "bills", label: "Vendor bills", hint: "Entered by Accounts" },
   { key: "other", label: "Other direct costs", hint: "Hire, sub-contract…" },
 ];

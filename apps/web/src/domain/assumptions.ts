@@ -110,15 +110,11 @@ export function expectedProgress(elapsedDays: number, totalDays: number) {
 export const WAGE_RATE_MODE = "current-daily-cost" as const;
 
 /**
- * Operational charges = calendar days the project has run × the project's operational cost per day.
- * Days count from the start date up to today, or up to the completion date once the project is completed.
+ * Operational charges = man-days consumed × the project's operational cost per man-day,
+ * as in Aerosys's costing sheet (120 man-days × ₹150 = ₹18,000).
  */
-export function operationalDays(start: string, end: string) {
-  return end < start ? 0 : daysBetween(start, end) + 1;
-}
-
-export function operationalCost(days: number, perDay: number) {
-  return days * perDay;
+export function operationalCost(manDays: number, perManDay: number) {
+  return manDays * perManDay;
 }
 
 /**
@@ -198,5 +194,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   deadlineAlertDays: 14,
   hoursPerManDay: 8,
   projectionMethod: "performance",
-  targetMarginPct: 15,
+  targetMarginPct: 20,
 };

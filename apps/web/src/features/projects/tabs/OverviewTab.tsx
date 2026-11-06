@@ -88,7 +88,7 @@ export function OverviewTab({
             />
             <KpiCard label="Wages" value={formatINRShort(p.costs.wages)} sub="MD × daily cost" onClick={() => onExplain("wages")} />
             <KpiCard label="Instrument Charges" value={formatINRShort(p.costs.instruments)} sub="Deployment usage" onClick={() => onExplain("instruments")} />
-            <KpiCard label="Operational Charges" value={formatINRShort(p.costs.operational)} sub={`${formatINR(p.operationalCostPerDay)}/day × ${p.operationalDays} days`} onClick={() => onExplain("operational")} />
+            <KpiCard label="Operational Charges" value={formatINRShort(p.costs.operational)} sub={`${formatINR(p.operationalCostPerManDay)}/man-day × ${formatNumber(p.consumedManDays, 1)} MD`} onClick={() => onExplain("operational")} />
           </>
         )}
       </section>

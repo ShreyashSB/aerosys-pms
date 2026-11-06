@@ -69,5 +69,5 @@ export class ProjectsController {
 
 /** Contract value, budget and cost rates are blanked for roles without `finance.view`. */
 function withoutFinance(p: ProjectDto, finance: boolean): ProjectDto {
-  return finance ? p : { ...p, contractValue: 0, estimatedCost: 0, allottedExpenses: 0, operationalCostPerDay: 0 };
+  return finance ? p : { ...p, contractValue: 0, estimatedCost: 0, allottedExpenses: 0, operationalCostPerManDay: 0 };
 }
