@@ -5,6 +5,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Expense } from '../db/schema.js';
 import { ExpenseInputSchema, ExpenseQuerySchema, type ExpenseInput, type ExpenseQuery } from './expenses.dto.js';
 import { ExpensesService } from './expenses.service.js';
+import { Audit } from '../audit/audit.js';
 
 /**
  * Accounts records expenses on behalf of whoever spent the money. A recorded
@@ -28,6 +29,7 @@ export class ExpensesController {
 
   /** POST /api/expenses */
   @Allow('expense.create')
+  @Audit('expense')
   @Post()
   create(@User() user: CurrentUser, @Body(new ZodValidationPipe(ExpenseInputSchema)) body: ExpenseInput): Promise<Expense> {
     return this.expenses.create(body, user);
@@ -35,6 +37,7 @@ export class ExpensesController {
 
   /** DELETE /api/expenses/:id → remove a wrong entry (204) */
   @Allow('expense.create')
+  @Audit('expense', { param: 'id' })
   @Delete(':id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

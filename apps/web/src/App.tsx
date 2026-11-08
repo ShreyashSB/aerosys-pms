@@ -14,6 +14,7 @@ const ExpensesPage = lazy(() => import("@/pages/ExpensesPage").then((m) => ({ de
 const InstrumentsPage = lazy(() => import("@/pages/InstrumentsPage").then((m) => ({ default: m.InstrumentsPage })));
 const EmployeesPage = lazy(() => import("@/pages/EmployeesPage").then((m) => ({ default: m.EmployeesPage })));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage").then((m) => ({ default: m.ReportsPage })));
+const HistoryPage = lazy(() => import("@/pages/HistoryPage").then((m) => ({ default: m.HistoryPage })));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 import { ForbiddenPage, NotFoundPage } from "@/pages/StatusPages";
 
@@ -37,6 +38,7 @@ export function App() {
           <Route path="instruments" element={<Guard permission="instrument.view"><InstrumentsPage /></Guard>} />
           <Route path="employees" element={<Guard permission="employee.view"><EmployeesPage /></Guard>} />
           <Route path="reports" element={<Guard permission="report.view"><ReportsPage /></Guard>} />
+          <Route path="history" element={<Guard permission="history.view"><HistoryPage /></Guard>} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

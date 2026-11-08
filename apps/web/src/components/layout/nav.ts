@@ -1,4 +1,4 @@
-import { BarChart3, FolderKanban, HardHat, LayoutDashboard, Receipt, Settings, Users, Wrench, type LucideIcon } from "lucide-react";
+import { BarChart3, FolderKanban, HardHat, History, LayoutDashboard, Receipt, Settings, Users, Wrench, type LucideIcon } from "lucide-react";
 import type { Permission } from "@/auth/permissions";
 import type { Role } from "@/types/models";
 
@@ -19,5 +19,6 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/instruments", label: "Instruments", icon: Wrench, permission: "instrument.view", labelFor: { site_engineer: "My Instruments" } },
   { to: "/employees", label: "Employees", icon: Users, permission: "employee.view" },
   { to: "/reports", label: "Reports", icon: BarChart3, permission: "report.view" },
+  { to: "/history", label: "History", icon: History, permission: "history.view" },
   { to: "/settings", label: "Settings", icon: Settings },
 ];

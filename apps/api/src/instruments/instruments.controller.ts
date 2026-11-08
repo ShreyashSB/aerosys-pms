@@ -15,6 +15,7 @@ import {
   type StatusInput,
 } from './instruments.dto.js';
 import { InstrumentsService } from './instruments.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller()
 export class InstrumentsController {
@@ -39,6 +40,7 @@ export class InstrumentsController {
 
   /** POST /api/instruments */
   @Allow('instrument.manage')
+  @Audit('instrument')
   @Post('instruments')
   create(@Body(new ZodValidationPipe(InstrumentInputSchema)) body: InstrumentInput): Promise<InstrumentDto> {
     return this.instruments.create(body);
@@ -46,6 +48,7 @@ export class InstrumentsController {
 
   /** PUT /api/instruments/:id */
   @Allow('instrument.manage')
+  @Audit('instrument', { param: 'id' })
   @Put('instruments/:id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(InstrumentInputSchema)) body: InstrumentInput): Promise<InstrumentDto> {
     return this.instruments.update(id, body);
@@ -53,6 +56,7 @@ export class InstrumentsController {
 
   /** POST /api/instruments/:id/assign */
   @Allow('instrument.manage')
+  @Audit('instrument', { param: 'id', summary: 'Sent to a project' })
   @Post('instruments/:id/assign')
   assign(
     @User() user: CurrentUser,
@@ -64,6 +68,7 @@ export class InstrumentsController {
 
   /** POST /api/instruments/:id/return */
   @Allow('instrument.manage')
+  @Audit('instrument', { param: 'id', summary: 'Returned to the store' })
   @Post('instruments/:id/return')
   returnInstrument(@Param('id', ParseUUIDPipe) id: string): Promise<InstrumentDto> {
     return this.instruments.returnInstrument(id);
@@ -71,6 +76,7 @@ export class InstrumentsController {
 
   /** PATCH /api/instruments/:id/status */
   @Allow('instrument.manage')
+  @Audit('instrument', { param: 'id' })
   @Patch('instruments/:id/status')
   setStatus(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(StatusInputSchema)) body: StatusInput): Promise<InstrumentDto> {
     return this.instruments.setStatus(id, body);

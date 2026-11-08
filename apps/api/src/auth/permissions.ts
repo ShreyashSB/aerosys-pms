@@ -33,6 +33,7 @@ export type Permission =
   | 'report.view'
   | 'engineer.review'
   | 'bill.manage'
+  | 'history.view' // the change history: who changed what, and when
   | 'settings.manage';
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -42,18 +43,18 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'expense.viewAll',
     'instrument.view', 'instrument.viewAll', 'instrument.manage', 'engineer.view', 'engineer.manage',
     'employee.view', 'employee.manage', 'report.view', 'settings.manage', 'boq.edit', 'log.create', 'document.upload',
-    'engineer.review',
+    'engineer.review', 'history.view',
   ],
   project_manager: [
     'project.edit', 'project.progress', 'project.assign', 'finance.view',
     'instrument.view', 'instrument.viewAll', 'instrument.manage', 'engineer.view', 'boq.edit', 'log.create', 'document.upload',
-    'rates.view', 'engineer.review',
+    'rates.view', 'engineer.review', 'history.view',
   ],
   site_engineer: ['project.progress', 'instrument.view'],
   accounts: [
     'dashboard.portfolio', 'project.viewAll', 'project.costs.edit', 'finance.view', 'rates.view',
     'expense.viewAll', 'expense.create',
-    'employee.view', 'employee.manage', 'report.view', 'document.upload', 'bill.manage',
+    'employee.view', 'employee.manage', 'report.view', 'document.upload', 'bill.manage', 'history.view',
   ],
 };
 

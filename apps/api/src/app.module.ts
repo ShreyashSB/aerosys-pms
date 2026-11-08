@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AssignmentsModule } from './assignments/assignments.module.js';
 import { BillsModule } from './bills/bills.module.js';
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module.js';
     ConfigModule,
     DbModule,
     AuthModule,
+    AuditModule,
     NotificationsModule,
     UsersModule,
     HealthModule,

@@ -15,6 +15,7 @@ import type {
   BoqItem,
   DailyLog,
   EngineerReview,
+  HistoryPage,
   Employee,
   Expense,
   Instrument,
@@ -176,4 +177,12 @@ export const notificationService: Service<"notificationService"> = {
     await http.post("/api/notifications/read-all");
   },
   runScheduledChecks: async () => {},
+};
+
+export const historyService: Service<"historyService"> = {
+  list(q = {}) {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== "") params.set(k, String(v));
+    return http.get<HistoryPage>(`/api/history?${params}`);
+  },
 };

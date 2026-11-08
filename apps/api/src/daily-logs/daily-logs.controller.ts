@@ -5,6 +5,7 @@ import { ProjectScope } from '../auth/project-access.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { DailyLogInputSchema, type DailyLogDto, type DailyLogInput } from './daily-logs.dto.js';
 import { DailyLogsService } from './daily-logs.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller()
 export class DailyLogsController {
@@ -30,6 +31,7 @@ export class DailyLogsController {
   /** POST /api/projects/:projectId/daily-logs */
   @Allow('log.create')
   @ProjectScope('projectId', 'projects')
+  @Audit('daily_log')
   @Post('projects/:projectId/daily-logs')
   create(
     @User() user: CurrentUser,
@@ -42,6 +44,7 @@ export class DailyLogsController {
   /** PUT /api/daily-logs/:id */
   @Allow('log.create')
   @ProjectScope('id', 'dailyLogs')
+  @Audit('daily_log', { param: 'id' })
   @Put('daily-logs/:id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(DailyLogInputSchema)) body: DailyLogInput): Promise<DailyLogDto> {
     return this.logs.update(id, body);
@@ -50,6 +53,7 @@ export class DailyLogsController {
   /** DELETE /api/daily-logs/:id (204) */
   @Allow('log.create')
   @ProjectScope('id', 'dailyLogs')
+  @Audit('daily_log', { param: 'id' })
   @Delete('daily-logs/:id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

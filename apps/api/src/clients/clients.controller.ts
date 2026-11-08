@@ -4,6 +4,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Client } from '../db/schema.js';
 import { CreateClientSchema, type CreateClientDto } from './clients.dto.js';
 import { ClientsService } from './clients.service.js';
+import { Audit } from '../audit/audit.js';
 
 /** Routes under /api/clients. Like a Spring @RestController. */
 @Controller('clients')
@@ -19,6 +20,7 @@ export class ClientsController {
 
   /** POST /api/clients  { "name": "Tata Projects" } */
   @Allow('project.create')
+  @Audit('client')
   @Post()
   create(@Body(new ZodValidationPipe(CreateClientSchema)) body: CreateClientDto): Promise<Client> {
     return this.clients.create(body);

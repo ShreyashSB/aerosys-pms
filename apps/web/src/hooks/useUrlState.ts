@@ -4,18 +4,23 @@ import { useSearchParams } from "react-router-dom";
 export function useUrlState<K extends string>(keys: readonly K[]) {
   const [params, setParams] = useSearchParams();
   const values = Object.fromEntries(keys.map((k) => [k, params.get(k) ?? ""])) as Record<K, string>;
-  const set = (key: K, value: string) => {
+  /** Sets several values in one URL change (separate `set` calls in one click would overwrite each other). */
+  const update = (changes: Partial<Record<K, string>>) => {
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (value) next.set(key, value);
-        else next.delete(key);
+        for (const [key, value] of Object.entries(changes) as [K, string | undefined][]) {
+          if (value) next.set(key, value);
+          else next.delete(key);
+        }
         return next;
       },
       { replace: true },
     );
   };
-  const reset = () => setParams(new URLSearchParams(), { replace: true });
+  const set = (key: K, value: string) => update({ [key]: value } as Partial<Record<K, string>>);
+  /** Clears these filters only; other URL values (such as the open tab) stay. */
+  const reset = () => update(Object.fromEntries(keys.map((k) => [k, ""])) as Partial<Record<K, string>>);
   const active = keys.some((k) => values[k]);
-  return { values, set, reset, active };
+  return { values, set, update, reset, active };
 }

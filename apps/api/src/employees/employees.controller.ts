@@ -5,6 +5,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Employee } from '../db/schema.js';
 import { EmployeeInputSchema, type EmployeeInput } from './employees.dto.js';
 import { EmployeesService } from './employees.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller('employees')
 export class EmployeesController {
@@ -29,6 +30,7 @@ export class EmployeesController {
 
   /** POST /api/employees */
   @Allow('employee.manage')
+  @Audit('employee')
   @Post()
   create(@Body(new ZodValidationPipe(EmployeeInputSchema)) body: EmployeeInput): Promise<Employee> {
     return this.employees.create(body);
@@ -36,6 +38,7 @@ export class EmployeesController {
 
   /** PUT /api/employees/:id */
   @Allow('employee.manage')
+  @Audit('employee', { param: 'id' })
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

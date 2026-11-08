@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
-  Activity, BarChart3, Building2, Calculator, ChevronRight, ClipboardList, FileSpreadsheet, FileText, FolderOpen, LayoutGrid, MapPin, Pencil, Plus, Receipt, Star, Users, Wrench,
+  Activity, BarChart3, Building2, Calculator, ChevronRight, ClipboardList, FileSpreadsheet, FileText, FolderOpen, History, LayoutGrid, MapPin, Pencil, Plus, Receipt, Star, Users, Wrench,
 } from "lucide-react";
 import { useCurrentUser } from "@/auth/AuthContext";
 import { can, canManageProject } from "@/auth/permissions";
@@ -24,6 +24,7 @@ import { InstrumentsTab } from "@/features/projects/tabs/InstrumentsTab";
 import { CostsTab } from "@/features/projects/tabs/CostsTab";
 import { DocumentsTab } from "@/features/projects/tabs/DocumentsTab";
 import { BillsTab } from "@/features/projects/tabs/BillsTab";
+import { HistoryFeed } from "@/features/history/HistoryFeed";
 import { PnlDrawer } from "@/features/projects/PnlDrawer";
 import { ReviewTeamDialog, projectTeam } from "@/features/projects/ReviewTeamDialog";
 import { DailyLogFormDialog } from "@/features/projects/dailylog/DailyLogFormDialog";
@@ -168,6 +169,7 @@ export function ProjectDetailPage() {
           {showFinance && <TabsTrigger value="costs"><Calculator /> Costs</TabsTrigger>}
           <TabsTrigger value="instruments"><Wrench /> Instruments</TabsTrigger>
           <TabsTrigger value="documents"><FolderOpen /> Documents</TabsTrigger>
+          {can(user.role, "history.view") && <TabsTrigger value="history"><History /> History</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="overview">
@@ -254,6 +256,11 @@ export function ProjectDetailPage() {
         <TabsContent value="documents">
           <DocumentsTab projectId={id} canUpload={can(user.role, "document.upload") && (user.role !== "project_manager" || isManager)} onGoBoq={() => setTab("boq")} />
         </TabsContent>
+        {can(user.role, "history.view") && (
+          <TabsContent value="history">
+            <HistoryFeed projectId={id} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ProjectFormDialog open={editOpen} onOpenChange={setEditOpen} project={project} />

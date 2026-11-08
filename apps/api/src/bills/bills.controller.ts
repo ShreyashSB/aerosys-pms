@@ -6,6 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { ProjectBill } from '../db/schema.js';
 import { BillInputSchema, type BillInput } from './bills.dto.js';
 import { BillsService } from './bills.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller()
 export class BillsController {
@@ -25,6 +26,7 @@ export class BillsController {
   /** POST /api/projects/:projectId/bills */
   @Allow('bill.manage')
   @ProjectScope('projectId', 'projects')
+  @Audit('bill')
   @Post('projects/:projectId/bills')
   create(
     @User() user: CurrentUser,
@@ -37,6 +39,7 @@ export class BillsController {
   /** PUT /api/bills/:id */
   @Allow('bill.manage')
   @ProjectScope('id', 'projectBills')
+  @Audit('bill', { param: 'id' })
   @Put('bills/:id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(BillInputSchema)) body: BillInput): Promise<ProjectBill> {
     return this.bills.update(id, body);
@@ -45,6 +48,7 @@ export class BillsController {
   /** DELETE /api/bills/:id (204) */
   @Allow('bill.manage')
   @ProjectScope('id', 'projectBills')
+  @Audit('bill', { param: 'id' })
   @Delete('bills/:id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
