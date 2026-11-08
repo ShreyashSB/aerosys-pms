@@ -6,6 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { ProjectDocument } from '../db/schema.js';
 import { DocumentInputSchema, type DocumentInput } from './documents.dto.js';
 import { DocumentsService } from './documents.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller()
 export class DocumentsController {
@@ -23,6 +24,7 @@ export class DocumentsController {
   /** POST /api/projects/:projectId/documents */
   @Allow('document.upload')
   @ProjectScope('projectId', 'projects')
+  @Audit('document')
   @Post('projects/:projectId/documents')
   create(
     @User() user: CurrentUser,
@@ -35,6 +37,7 @@ export class DocumentsController {
   /** DELETE /api/documents/:id (204) */
   @Allow('document.upload')
   @ProjectScope('id', 'projectDocuments')
+  @Audit('document', { param: 'id' })
   @Delete('documents/:id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

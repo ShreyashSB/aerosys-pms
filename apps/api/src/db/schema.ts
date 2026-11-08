@@ -444,6 +444,48 @@ export const notificationReads = pgTable(
   (t) => [primaryKey({ columns: [t.notificationId, t.userId] })],
 );
 
+/** One field that changed: its value before and after. Ids are stored as the names they point to. */
+export interface AuditChange {
+  field: string;
+  from: unknown;
+  to: unknown;
+}
+
+/**
+ * The change history: one row each time someone creates, edits or deletes a
+ * record. Names are copied in (who did it, which record, which project), so a
+ * row still reads correctly after the record itself is deleted. Rows are only
+ * ever added, never edited.
+ */
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+    actorEmployeeId: uuid('actor_employee_id'),
+    actorName: text('actor_name').notNull(),
+    actorRole: text('actor_role').notNull(),
+    /** employee, project, daily_log, expense, … (see audit/audit.entities.ts). */
+    entity: text('entity').notNull(),
+    entityId: text('entity_id').notNull(),
+    entityLabel: text('entity_label').notNull(),
+    /** No foreign key: the history of a deleted project stays. */
+    projectId: uuid('project_id'),
+    projectLabel: text('project_label'),
+    /** create, update or delete. */
+    action: text('action').notNull(),
+    /** What happened in words when the fields alone don't say it, e.g. "Reset the password". */
+    summary: text('summary'),
+    changes: jsonb('changes').$type<AuditChange[]>().notNull().default(sql`'[]'::jsonb`),
+  },
+  (t) => [
+    index('audit_log_at_idx').on(t.at),
+    index('audit_log_entity_idx').on(t.entity, t.entityId),
+    index('audit_log_project_idx').on(t.projectId),
+    index('audit_log_actor_idx').on(t.actorEmployeeId),
+  ],
+);
+
 /** Row types inferred from the tables: what a SELECT returns and what an INSERT accepts. */
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -466,3 +508,4 @@ export type InstrumentDeployment = typeof instrumentDeployments.$inferSelect;
 export type ProjectDocument = typeof projectDocuments.$inferSelect;
 export type EngineerReview = typeof engineerReviews.$inferSelect;
 export type UserRow = typeof users.$inferSelect;
+export type AuditRow = typeof auditLog.$inferSelect;

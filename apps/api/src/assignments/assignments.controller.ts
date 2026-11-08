@@ -6,6 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Assignment } from '../db/schema.js';
 import { AssignmentInputSchema, type AssignmentInput } from './assignments.dto.js';
 import { AssignmentsService } from './assignments.service.js';
+import { Audit } from '../audit/audit.js';
 
 /** No path on @Controller: each route spells out its own, since some hang off /projects/:id. */
 @Controller()
@@ -24,6 +25,7 @@ export class AssignmentsController {
   /** POST /api/projects/:projectId/assignments */
   @Allow('project.assign')
   @ProjectScope('projectId', 'projects')
+  @Audit('assignment')
   @Post('projects/:projectId/assignments')
   assign(
     @Param('projectId', ParseUUIDPipe) projectId: string,
@@ -35,6 +37,7 @@ export class AssignmentsController {
   /** DELETE /api/assignments/:id → release the engineer (204) */
   @Allow('project.assign')
   @ProjectScope('id', 'assignments')
+  @Audit('assignment', { param: 'id', summary: 'Released from the project' })
   @Delete('assignments/:id')
   @HttpCode(204)
   release(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

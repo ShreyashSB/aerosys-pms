@@ -334,3 +334,68 @@ export interface AppSettings {
   /** Margin below which projected profit is flagged. */
   targetMarginPct: number;
 }
+
+// ---------------------------------------------------------------- Change history
+
+/** Kinds of record the change history follows (audit_log.entity on the server). */
+export type AuditEntity =
+  | "employee"
+  | "login"
+  | "project"
+  | "client"
+  | "assignment"
+  | "boq_item"
+  | "boq_execution"
+  | "daily_log"
+  | "expense"
+  | "bill"
+  | "project_cost"
+  | "instrument"
+  | "document"
+  | "reviews"
+  | "settings";
+
+export type AuditAction = "create" | "update" | "delete";
+
+/** One field that changed. Ids are already replaced by the names they point to. */
+export interface AuditChange {
+  field: string;
+  from: unknown;
+  to: unknown;
+}
+
+/** One change someone made: who, when, which record, and the fields before and after. */
+export interface AuditEntry {
+  id: ID;
+  at: ISODateTime;
+  actorEmployeeId: ID | null;
+  actorName: string;
+  actorRole: string;
+  entity: AuditEntity;
+  entityId: string;
+  entityLabel: string;
+  projectId: ID | null;
+  projectLabel: string | null;
+  action: AuditAction;
+  summary: string | null;
+  changes: AuditChange[];
+}
+
+export interface HistoryQuery {
+  entity?: AuditEntity | "";
+  entityId?: string;
+  projectId?: string;
+  actorId?: string;
+  action?: AuditAction | "";
+  from?: ISODate;
+  to?: ISODate;
+  q?: string;
+  /** `nextCursor` from the previous page. */
+  before?: string;
+  limit?: number;
+}
+
+export interface HistoryPage {
+  entries: AuditEntry[];
+  nextCursor: string | null;
+}

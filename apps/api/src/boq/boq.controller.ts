@@ -6,6 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { BoqExecution, BoqItem } from '../db/schema.js';
 import { BoqItemInputSchema, ExecutionInputSchema, type BoqItemInput, type ExecutionInput } from './boq.dto.js';
 import { BoqService } from './boq.service.js';
+import { Audit } from '../audit/audit.js';
 
 const optionalUuid = new ParseUUIDPipe({ optional: true });
 
@@ -25,6 +26,7 @@ export class BoqController {
   /** POST /api/projects/:projectId/boq-items */
   @Allow('boq.edit')
   @ProjectScope('projectId', 'projects')
+  @Audit('boq_item')
   @Post('projects/:projectId/boq-items')
   createItem(
     @Param('projectId', ParseUUIDPipe) projectId: string,
@@ -36,6 +38,7 @@ export class BoqController {
   /** PUT /api/boq-items/:id */
   @Allow('boq.edit')
   @ProjectScope('id', 'boqItems')
+  @Audit('boq_item', { param: 'id' })
   @Put('boq-items/:id')
   updateItem(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(BoqItemInputSchema)) body: BoqItemInput): Promise<BoqItem> {
     return this.boq.updateItem(id, body);
@@ -44,6 +47,7 @@ export class BoqController {
   /** DELETE /api/boq-items/:id (204) */
   @Allow('boq.edit')
   @ProjectScope('id', 'boqItems')
+  @Audit('boq_item', { param: 'id' })
   @Delete('boq-items/:id')
   @HttpCode(204)
   deleteItem(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
@@ -59,6 +63,7 @@ export class BoqController {
   /** POST /api/boq-items/:id/executions */
   @Allow('boq.edit')
   @ProjectScope('id', 'boqItems')
+  @Audit('boq_execution')
   @Post('boq-items/:id/executions')
   addExecution(
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,6 +75,7 @@ export class BoqController {
   /** DELETE /api/boq-executions/:id (204) */
   @Allow('boq.edit')
   @ProjectScope('id', 'boqExecutions')
+  @Audit('boq_execution', { param: 'id' })
   @Delete('boq-executions/:id')
   @HttpCode(204)
   deleteExecution(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
@@ -79,6 +85,7 @@ export class BoqController {
   /** POST /api/projects/:projectId/close-period (204) */
   @Allow('boq.edit')
   @ProjectScope('projectId', 'projects')
+  @Audit('project', { param: 'projectId', summary: 'Closed the measurement period' })
   @Post('projects/:projectId/close-period')
   @HttpCode(204)
   closePeriod(@Param('projectId', ParseUUIDPipe) projectId: string): Promise<void> {

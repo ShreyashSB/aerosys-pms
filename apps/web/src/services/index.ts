@@ -24,4 +24,5 @@ export const {
   documentService,
   reviewService,
   billService,
+  historyService,
 } = source;

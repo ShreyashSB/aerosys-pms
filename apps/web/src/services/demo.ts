@@ -11,3 +11,4 @@ export { dailyLogService } from "./dailyLogService";
 export { documentService } from "./documentService";
 export { reviewService } from "./reviewService";
 export { billService } from "./billService";
+export { historyService } from "./historyService";

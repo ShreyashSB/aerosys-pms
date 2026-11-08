@@ -6,6 +6,7 @@
  * with HTTP calls (see `src/api/http.ts`) – components never touch this file.
  */
 import { buildSeed, DB_VERSION, type Database } from "./seed";
+import { recordChanges } from "./demoHistory";
 
 const STORAGE_KEY = "aerosys.db.v1";
 
@@ -43,11 +44,13 @@ export const db = {
   read(): Database {
     return load();
   },
-  /** Apply a mutation to the database and persist it. */
+  /** Apply a mutation to the database, persist it, and add what changed to the change history. */
   write<T>(mutator: (data: Database) => T): T {
     const data = load();
+    const before = structuredClone(data);
     const result = mutator(data);
     persist();
+    recordChanges(before, data);
     return result;
   },
   reset() {

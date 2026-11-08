@@ -6,6 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { EngineerReview } from '../db/schema.js';
 import { ReviewsInputSchema, type ReviewsInput } from './reviews.dto.js';
 import { ReviewsService } from './reviews.service.js';
+import { Audit } from '../audit/audit.js';
 
 const optionalUuid = new ParseUUIDPipe({ optional: true });
 
@@ -30,6 +31,7 @@ export class ReviewsController {
   /** PUT /api/projects/:projectId/reviews */
   @Allow('engineer.review')
   @ProjectScope('projectId', 'projects')
+  @Audit('reviews', { param: 'projectId' })
   @Put('projects/:projectId/reviews')
   save(
     @User() user: CurrentUser,

@@ -6,6 +6,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { ProjectCost } from '../db/schema.js';
 import { ProjectCostInputSchema, type ProjectCostInput } from './project-costs.dto.js';
 import { ProjectCostsService } from './project-costs.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller()
 export class ProjectCostsController {
@@ -24,6 +25,7 @@ export class ProjectCostsController {
   /** POST /api/projects/:projectId/costs */
   @Allow('project.costs.edit')
   @ProjectScope('projectId', 'projects')
+  @Audit('project_cost')
   @Post('projects/:projectId/costs')
   create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
@@ -35,6 +37,7 @@ export class ProjectCostsController {
   /** DELETE /api/project-costs/:id (204) */
   @Allow('project.costs.edit')
   @ProjectScope('id', 'projectCosts')
+  @Audit('project_cost', { param: 'id' })
   @Delete('project-costs/:id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

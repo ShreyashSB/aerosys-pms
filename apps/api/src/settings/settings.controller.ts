@@ -4,6 +4,7 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import type { Settings } from '../db/schema.js';
 import { SettingsInputSchema, type SettingsInput } from './settings.dto.js';
 import { SettingsService } from './settings.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller('settings')
 export class SettingsController {
@@ -17,6 +18,7 @@ export class SettingsController {
 
   /** PUT /api/settings */
   @Allow('settings.manage')
+  @Audit('settings', { fixedId: '1' })
   @Put()
   update(@Body(new ZodValidationPipe(SettingsInputSchema)) body: SettingsInput): Promise<Settings> {
     return this.settings.update(body);

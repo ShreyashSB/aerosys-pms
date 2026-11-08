@@ -11,6 +11,7 @@ import {
   type UserDto,
 } from './users.dto.js';
 import { UsersService } from './users.service.js';
+import { Audit } from '../audit/audit.js';
 
 @Controller('users')
 export class UsersController {
@@ -24,6 +25,7 @@ export class UsersController {
 
   /** POST /api/users */
   @Allow('employee.manage')
+  @Audit('login')
   @Post()
   create(@User() actor: CurrentUser, @Body(new ZodValidationPipe(CreateUserSchema)) body: CreateUserInput): Promise<UserDto> {
     return this.users.create(actor, body);
@@ -31,6 +33,7 @@ export class UsersController {
 
   /** PUT /api/users/:id → change role or switch the login on/off */
   @Allow('employee.manage')
+  @Audit('login', { param: 'id' })
   @Put(':id')
   update(@User() actor: CurrentUser, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodValidationPipe(UpdateUserSchema)) body: UpdateUserInput): Promise<UserDto> {
     return this.users.update(actor, id, body);
@@ -38,6 +41,7 @@ export class UsersController {
 
   /** POST /api/users/:id/reset-password */
   @Allow('employee.manage')
+  @Audit('login', { param: 'id', summary: 'Reset the password' })
   @Post(':id/reset-password')
   resetPassword(
     @User() actor: CurrentUser,
