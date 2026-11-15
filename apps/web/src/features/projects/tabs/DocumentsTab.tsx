@@ -83,7 +83,7 @@ export function DocumentsTab({ projectId, canUpload, onGoBoq }: { projectId: str
           })
         )}
       </Card>
-      <p className="text-xs text-muted-foreground">Prototype: file contents are not stored — only document details are kept locally.</p>
+      <p className="text-xs text-muted-foreground">File contents are not stored yet. Only the document details are kept.</p>
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(o) => !o && setDeleting(null)}

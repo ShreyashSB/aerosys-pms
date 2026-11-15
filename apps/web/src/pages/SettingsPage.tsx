@@ -96,7 +96,7 @@ export function SettingsPage() {
               <CardTitle>Costing & performance assumptions</CardTitle>
               <CardDescription>
                 {editable
-                  ? "Demo assumptions pending confirmation by Aerosys. Changing them recalculates every project, KPI and report immediately."
+                  ? "Working assumptions behind every costing and performance figure. Changing them recalculates every project, KPI and report immediately."
                   : "Only management can change these settings."}
               </CardDescription>
             </div>
@@ -141,7 +141,7 @@ export function SettingsPage() {
                   <Input id="s-days" type="number" min={1} max={90} value={form.deadlineAlertDays} disabled={!editable} onChange={(e) => setF("deadlineAlertDays", e.target.value)} />
                 </Field>
                 <div className="rounded-md border border-dashed bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
-                  <p className="mb-1 font-medium text-foreground">Formulas in use (defined once in src/domain/assumptions.ts)</p>
+                  <p className="mb-1 font-medium text-foreground">Formulas in use</p>
                   <ul className="list-disc space-y-0.5 pl-4">
                     <li>PPI = work order value ÷ allotted man-days (working hypothesis)</li>
                     <li>Progress = executed BOQ value ÷ total BOQ value; earned value = work order value × progress</li>
@@ -165,7 +165,7 @@ export function SettingsPage() {
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2"><Shield className="size-4" /> Roles & access</CardTitle>
-              <CardDescription>What each role can see and do in this prototype</CardDescription>
+              <CardDescription>What each role can see and do</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">

@@ -8,7 +8,7 @@ export function ForbiddenPage() {
     <EmptyState
       icon={<ShieldAlert />}
       title="You don't have access to this page"
-      description="Your current role does not include this module. Switch role using the Demo Role selector in the top bar."
+      description="Your role does not include this page. If you need it, ask someone in Management."
       action={<Button asChild variant="outline"><Link to="/">Back to dashboard</Link></Button>}
     />
   );

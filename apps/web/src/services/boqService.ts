@@ -31,6 +31,9 @@ export const boqService = {
     await simulateLatency();
     validateItem(input);
     return db.write((data) => {
+      if (data.boqItems.some((b) => b.projectId === input.projectId && b.srNo.trim().toLowerCase() === input.srNo.trim().toLowerCase())) {
+        throw new ApiError(`Sr. no. ${input.srNo} is already used by another item on this project`, 409);
+      }
       const before = projectProgress(data, input.projectId);
       const item: BoqItem = { ...input, id: uid("boq") };
       data.boqItems.push(item);
@@ -46,6 +49,11 @@ export const boqService = {
     return db.write((data) => {
       const item = data.boqItems.find((b) => b.id === id);
       if (!item) throw new ApiError("BOQ item not found", 404);
+      if (data.boqItems.some((b) => b.id !== id && b.projectId === item.projectId && b.srNo.trim().toLowerCase() === input.srNo.trim().toLowerCase())) {
+        throw new ApiError(`Sr. no. ${input.srNo} is already used by another item on this project`, 409);
+      }
+      const executed = data.boqExecutions.filter((x) => x.boqItemId === id).reduce((s, x) => s + x.qty, 0);
+      if (input.contractQty < executed - 1e-6) throw new ApiError(`Contract quantity cannot be below the ${executed} already executed`);
       const before = projectProgress(data, item.projectId);
       Object.assign(item, input);
       notifyProgressMilestones(data, item.projectId, before);
@@ -72,6 +80,9 @@ export const boqService = {
       if (!item) throw new ApiError("BOQ item not found", 404);
       const executed = data.boqExecutions.filter((x) => x.boqItemId === item.id).reduce((s, x) => s + x.qty, 0);
       if (executed + input.qty < 0) throw new ApiError("Correction would make executed quantity negative");
+      if (input.qty > 0 && executed + input.qty > item.contractQty + 1e-6) {
+        throw new ApiError(`This would exceed the contract quantity (balance ${Math.max(0, item.contractQty - executed)} ${item.uom}). Raise the contract quantity first if a variation order applies.`);
+      }
       const before = projectProgress(data, input.projectId);
       const exe: BoqExecution = { ...input, id: uid("exe"), dailyLogId: null };
       data.boqExecutions.push(exe);

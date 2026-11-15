@@ -108,9 +108,15 @@ export function DailyLogFormDialog({
   };
   const rowError = (a: AttendanceEntry) =>
     (a.status === "idle" || a.idleHours > 0) && !a.idleReason ? "Reason required" : a.idleHours > hours ? `Max ${hours} h` : undefined;
-  const workError = (w: WorkLine) => (!w.boqItemId && w.qty ? "Select item" : w.boqItemId && !(Number(w.qty) > 0) ? "Enter qty" : undefined);
+  /** What is left on the item for line `i`, after other logs and the lines above it. */
+  const workBalance = (w: WorkLine, i: number) => {
+    const it = itemById.get(w.boqItemId);
+    return it ? it.contractQty - (executed.get(it.id) ?? 0) - work.filter((x, k) => k < i && x.boqItemId === it.id).reduce((s, x) => s + (Number(x.qty) || 0), 0) : 0;
+  };
+  const workError = (w: WorkLine, i: number) =>
+    !w.boqItemId && w.qty ? "Select item" : w.boqItemId && !(Number(w.qty) > 0) ? "Enter qty" : w.boqItemId && Number(w.qty) > workBalance(w, i) + 1e-6 ? "Over balance" : undefined;
   const hasErrors =
-    !!errors.date || !!errors.rows || rows.some((r) => rowError(r)) || work.some((w) => workError(w));
+    !!errors.date || !!errors.rows || rows.some((r) => rowError(r)) || work.some((w, i) => workError(w, i));
 
   const setRow = (i: number, patch: Partial<AttendanceEntry>) =>
     editRows((rs) =>
@@ -297,9 +303,9 @@ export function DailyLogFormDialog({
               <div className="space-y-2">
                 {work.map((w, i) => {
                   const it = itemById.get(w.boqItemId);
-                  const balance = it ? it.contractQty - (executed.get(it.id) ?? 0) - work.filter((x, k) => k < i && x.boqItemId === it.id).reduce((s, x) => s + (Number(x.qty) || 0), 0) : 0;
-                  const over = it && Number(w.qty) > balance;
-                  const err = submitted ? workError(w) : undefined;
+                  const balance = workBalance(w, i);
+                  const over = it && Number(w.qty) > balance + 1e-6;
+                  const err = submitted && !over ? workError(w, i) : undefined;
                   return (
                     <div key={i} className="grid grid-cols-12 items-start gap-2">
                       <div className="col-span-12 sm:col-span-6">
@@ -322,8 +328,8 @@ export function DailyLogFormDialog({
                         <Button variant="ghost" size="icon-sm" onClick={() => setWork((ws) => ws.filter((_, k) => k !== i))} aria-label="Remove work line"><Trash2 className="text-muted-foreground" /></Button>
                       </div>
                       {(err || over) && (
-                        <p className={cn("col-span-12 -mt-1 text-xs", err ? "text-danger" : "text-warning")}>
-                          {err ?? <><AlertTriangle className="mr-1 inline size-3" />Exceeds balance quantity ({formatNumber(balance, 2)} {it?.uom}) – allowed, but check for a variation.</>}
+                        <p className="col-span-12 -mt-1 text-xs text-danger">
+                          {err ?? <><AlertTriangle className="mr-1 inline size-3" />Only {formatNumber(Math.max(0, balance), 2)} {it?.uom} left on this item. Raise the contract quantity first if a variation order applies.</>}
                         </p>
                       )}
                     </div>

@@ -185,7 +185,7 @@ export function ExpenseFormDialog({
           <Field label="Description" htmlFor="x-desc" required error={errors.description} className="sm:col-span-2">
             <Textarea id="x-desc" value={v.description} onChange={(e) => set("description", e.target.value)} placeholder="e.g. Hotel stay for 2 nights during chiller commissioning" aria-invalid={!!errors.description} />
           </Field>
-          <Field label="Receipt" className="sm:col-span-2" hint="JPG, PNG or PDF up to 5 MB (stored locally in this prototype)">
+          <Field label="Receipt" className="sm:col-span-2" hint="JPG, PNG or PDF up to 5 MB. Only the file name and size are kept for now.">
             <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             {receipt ? (
               <div className="flex items-center gap-3 rounded-md border bg-success-soft/40 p-3">

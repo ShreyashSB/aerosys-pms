@@ -41,7 +41,7 @@ export function ProjectDetailPage() {
   const { user } = useCurrentUser();
   const data = useScopedData();
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") ?? "overview";
+  const requestedTab = params.get("tab") ?? "overview";
   const setTab = (t: string) => setParams({ tab: t }, { replace: true });
   const [editOpen, setEditOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -64,6 +64,9 @@ export function ProjectDetailPage() {
   const assignments = data.assignments.filter((a) => a.projectId === id);
   const isManager = canManageProject(user, project);
   const showFinance = can(user.role, "finance.view");
+  // A tab this person cannot see (typed into the URL, or an old link) opens Overview instead of an empty panel.
+  const visibleTabs = ["overview", "performance", "boq", "log", "team", "expenses", "instruments", "documents", ...(showFinance ? ["bills", "costs"] : []), ...(can(user.role, "history.view") ? ["history"] : [])];
+  const tab = visibleTabs.includes(requestedTab) ? requestedTab : "overview";
   const open = project.status === "active" || project.status === "on_hold";
   const canEdit = can(user.role, "project.edit") && isManager;
   const canLog = can(user.role, "log.create") && isManager && open;

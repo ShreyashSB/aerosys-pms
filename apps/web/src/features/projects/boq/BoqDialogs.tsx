@@ -109,6 +109,7 @@ export function ExecutionDialog({ row, onClose, projectId }: { row: BoqRow | nul
     const q = Number(v.qty);
     if (!v.qty || !q) e.qty = "Enter quantity (negative to correct)";
     else if (row && row.executedQty + q < 0) e.qty = "Cannot go below zero executed";
+    else if (row && q > row.balanceQty + 1e-6) e.qty = `Only ${formatNumber(Math.max(0, row.balanceQty), 2)} ${row.item.uom} left on this item`;
     if (!v.date) e.date = "Date is required";
     else if (v.date > todayISO()) e.date = "Cannot be a future date";
     return e;
@@ -164,7 +165,7 @@ export function ExecutionDialog({ row, onClose, projectId }: { row: BoqRow | nul
             <Field label="Remarks" htmlFor="x-rem">
               <Textarea id="x-rem" rows={2} value={v.remarks} onChange={(e) => set("remarks", e.target.value)} placeholder="e.g. As per joint measurement with client" />
             </Field>
-            {q > row.balanceQty && q > 0 && <p className="text-xs text-warning">This exceeds the balance quantity – check whether a variation order applies.</p>}
+            {q > row.balanceQty + 1e-6 && q > 0 && <p className="text-xs text-danger">This exceeds the balance quantity. Raise the contract quantity first if a variation order applies.</p>}
           </form>
         </DialogContent>
       )}

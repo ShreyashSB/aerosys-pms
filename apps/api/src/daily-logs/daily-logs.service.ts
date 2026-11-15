@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, eq, inArray, ne } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, ne, or, sum } from 'drizzle-orm';
 import { todayIST } from '../common/dates.js';
 import { isUniqueViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
@@ -7,6 +7,7 @@ import { attendanceEntries, boqExecutions, boqItems, dailyLogs, employees, proje
 import { findProject, isClosed } from '../projects/find-project.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { formatNumber } from '../common/format.js';
+import { QTY_TOLERANCE } from '../boq/boq.service.js';
 import { WORKING_STATUSES, type DailyLogDto, type DailyLogInput } from './daily-logs.dto.js';
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
@@ -63,7 +64,7 @@ export class DailyLogsService {
     const hoursPerManDay = await this.checkIdleHours(input);
     await this.checkPeople(input);
     await this.checkDoubleBooking(input, logId);
-    await this.checkWorkItems(projectId, input);
+    await this.checkWorkItems(projectId, input, logId);
 
     const attendance = input.attendance.map((a) => ({
       ...a,
@@ -180,14 +181,31 @@ export class DailyLogsService {
     if (clash) throw new ConflictException(`${clash.name} is already logged as working on ${clash.project} for this date`);
   }
 
-  private async checkWorkItems(projectId: string, input: DailyLogInput) {
+  private async checkWorkItems(projectId: string, input: DailyLogInput, logId?: string) {
     const ids = [...new Set(input.work.map((w) => w.boqItemId))];
     if (!ids.length) return;
     const found = await this.db
-      .select({ id: boqItems.id })
+      .select({ id: boqItems.id, srNo: boqItems.srNo, uom: boqItems.uom, contractQty: boqItems.contractQty })
       .from(boqItems)
       .where(and(inArray(boqItems.id, ids), eq(boqItems.projectId, projectId)));
     if (found.length !== ids.length) throw new BadRequestException("A work line points at a BOQ item from another project");
+
+    // Quantity already executed per item, leaving out what this log itself recorded before an edit.
+    const done = await this.db
+      .select({ id: boqExecutions.boqItemId, qty: sum(boqExecutions.qty).mapWith(Number) })
+      .from(boqExecutions)
+      .where(and(inArray(boqExecutions.boqItemId, ids), logId ? or(isNull(boqExecutions.dailyLogId), ne(boqExecutions.dailyLogId, logId)) : undefined))
+      .groupBy(boqExecutions.boqItemId);
+    const executed = new Map(done.map((d) => [d.id, d.qty ?? 0]));
+    const thisLog = new Map<string, number>();
+    for (const w of input.work) thisLog.set(w.boqItemId, (thisLog.get(w.boqItemId) ?? 0) + w.qty);
+    for (const item of found) {
+      const total = (executed.get(item.id) ?? 0) + (thisLog.get(item.id) ?? 0);
+      if (total > item.contractQty + QTY_TOLERANCE) {
+        const balance = Math.max(0, item.contractQty - (executed.get(item.id) ?? 0));
+        throw new BadRequestException(`Item ${item.srNo} would exceed its contract quantity (balance ${balance} ${item.uom}). Raise the contract quantity first if a variation order applies.`);
+      }
+    }
   }
 
   /** Bumps the project's updated_at so lists sorted by activity show it on top. */
