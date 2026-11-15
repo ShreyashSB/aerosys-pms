@@ -246,6 +246,8 @@ export interface AppNotification {
   /** Specific employees that should see it (in addition to roles). */
   audienceEmployeeIds: ID[];
   readBy: ID[]; // user ids
+  /** Demo only: users who cleared it from their bell. The server leaves cleared ones out instead. */
+  clearedBy?: ID[];
   dedupeKey?: string;
 }
 

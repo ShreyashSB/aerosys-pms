@@ -429,7 +429,7 @@ export const notifications = pgTable(
   ],
 );
 
-/** Who has read what: one row per (notification, login). */
+/** Who has read what: one row per (notification, login). `clearedAt` hides it from that person's bell; the notification itself stays. */
 export const notificationReads = pgTable(
   'notification_reads',
   {
@@ -440,6 +440,7 @@ export const notificationReads = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     readAt: timestamp('read_at', { withTimezone: true }).notNull().defaultNow(),
+    clearedAt: timestamp('cleared_at', { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.notificationId, t.userId] })],
 );

@@ -20,6 +20,13 @@ export class NotificationsController {
     return this.notifications.markAllRead(user);
   }
 
+  /** POST /api/notifications/clear-read → hides my read ones from my bell (nothing is deleted) */
+  @Post('clear-read')
+  @HttpCode(204)
+  clearRead(@User() user: CurrentUser): Promise<void> {
+    return this.notifications.clearRead(user);
+  }
+
   /** POST /api/notifications/:id/read */
   @Post(':id/read')
   @HttpCode(204)

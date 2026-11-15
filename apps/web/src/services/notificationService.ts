@@ -22,7 +22,7 @@ export function isVisibleTo(n: AppNotification, user: User) {
 export const notificationService = {
   async listForUser(user: User): Promise<AppNotification[]> {
     await simulateLatency(80, 200);
-    return clone(db.read().notifications.filter((n) => isVisibleTo(n, user)));
+    return clone(db.read().notifications.filter((n) => isVisibleTo(n, user) && !n.clearedBy?.includes(user.id)));
   },
 
   async markRead(id: string, userId: string) {
@@ -36,6 +36,15 @@ export const notificationService = {
     db.write((data) => {
       for (const n of data.notifications) {
         if (isVisibleTo(n, user) && !n.readBy.includes(user.id)) n.readBy.push(user.id);
+      }
+    });
+  },
+
+  /** Hides the user's read notifications from their bell. Nothing is deleted. */
+  async clearRead(user: User) {
+    db.write((data) => {
+      for (const n of data.notifications) {
+        if (n.readBy.includes(user.id) && !n.clearedBy?.includes(user.id)) n.clearedBy = [...(n.clearedBy ?? []), user.id];
       }
     });
   },

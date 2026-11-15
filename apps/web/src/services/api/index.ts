@@ -176,6 +176,9 @@ export const notificationService: Service<"notificationService"> = {
   markAllRead: async () => {
     await http.post("/api/notifications/read-all");
   },
+  clearRead: async () => {
+    await http.post("/api/notifications/clear-read");
+  },
   runScheduledChecks: async () => {},
 };
 
