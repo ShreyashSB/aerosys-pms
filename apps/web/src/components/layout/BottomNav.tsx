@@ -20,6 +20,7 @@ export function BottomNav({ onOpenMore }: { onOpenMore: () => void }) {
   return (
     <nav
       aria-label="Main"
+      data-slot="bottom-nav"
       className="fixed inset-x-0 bottom-0 z-20 flex border-t bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       {items.map((item) => {

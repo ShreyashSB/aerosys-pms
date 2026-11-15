@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 import {
   DENSITY_OPTIONS,
+  STYLE_OPTIONS,
   THEME_OPTIONS,
   VIEW_OPTIONS,
   useAppearance,
   type Density,
+  type Style,
   type ThemePref,
   type View,
   type ViewPref,
@@ -129,6 +131,36 @@ function ViewPreviewParts({ laptop, phone }: { laptop: View; phone: View }) {
   );
 }
 
+/** Mini drawing of each style: flat panels with borders vs floating rounded panels on a blue ground. */
+function StylePreview({ style }: { style: Style }) {
+  if (style === "studio") {
+    return (
+      <div className="flex h-16 gap-1 rounded-md p-1" style={{ background: "#d7e6f6" }}>
+        <div className="w-3 rounded-[5px]" style={{ background: "#0d1626" }} />
+        <div className="flex flex-1 flex-col gap-1 rounded-[6px] p-1" style={{ background: "#f4f6f9" }}>
+          <div className="h-1.5 w-1/2 rounded-full" style={{ background: "#0d1626" }} />
+          <div className="flex flex-1 gap-1">
+            <div className="flex-1 rounded-[5px] bg-white shadow-sm" />
+            <div className="flex-1 rounded-[5px] bg-white shadow-sm" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-16 overflow-hidden rounded-md border" style={{ background: "#f6f7f9" }}>
+      <div className="w-3.5" style={{ background: "#0c1a2e" }} />
+      <div className="flex flex-1 flex-col gap-1 p-1">
+        <div className="h-1.5 w-1/2 rounded-sm" style={{ background: "#0b5cab" }} />
+        <div className="flex flex-1 gap-1">
+          <div className="flex-1 rounded-sm border border-l-2 bg-white" style={{ borderColor: "#e3e6eb", borderLeftColor: "#0e7c4a" }} />
+          <div className="flex-1 rounded-sm border bg-white" style={{ borderColor: "#e3e6eb" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DensityPreview({ density }: { density: Density }) {
   const rows = density === "compact" ? 5 : density === "default" ? 4 : 3;
   return (
@@ -141,7 +173,7 @@ function DensityPreview({ density }: { density: Density }) {
 }
 
 export function AppearanceCard() {
-  const { theme, view, density, set, reset } = useAppearance();
+  const { style, theme, view, density, set, reset } = useAppearance();
   const ref = useRef<HTMLDivElement>(null);
   const { hash } = useLocation();
 
@@ -163,6 +195,7 @@ export function AppearanceCard() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          <OptionTiles name="style" legend="Style" value={style} options={STYLE_OPTIONS} onChange={(v) => set({ style: v })} preview={(v) => <StylePreview style={v} />} columns="sm:grid-cols-4" />
           <OptionTiles name="theme" legend="Theme" value={theme} options={THEME_OPTIONS} onChange={(v) => set({ theme: v })} preview={(v) => <ThemePreview theme={v} />} columns="sm:grid-cols-4" />
           <OptionTiles name="view" legend="View" value={view} options={VIEW_OPTIONS} onChange={(v) => set({ view: v })} preview={(v) => <ViewPreview view={v} />} columns="sm:grid-cols-4" />
           <OptionTiles name="density" legend="Size" value={density} options={DENSITY_OPTIONS} onChange={(v) => set({ density: v })} preview={(v) => <DensityPreview density={v} />} />

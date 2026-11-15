@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown";
-import { DENSITY_OPTIONS, THEME_OPTIONS, VIEW_OPTIONS, useAppearance, type Appearance } from "@/appearance/AppearanceContext";
+import { DENSITY_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, VIEW_OPTIONS, useAppearance, type Appearance } from "@/appearance/AppearanceContext";
 
 /** Quick switcher in the top bar, so views and themes can be compared without leaving the current page. */
 export function AppearanceMenu() {
@@ -36,11 +36,13 @@ export function AppearanceMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Appearance: view and theme">
+        <Button variant="ghost" size="icon" aria-label="Appearance: style, view and theme">
           <Palette className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="max-h-[80vh] w-56 overflow-y-auto">
+        {group("Style", "style", STYLE_OPTIONS)}
+        <DropdownMenuSeparator />
         {group("Theme", "theme", THEME_OPTIONS)}
         <DropdownMenuSeparator />
         {group("View", "view", VIEW_OPTIONS)}

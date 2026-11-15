@@ -41,7 +41,7 @@ export function AppShell() {
   if (!user || !employee) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 
   return (
-    <div className="flex min-h-screen">
+    <div data-slot="shell" className="flex min-h-screen">
       {/* The sidebar is always available as the phone slide-out menu; "Top bar" view hides it on laptops. */}
       <Sidebar
         collapsed={collapsed}
@@ -50,7 +50,7 @@ export function AppShell() {
         onCloseMobile={() => setMobileOpen(false)}
         hideOnDesktop={view === "topnav"}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div data-slot="canvas" className="flex min-w-0 flex-1 flex-col">
         <Topbar onOpenMobile={() => setMobileOpen(true)} view={view} />
         {view === "topnav" && <TopNav />}
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8">

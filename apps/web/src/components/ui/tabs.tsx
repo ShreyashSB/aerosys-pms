@@ -51,6 +51,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
   return (
     <div className="relative">
       <TabsPrimitive.List
+        data-slot="tabs-list"
         ref={ref}
         onScroll={measure}
         className={cn(
@@ -81,6 +82,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
 export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
+      data-slot="tab"
       className={cn(
         "-mb-px inline-flex items-center gap-2 whitespace-nowrap rounded-t-md border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground cursor-pointer data-[state=active]:border-primary data-[state=active]:text-primary [&_svg]:size-4",
         // Same focus ring as buttons, only for keyboard use (no black box after a mouse click).
