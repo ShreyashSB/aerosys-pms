@@ -141,6 +141,43 @@ describe('Site work (e2e)', () => {
     expect(after.body.some((x: { dailyLogId: string }) => x.dailyLogId === created.body.id)).toBe(false);
   });
 
+  it('refuses to execute more than the contract quantity, from a measurement or a daily log', async () => {
+    const proj = await newProject('Capped Works');
+    const item = (await api().post(`/api/projects/${proj}/boq-items`).send({ srNo: '1', description: 'Duct', uom: 'Sqm', contractQty: 10, rate: 100 }).expect(201)).body;
+    await api().post(`/api/boq-items/${item.id}/executions`).send({ date: '2026-02-01', qty: 8 }).expect(201);
+    const over = await api().post(`/api/boq-items/${item.id}/executions`).send({ date: '2026-02-02', qty: 3 }).expect(400);
+    expect(over.body.message).toContain('exceed the contract quantity (balance 2 Sqm)');
+    await api().post(`/api/boq-items/${item.id}/executions`).send({ date: '2026-02-02', qty: 2 }).expect(201); // exactly to the limit
+
+    const day = { date: '2026-02-03', attendance: [{ employeeId: engineerId, status: 'on_site' }] };
+    await api().post(`/api/projects/${proj}/daily-logs`).send({ ...day, work: [{ boqItemId: item.id, qty: 1 }] }).expect(400);
+    // A correction frees the balance again, and the log may then use it.
+    await api().post(`/api/boq-items/${item.id}/executions`).send({ date: '2026-02-03', qty: -4 }).expect(201);
+    const ok = await api().post(`/api/projects/${proj}/daily-logs`).send({ ...day, work: [{ boqItemId: item.id, qty: 4 }] }).expect(201);
+    // Editing that log keeps its own quantity out of the total, but cannot push past the limit.
+    await api().put(`/api/daily-logs/${ok.body.id}`).send({ ...day, work: [{ boqItemId: item.id, qty: 4 }], activities: 'edited' }).expect(200);
+    await api().put(`/api/daily-logs/${ok.body.id}`).send({ ...day, work: [{ boqItemId: item.id, qty: 5 }] }).expect(400);
+    // Two lines for the same item are added together.
+    await api().put(`/api/daily-logs/${ok.body.id}`).send({ ...day, work: [{ boqItemId: item.id, qty: 3 }, { boqItemId: item.id, qty: 3 }] }).expect(400);
+  });
+
+  it('keeps BOQ serial numbers unique per project and the contract quantity above what is executed', async () => {
+    const proj = await newProject('Serial Works');
+    const input = { srNo: '1', description: 'Duct', uom: 'Sqm', contractQty: 10, rate: 100 };
+    const first = (await api().post(`/api/projects/${proj}/boq-items`).send(input).expect(201)).body;
+    const dup = await api().post(`/api/projects/${proj}/boq-items`).send({ ...input, srNo: ' 1 ' }).expect(409);
+    expect(dup.body.message).toContain('already used');
+    const second = (await api().post(`/api/projects/${proj}/boq-items`).send({ ...input, srNo: '2' }).expect(201)).body;
+    await api().put(`/api/boq-items/${second.id}`).send({ ...input, srNo: '1' }).expect(409);
+    await api().put(`/api/boq-items/${second.id}`).send({ ...input, srNo: '2', description: 'Renamed' }).expect(200);
+    // Another project may reuse the number.
+    await api().post(`/api/projects/${await newProject('Serial Works Two')}/boq-items`).send({ ...input, srNo: '1' }).expect(201);
+
+    await api().post(`/api/boq-items/${first.id}/executions`).send({ date: '2026-02-01', qty: 6 }).expect(201);
+    await api().put(`/api/boq-items/${first.id}`).send({ ...input, contractQty: 5 }).expect(400);
+    await api().put(`/api/boq-items/${first.id}`).send({ ...input, contractQty: 6 }).expect(200);
+  });
+
   it('completing a project ends open assignments and stops logging', async () => {
     await api().post(`/api/projects/${otherProjectId}/assignments`).send({ employeeId: techId, role: 'Technician', allocation: 50, startDate: '2026-01-10' }).expect(201);
     await api().patch(`/api/projects/${otherProjectId}/status`).send({ status: 'completed' }).expect(200);

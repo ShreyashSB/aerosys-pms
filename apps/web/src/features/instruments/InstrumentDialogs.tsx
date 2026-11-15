@@ -185,7 +185,7 @@ export function InstrumentFormDialog({ open, onOpenChange, instrument }: { open:
               ))}
             </datalist>
           </Field>
-          <Field label="Calibration certificate (optional)" className="sm:col-span-2" hint="PDF up to 10 MB (only the file details are kept in this prototype)">
+          <Field label="Calibration certificate (optional)" className="sm:col-span-2" hint="PDF up to 10 MB. Only the file name and size are kept for now.">
             <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             {certificate ? (
               <div className="flex items-center gap-3 rounded-md border bg-success-soft/40 p-3">
