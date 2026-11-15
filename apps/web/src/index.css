@@ -172,8 +172,11 @@
   [data-style="studio"] [data-slot="canvas"] { background: var(--color-background); border-radius: 20px; min-height: calc(100vh - 24px); }
   [data-style="studio"] [data-slot="topbar"] { border-radius: 20px 20px 0 0; }
 }
-[data-style="studio"] [data-slot="topbar"] { border-bottom-color: transparent; background: color-mix(in srgb, var(--color-background) 92%, transparent); }
-[data-style="studio"] [data-slot="topnav"] { background: transparent; border-bottom-color: transparent; }
+/* Header and top menu stay solid so the page scrolls underneath without showing through, and a hairline
+ * plus a soft shadow on the last sticky bar separates navigation from the page body. */
+[data-style="studio"] [data-slot="topbar"] { background: var(--color-background); border-bottom-color: var(--color-border); }
+[data-style="studio"][data-view="topnav"] [data-slot="topbar"] { border-bottom-color: transparent; }
+[data-style="studio"] [data-slot="topnav"] { background: var(--color-background); border-bottom-color: var(--color-border); box-shadow: 0 6px 12px -10px rgb(15 23 41 / 0.25); }
 
 [data-style="studio"] [data-slot="card"] { border-radius: 18px; box-shadow: var(--studio-shadow); }
 [data-style="studio"]:not([data-theme="sunlight"]) [data-slot="card"] { border-width: 0; }
