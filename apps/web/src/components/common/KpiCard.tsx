@@ -49,7 +49,7 @@ export function KpiCard({
         {loading ? (
           <Skeleton className="mt-2 h-7 w-24" />
         ) : (
-          <p className={cn("mt-1 whitespace-nowrap font-semibold tracking-tight tabular", size === "lg" ? "text-2xl" : "text-xl", tone !== "neutral" && c.text)}>{value}</p>
+          <p data-slot="metric" className={cn("mt-1 whitespace-nowrap font-semibold tracking-tight tabular", size === "lg" ? "text-2xl" : "text-xl", tone !== "neutral" && c.text)}>{value}</p>
         )}
         {!loading && (sub || (health && health.label)) && (
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">

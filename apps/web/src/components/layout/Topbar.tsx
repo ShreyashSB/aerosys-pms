@@ -32,7 +32,7 @@ export function Topbar({ onOpenMobile, view }: { onOpenMobile: () => void; view:
   const nameOf = (employeeId: string) => employees.find((e) => e.id === employeeId)?.name ?? employeeId;
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-surface/95 px-4 backdrop-blur lg:px-6">
+    <header data-slot="topbar" className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-surface/95 px-4 backdrop-blur lg:px-6">
       {/* In Field view the bottom tab bar has a "More" button, so the hamburger is not needed. */}
       {view !== "field" && (
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMobile} aria-label="Open menu">

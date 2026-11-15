@@ -1,10 +1,10 @@
 /**
- * Appearance settings: theme (colours), view (navigation layout) and density (size).
+ * Appearance settings: style (overall design language), theme (colours), view (navigation layout) and density (size).
  *
  * How it works, in short:
  * 1. The user's choices live in React state and are saved to localStorage, so they survive a refresh.
  * 2. Whenever a choice changes, we write it onto the <html> element as data attributes:
- *      <html data-theme="dark" data-view="field" data-density="comfortable">
+ *      <html data-style="studio" data-theme="dark" data-view="field" data-density="comfortable">
  * 3. src/index.css has CSS rules for each attribute value (e.g. [data-theme="dark"] swaps the colour tokens).
  *    Because every component uses those tokens (bg-surface, text-foreground, ...), the whole app restyles
  *    itself without any component needing to know which theme is active.
@@ -18,6 +18,8 @@
  */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+/** "standard" is the original design; "studio" is the softer look with floating panels, rounded cards and pill buttons. */
+export type Style = "standard" | "studio";
 export type ThemePref = "system" | "light" | "dark" | "sunlight";
 export type ResolvedTheme = Exclude<ThemePref, "system">;
 export type ViewPref = "auto" | "classic" | "topnav" | "field";
@@ -25,12 +27,13 @@ export type View = Exclude<ViewPref, "auto">;
 export type Density = "compact" | "default" | "comfortable";
 
 export interface Appearance {
+  style: Style;
   theme: ThemePref;
   view: ViewPref;
   density: Density;
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { theme: "light", view: "auto", density: "default" };
+export const DEFAULT_APPEARANCE: Appearance = { style: "standard", theme: "light", view: "auto", density: "default" };
 
 const STORAGE_KEY = "aerosys.appearance";
 /** Bumped when "Match device" was added. Older saves always stored the then-default "classic" view, even when
@@ -45,6 +48,11 @@ const STORAGE_VERSION = 2;
 export const MOBILE_QUERY = "(max-width: 767.98px), (hover: none) and (pointer: coarse)";
 
 /** Labels and one-line descriptions, shared by the quick switcher in the top bar and the Settings page. */
+export const STYLE_OPTIONS: Array<{ value: Style; label: string; hint: string }> = [
+  { value: "standard", label: "Standard", hint: "The original design" },
+  { value: "studio", label: "Studio", hint: "Floating panels, rounded cards and pill buttons" },
+];
+
 export const THEME_OPTIONS: Array<{ value: ThemePref; label: string; hint: string }> = [
   { value: "light", label: "Light", hint: "The original look" },
   { value: "dark", label: "Dark", hint: "Easier on the eyes indoors and at night" },
@@ -74,6 +82,7 @@ function load(): Appearance {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
     if (saved.v !== STORAGE_VERSION && saved.view === "classic") saved.view = "auto";
     return {
+      style: isOneOf(saved.style, STYLE_OPTIONS) ? saved.style : DEFAULT_APPEARANCE.style,
       theme: isOneOf(saved.theme, THEME_OPTIONS) ? saved.theme : DEFAULT_APPEARANCE.theme,
       view: isOneOf(saved.view, VIEW_OPTIONS) ? saved.view : DEFAULT_APPEARANCE.view,
       density: isOneOf(saved.density, DENSITY_OPTIONS) ? saved.density : DEFAULT_APPEARANCE.density,
@@ -122,6 +131,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   // Push the choices onto <html> (see the comment at the top of this file) and remember them.
   useEffect(() => {
     const root = document.documentElement;
+    root.dataset.style = appearance.style;
     root.dataset.theme = resolvedTheme;
     root.dataset.view = resolvedView;
     root.dataset.density = appearance.density;

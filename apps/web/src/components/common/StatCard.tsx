@@ -28,6 +28,7 @@ export function StatCard({
         <Skeleton className="mt-2 h-7 w-24" />
       ) : (
         <p
+          data-slot="metric"
           className={cn(
             "mt-1.5 whitespace-nowrap text-2xl font-semibold tracking-tight tabular",
             tone === "positive" && "text-success",

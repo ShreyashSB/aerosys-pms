@@ -12,7 +12,7 @@ export function TopNav() {
   const items = NAV_ITEMS.filter((i) => !i.permission || can(i.permission));
 
   return (
-    <nav aria-label="Main" className="sticky top-16 z-10 hidden border-b bg-surface lg:block">
+    <nav aria-label="Main" data-slot="topnav" className="sticky top-16 z-10 hidden border-b bg-surface lg:block">
       <div className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-8">
         {items.map((item) => {
           const label = (user && item.labelFor?.[user.role]) ?? item.label;
