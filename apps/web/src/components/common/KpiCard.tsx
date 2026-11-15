@@ -32,15 +32,16 @@ export function KpiCard({
 }) {
   const tone = health?.tone ?? "neutral";
   const c = TONE_CLASSES[tone];
-  // Only amber and red get a coloured edge, so the cards that need attention stand out. Green keeps
-  // its green number and badge but no edge.
-  const edge = tone === "warn" || tone === "bad" ? c.border : "border-l-transparent";
+  // Only amber and red get a thick coloured edge, so the cards that need attention stand out. The rest keep
+  // their normal border all round (a transparent edge looked cut off where borders are strong, as in Sunlight),
+  // with 3px of extra padding so their text still lines up with the coloured cards.
+  const edged = tone === "warn" || tone === "bad";
   const Comp = onClick ? "button" : "div";
   return (
-    <Card className={cn("relative overflow-hidden border-l-4 text-left", edge, onClick && "transition-shadow hover:shadow-md", className)}>
+    <Card className={cn("relative overflow-hidden text-left", edged && cn("border-l-4", c.border), onClick && "transition-shadow hover:shadow-md", className)}>
       <Comp
         {...(onClick ? { type: "button" as const, onClick, "aria-label": `${label} – show calculation` } : {})}
-        className={cn("group block h-full w-full p-4 text-left", onClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}
+        className={cn("group block h-full w-full p-4 text-left", !edged && "pl-[19px]", onClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}
       >
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -53,7 +54,7 @@ export function KpiCard({
         )}
         {!loading && (sub || (health && health.label)) && (
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            {health && <HealthBadge health={health} />}
+            {health && <HealthBadge health={health} className="max-w-full whitespace-normal" />}
             {sub && <span>{sub}</span>}
           </div>
         )}

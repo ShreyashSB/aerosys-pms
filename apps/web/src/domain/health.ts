@@ -99,5 +99,5 @@ export const TONE_CLASSES: Record<Tone, { text: string; bg: string; border: stri
   good: { text: "text-success", bg: "bg-success-soft", border: "border-l-success", dot: "bg-success" },
   warn: { text: "text-warning", bg: "bg-warning-soft", border: "border-l-warning", dot: "bg-warning" },
   bad: { text: "text-danger", bg: "bg-danger-soft", border: "border-l-danger", dot: "bg-danger" },
-  neutral: { text: "text-muted-foreground", bg: "bg-muted", border: "border-l-transparent", dot: "bg-muted-foreground" },
+  neutral: { text: "text-muted-foreground", bg: "bg-muted", border: "border-l-border", dot: "bg-muted-foreground" },
 };
