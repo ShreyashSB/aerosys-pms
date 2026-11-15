@@ -92,8 +92,8 @@ export function OverviewTab({
       {showFinance && (
         <div className="grid gap-6 xl:grid-cols-5">
           {/* Financial health – clickable P&L */}
-          <Card className={cn("border-l-4 self-start xl:col-span-2", profit.tone === "good" ? "border-l-transparent" : TONE_CLASSES[profit.tone].border)}>
-            <button type="button" onClick={onOpenPnl} className="group block w-full p-5 text-left cursor-pointer" aria-label="Open profit and loss breakdown">
+          <Card className={cn("self-start xl:col-span-2", profit.tone !== "good" && cn("border-l-4", TONE_CLASSES[profit.tone].border))}>
+            <button type="button" onClick={onOpenPnl} className={cn("group block w-full p-5 text-left cursor-pointer", profit.tone === "good" && "pl-[23px]")} aria-label="Open profit and loss breakdown">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold">Financial health</p>
