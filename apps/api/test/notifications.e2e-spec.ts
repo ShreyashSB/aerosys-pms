@@ -72,6 +72,22 @@ describe('Notifications (e2e)', () => {
     await otherPm().post(`/api/notifications/${first.id}/read`).expect(404);
   });
 
+  it('clears only my read ones, and only from my own bell', async () => {
+    // Management read everything above; the engineer has read nothing yet.
+    const before = await mine(admin);
+    await admin().post('/api/notifications/clear-read').expect(204);
+    expect(await mine(admin)).toEqual([]);
+    // The engineer's unread copy of the same notification is untouched.
+    const engineerNotes = await mine(engineer.api);
+    expect(engineerNotes.map((n) => n.id).every((id) => before.some((b) => b.id === id))).toBe(true);
+    await engineer.api().post('/api/notifications/clear-read').expect(204);
+    expect(await mine(engineer.api)).toHaveLength(engineerNotes.length); // unread ones stay
+    // New ones still arrive after a clear.
+    const second = await signIn(app, 'site_engineer', `Second ${run}`);
+    await admin().post(`/api/projects/${projectId}/assignments`).send({ employeeId: second.employeeId, role: 'Site Engineer', allocation: 50, startDate: '2026-01-06' }).expect(201);
+    expect(await titles(admin)).toEqual(['Engineer assigned']);
+  });
+
   it('raises milestone alerts when the BOQ crosses 90% and 100%', async () => {
     const item = (await admin().post(`/api/projects/${projectId}/boq-items`).send({ srNo: '1', description: 'Duct', uom: 'sqm', contractQty: 100, rate: 1000 }).expect(201)).body;
     await admin().post(`/api/boq-items/${item.id}/executions`).send({ date: '2026-02-01', qty: 50, remarks: '' }).expect(201);

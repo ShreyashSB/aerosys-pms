@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, or, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import type { CurrentUser } from '../auth/current-user.js';
 import { todayIST } from '../common/dates.js';
 import { DB, type Database } from '../db/db.module.js';
@@ -59,14 +59,14 @@ export class NotificationsService {
     }
   }
 
-  /** Newest first: everything sent to the caller's role or to them by name. */
+  /** Newest first: everything sent to the caller's role or to them by name, minus what they cleared. */
   async listForUser(user: CurrentUser): Promise<NotificationDto[]> {
     await this.runChecksIfDue();
     const rows = await this.db
       .select({ n: notifications, readAt: notificationReads.readAt })
       .from(notifications)
       .leftJoin(notificationReads, and(eq(notificationReads.notificationId, notifications.id), eq(notificationReads.userId, user.id)))
-      .where(visibleTo(user))
+      .where(and(visibleTo(user), isNull(notificationReads.clearedAt)))
       .orderBy(desc(notifications.createdAt))
       .limit(LIST_LIMIT);
     return rows.map(({ n, readAt }) => ({ ...n, type: n.type as NotificationType, readBy: readAt ? [user.id] : [] }));
@@ -84,11 +84,23 @@ export class NotificationsService {
       .insert(notificationReads)
       .select(
         this.db
-          .select({ notificationId: notifications.id, userId: sql`${user.id}::uuid`.as('user_id'), readAt: sql`now()`.as('read_at') })
+          .select({ notificationId: notifications.id, userId: sql`${user.id}::uuid`.as('user_id'), readAt: sql`now()`.as('read_at'), clearedAt: sql`null::timestamptz`.as('cleared_at') })
           .from(notifications)
           .where(visibleTo(user)),
       )
       .onConflictDoNothing();
+  }
+
+  /**
+   * "Clear read": hides the caller's read notifications from their own bell.
+   * Only their read rows are stamped, so nothing is deleted and everyone
+   * else still sees their copy. Unread ones stay.
+   */
+  async clearRead(user: CurrentUser): Promise<void> {
+    await this.db
+      .update(notificationReads)
+      .set({ clearedAt: sql`now()` })
+      .where(and(eq(notificationReads.userId, user.id), isNull(notificationReads.clearedAt)));
   }
 
   /**

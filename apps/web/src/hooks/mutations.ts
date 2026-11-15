@@ -141,6 +141,7 @@ export const useDeleteProjectCost = () => useServiceMutation(projectCostService.
 export const useMarkNotificationRead = () =>
   useServiceMutation(({ id, userId }: { id: string; userId: string }) => notificationService.markRead(id, userId), [NOTIFS]);
 export const useMarkAllNotificationsRead = () => useServiceMutation(notificationService.markAllRead, [NOTIFS]);
+export const useClearReadNotifications = () => useServiceMutation(notificationService.clearRead, [NOTIFS]);
 export const useUpdateSettings = () => useServiceMutation(settingsService.update, [qk.settings]);
 export const useResetDemoData = () => {
   const qc = useQueryClient();

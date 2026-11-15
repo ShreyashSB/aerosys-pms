@@ -1,9 +1,9 @@
 import * as Popover from "@radix-ui/react-popover";
 import { useNavigate } from "react-router-dom";
-import { Bell, PauseCircle, CheckCheck, Clock, FolderPlus, UserPlus, Wrench, type LucideIcon } from "lucide-react";
+import { Bell, PauseCircle, CheckCheck, Eraser, Clock, FolderPlus, UserPlus, Wrench, type LucideIcon } from "lucide-react";
 import { useCurrentUser } from "@/auth/AuthContext";
 import { useNotifications } from "@/hooks/queries";
-import { useMarkAllNotificationsRead, useMarkNotificationRead } from "@/hooks/mutations";
+import { useClearReadNotifications, useMarkAllNotificationsRead, useMarkNotificationRead } from "@/hooks/mutations";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/misc";
 import { timeAgo } from "@/lib/format";
@@ -24,8 +24,10 @@ export function NotificationCenter() {
   const { data = [], isLoading } = useNotifications(user);
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
+  const clearRead = useClearReadNotifications();
   const navigate = useNavigate();
   const unread = data.filter((n) => !n.readBy.includes(user.id)).length;
+  const read = data.length - unread;
 
   return (
     <Popover.Root>
@@ -46,9 +48,14 @@ export function NotificationCenter() {
               <p className="text-sm font-semibold">Notifications</p>
               <p className="text-xs text-muted-foreground">{unread} unread</p>
             </div>
-            <Button variant="ghost" size="sm" disabled={unread === 0} onClick={() => markAll.mutate(user)}>
-              <CheckCheck /> Mark all read
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" disabled={unread === 0} onClick={() => markAll.mutate(user)}>
+                <CheckCheck /> Mark all read
+              </Button>
+              <Button variant="ghost" size="sm" disabled={read === 0 || clearRead.isPending} onClick={() => clearRead.mutate(user)} title="Hide notifications you've already read">
+                <Eraser /> Clear read
+              </Button>
+            </div>
           </div>
           <div className="max-h-[26rem] overflow-y-auto">
             {isLoading ? (
