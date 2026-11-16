@@ -30,7 +30,7 @@ export function EngineerDetailPage() {
   const [assignOpen, setAssignOpen] = useState(false);
 
   if (data.isLoading) return <PageSkeleton />;
-  if (data.error) return <ErrorState error={data.error} />;
+  if (data.error) return <ErrorState error={data.error} onRetry={data.retry} />;
   const emp = data.employeeById.get(id);
   if (!emp) return <NotFoundPage />;
 

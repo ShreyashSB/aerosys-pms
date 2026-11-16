@@ -99,7 +99,8 @@ export function EmployeesPage() {
       { header: "Status", value: (e) => EMPLOYEE_STATUS[e.status].label },
     ]));
 
-  if (data.error) return <ErrorState error={data.error} />;
+  const error = data.errorFor("employees");
+  if (error) return <ErrorState error={error} onRetry={data.retry} />;
   const active = data.employees.filter((e) => e.status !== "inactive");
 
   return (

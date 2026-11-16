@@ -18,14 +18,21 @@ export class DailyLogsService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  /** Logs with their attendance: two queries, then grouped in memory (no N+1 queries). */
+  /**
+   * Logs with their attendance: two queries, then grouped in memory (no N+1 queries). Attendance is selected with a
+   * join on the same filter rather than a list of every log id, which Postgres caps at 65,535 values per query.
+   */
   async list(projectId?: string): Promise<DailyLogDto[]> {
-    const logs = await this.db
-      .select()
-      .from(dailyLogs)
-      .where(projectId ? eq(dailyLogs.projectId, projectId) : undefined)
-      .orderBy(asc(dailyLogs.date));
-    return this.withAttendance(logs);
+    const filter = projectId ? eq(dailyLogs.projectId, projectId) : undefined;
+    const [logs, rows] = await Promise.all([
+      this.db.select().from(dailyLogs).where(filter).orderBy(asc(dailyLogs.date)),
+      this.db
+        .select({ a: attendanceEntries })
+        .from(attendanceEntries)
+        .innerJoin(dailyLogs, eq(attendanceEntries.dailyLogId, dailyLogs.id))
+        .where(filter),
+    ]);
+    return groupAttendance(logs, rows.map((r) => r.a));
   }
 
   async get(id: string): Promise<DailyLogDto> {
@@ -136,13 +143,7 @@ export class DailyLogsService {
       .select()
       .from(attendanceEntries)
       .where(inArray(attendanceEntries.dailyLogId, logs.map((l) => l.id)));
-    const byLog = new Map<string, DailyLogDto['attendance']>();
-    for (const r of rows) {
-      const list = byLog.get(r.dailyLogId) ?? [];
-      list.push({ employeeId: r.employeeId, status: r.status as DailyLogDto['attendance'][number]['status'], idleHours: r.idleHours, idleReason: r.idleReason });
-      byLog.set(r.dailyLogId, list);
-    }
-    return logs.map((l) => ({ ...l, attendance: byLog.get(l.id) ?? [] }));
+    return groupAttendance(logs, rows);
   }
 
   private async checkIdleHours(input: DailyLogInput) {
@@ -201,4 +202,14 @@ function idleManDays(status: string, idleHours: number, hoursPerManDay: number):
   if (status === 'idle') return 1;
   if (!(WORKING_STATUSES as readonly string[]).includes(status) || !idleHours) return 0;
   return Math.min(1, idleHours / Math.max(1, hoursPerManDay));
+}
+
+function groupAttendance(logs: DailyLogRow[], rows: Array<typeof attendanceEntries.$inferSelect>): DailyLogDto[] {
+  const byLog = new Map<string, DailyLogDto['attendance']>();
+  for (const r of rows) {
+    const list = byLog.get(r.dailyLogId) ?? [];
+    list.push({ employeeId: r.employeeId, status: r.status as DailyLogDto['attendance'][number]['status'], idleHours: r.idleHours, idleReason: r.idleReason });
+    byLog.set(r.dailyLogId, list);
+  }
+  return logs.map((l) => ({ ...l, attendance: byLog.get(l.id) ?? [] }));
 }

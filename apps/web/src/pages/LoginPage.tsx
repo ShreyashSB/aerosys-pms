@@ -61,7 +61,6 @@ function PasswordLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [slow, setSlow] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
@@ -72,8 +71,7 @@ function PasswordLogin() {
     }
     setSubmitting(true);
     setError(null);
-    // The free server sleeps when nobody has used it for a while; say so if waking it takes a moment.
-    const timer = setTimeout(() => setSlow(true), 4000);
+    // If the free server is asleep, the app-wide ServerWakeNotice says so after a few seconds.
     try {
       await signIn(email.trim(), password);
       const from = (location.state as { from?: string } | null)?.from;
@@ -81,9 +79,6 @@ function PasswordLogin() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't sign in");
       setSubmitting(false);
-    } finally {
-      clearTimeout(timer);
-      setSlow(false);
     }
   };
 
@@ -106,7 +101,6 @@ function PasswordLogin() {
       <Button type="submit" className="w-full" size="lg" loading={submitting}>
         {!submitting && <LogIn />} Sign in
       </Button>
-      {slow && <p className="text-center text-xs text-muted-foreground">Waking the server up. The first sign-in after a quiet spell can take up to a minute.</p>}
       <p className="text-xs text-muted-foreground">Forgot your password? Ask management to reset it from the Employees page.</p>
     </form>
   );

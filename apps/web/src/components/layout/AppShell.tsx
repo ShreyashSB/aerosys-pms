@@ -12,6 +12,7 @@ import { TopNav } from "./TopNav";
 import { Topbar } from "./Topbar";
 import { FirstPasswordScreen } from "@/features/auth/FirstPasswordScreen";
 import { preloadPages } from "@/pages/pageImports";
+import { AppErrorBoundary } from "@/components/common/ErrorBoundary";
 
 const COLLAPSE_KEY = "aerosys.sidebar.collapsed";
 
@@ -66,10 +67,12 @@ export function AppShell() {
         <main data-ground className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8">
           {/* Keyed by page: React Router switches pages inside a transition, which keeps the old page on screen while
               the new one's code downloads and makes the app look stuck. A fresh boundary per page shows the loading
-              skeleton straight away instead. */}
-          <Suspense key={location.pathname} fallback={<PageSkeleton />}>
-            <Outlet />
-          </Suspense>
+              skeleton straight away instead. The error boundary is keyed too, so moving to another page clears an error. */}
+          <AppErrorBoundary key={location.pathname} compact>
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </AppErrorBoundary>
         </main>
       </div>
       {view === "field" && <BottomNav onOpenMore={() => setMobileOpen(true)} />}

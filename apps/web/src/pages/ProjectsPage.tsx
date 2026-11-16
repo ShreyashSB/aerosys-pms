@@ -172,7 +172,7 @@ export function ProjectsPage() {
     },
   ];
 
-  if (data.error) return <ErrorState error={data.error} />;
+  if (data.error) return <ErrorState error={data.error} onRetry={data.retry} />;
 
   return (
     <div>

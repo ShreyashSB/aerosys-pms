@@ -49,7 +49,41 @@ async function errorFrom(res: Response): Promise<ApiError> {
   }
 }
 
+/**
+ * The free API host sleeps after about 15 idle minutes and takes up to a minute to wake. While any request has been
+ * waiting longer than SLOW_AFTER_MS, `serverSlow` is true, and the app shows a "waking up" note (ServerWakeNotice)
+ * on every screen, not just sign-in, so a long wait never looks like a hung app.
+ */
+const SLOW_AFTER_MS = 4000;
+let slowCount = 0;
+const slowListeners = new Set<() => void>();
+function setSlow(delta: number) {
+  slowCount += delta;
+  slowListeners.forEach((fn) => fn());
+}
+export const serverSlow = {
+  get: () => slowCount > 0,
+  subscribe(fn: () => void) {
+    slowListeners.add(fn);
+    return () => slowListeners.delete(fn);
+  },
+};
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  let slow = false;
+  const timer = setTimeout(() => {
+    slow = true;
+    setSlow(1);
+  }, SLOW_AFTER_MS);
+  try {
+    return await send<T>(method, path, body);
+  } finally {
+    clearTimeout(timer);
+    if (slow) setSlow(-1);
+  }
+}
+
+async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
     const headers: Record<string, string> = {};

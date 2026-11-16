@@ -53,7 +53,7 @@ export function ProjectDetailPage() {
   const [reviewOpen, setReviewOpen] = useState(false);
 
   if (data.isLoading) return <PageSkeleton />;
-  if (data.error) return <ErrorState error={data.error} />;
+  if (data.error) return <ErrorState error={data.error} onRetry={data.retry} />;
   const project = data.projectById.get(id);
   if (!project) return <NotFoundPage />;
   if (!data.scopedProjectIds.has(id)) return <ForbiddenPage />;

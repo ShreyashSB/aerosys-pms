@@ -69,7 +69,7 @@ function PortfolioDashboard() {
   const lowPpi = live.filter((r) => r.f.consumedManDays > 0 && r.f.ppiVariancePct < 0);
   const filtered = filter === "risk" ? atRisk : filter === "budget" ? overBudget : filter === "ppi" ? lowPpi : rows;
 
-  if (error) return <ErrorState error={error} />;
+  if (error) return <ErrorState error={error} onRetry={data.retry} />;
 
   const ppiVar = s.ppi ? ((s.runningPpi - s.ppi) / s.ppi) * 100 : 0;
   const ppiHealth: Health = s.consumedManDays === 0 ? { tone: "neutral", label: "" } : ppiVar >= HEALTH_THRESHOLDS.runningPpiGood ? { tone: "good", label: "Above baseline" } : ppiVar >= HEALTH_THRESHOLDS.runningPpiBad ? { tone: "warn", label: "Near baseline" } : { tone: "bad", label: "Below baseline" };
@@ -404,7 +404,11 @@ function PortfolioDashboard() {
 function EngineerDashboard() {
   const { user, employee } = useCurrentUser();
   const data = useScopedData();
-  const { isLoading, error } = data;
+  // Only the lists this screen uses (progress needs the BOQ, man-days need the daily logs), so a site engineer on a
+  // phone isn't kept waiting for bills, costs, documents and the rest.
+  const lists = ["projects", "assignments", "employees", "expenses", "instruments", "dailyLogs", "boqItems", "boqExecutions", "settings"] as const;
+  const isLoading = data.waitingFor(...lists);
+  const error = data.errorFor(...lists);
 
   const myAssignments = data.assignments.filter((a) => a.employeeId === user.employeeId && !a.endDate);
   const myExpenses = data.scopedExpenses;
@@ -417,7 +421,7 @@ function EngineerDashboard() {
   const mdMonth = myMonth.reduce((acc, a) => acc + MAN_DAY_WEIGHT[a.status], 0);
   const idleMonth = myMonth.filter((a) => a.status === "idle").length;
 
-  if (error) return <ErrorState error={error} />;
+  if (error) return <ErrorState error={error} onRetry={data.retry} />;
 
   return (
     <div>
@@ -440,8 +444,9 @@ function EngineerDashboard() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {myAssignments.map((a) => {
-            const p = data.projectById.get(a.projectId)!;
-            const f = data.perf.get(p.id)!;
+            const p = data.projectById.get(a.projectId);
+            const f = p && data.perf.get(p.id);
+            if (!p || !f) return null;
             const mine = f.byEmployee.find((u) => u.employeeId === user.employeeId);
             const daysLeft = daysBetween(todayISO(), p.endDate);
             return (

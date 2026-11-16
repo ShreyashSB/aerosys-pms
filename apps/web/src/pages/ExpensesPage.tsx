@@ -62,7 +62,8 @@ export function ExpensesPage() {
       ]),
     );
 
-  if (data.error) return <ErrorState error={data.error} />;
+  const error = data.errorFor("expenses", "projects", "employees", "assignments");
+  if (error) return <ErrorState error={error} onRetry={data.retry} />;
 
   return (
     <div>

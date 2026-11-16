@@ -55,13 +55,28 @@ const toApiEmployee = (input: EmployeeInput) => {
 };
 
 /**
+ * The employee was saved but their login could not be set up (for example a dropped connection on the second
+ * request). Carries the saved employee so the form can close as saved and say what is left to do, instead of
+ * showing an error that makes the next Save try to add the same person again.
+ */
+export class LoginSetupError extends ApiError {
+  constructor(
+    public employee: Employee,
+    cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : "Couldn't set up the login");
+    this.name = "LoginSetupError";
+  }
+}
+
+/**
  * Brings the employee's login in line with the form's "System access" field:
  * create it (with the starting password), change its role, switch it off or
- * back on, and reset the password when a new one was typed.
+ * back on, and reset the password when a new one was typed. `users` is the
+ * current list of logins, or null for a brand-new employee (who has none).
  */
-async function syncLogin(employeeId: string, role: Role | null, password?: string) {
-  const users = await http.get<User[]>("/api/users");
-  const login = users.find((u) => u.employeeId === employeeId);
+async function syncLogin(employeeId: string, role: Role | null, password: string | undefined, users: User[] | null) {
+  const login = users?.find((u) => u.employeeId === employeeId);
   if (!login) {
     if (!role) return;
     if (!password) throw new ApiError("Set a starting password to give this person a login");
@@ -75,18 +90,31 @@ async function syncLogin(employeeId: string, role: Role | null, password?: strin
   if (active && password) await http.post(`/api/users/${login.id}/reset-password`, { password });
 }
 
+async function withLogin(employee: Employee, run: () => Promise<void>): Promise<Employee> {
+  try {
+    await run();
+  } catch (err) {
+    throw new LoginSetupError(employee, err);
+  }
+  return employee;
+}
+
 export const employeeService: Service<"employeeService"> = {
   list: () => http.get<Employee[]>("/api/employees"),
   listUsers: () => http.get<User[]>("/api/users"),
   async create(input) {
+    // Checked before saving anything, so a missing password never leaves a half-saved employee.
+    if (input.appRole && !input.password) throw new ApiError("Set a starting password to give this person a login");
     const employee = await http.post<Employee>("/api/employees", toApiEmployee(input));
-    await syncLogin(employee.id, input.appRole, input.password);
-    return employee;
+    return withLogin(employee, () => syncLogin(employee.id, input.appRole, input.password, null));
   },
   async update(id, input) {
-    const employee = await http.put<Employee>(`/api/employees/${id}`, toApiEmployee(input));
-    await syncLogin(id, input.appRole, input.password);
-    return employee;
+    // The employee and the current logins are fetched at the same time rather than one after the other.
+    const [employee, users] = await Promise.all([
+      http.put<Employee>(`/api/employees/${id}`, toApiEmployee(input)),
+      http.get<User[]>("/api/users"),
+    ]);
+    return withLogin(employee, () => syncLogin(id, input.appRole, input.password, users));
   },
 };
 

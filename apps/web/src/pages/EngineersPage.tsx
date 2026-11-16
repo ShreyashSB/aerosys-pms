@@ -115,7 +115,8 @@ export function EngineersPage() {
     },
   ];
 
-  if (data.error) return <ErrorState error={data.error} />;
+  const error = data.errorFor("employees", "assignments", "projects");
+  if (error) return <ErrorState error={error} onRetry={data.retry} />;
   const openProjects = data.projects.filter((p) => p.status === "active" || p.status === "on_hold" || p.status === "planning");
 
   return (
