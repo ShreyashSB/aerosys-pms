@@ -395,16 +395,18 @@
 
 /* Type: big friendly headings and numbers. */
 [data-style="calm"] [data-slot="page-title"] {
-  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; font-size: 1.6rem; line-height: 1.15; margin-bottom: 0.25rem;
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; font-size: 1.6rem; margin-bottom: 0.4rem;
 }
-/* Accent bar under titles: one short rounded bar under the whole heading, so it never crosses wrapped lines
- * the way a text underline does on narrow screens. */
-[data-style="calm"] :is([data-slot="page-title"], [data-slot="calm-greeting"])::after {
-  content: ""; display: block; width: 2.75rem; height: 4px; margin-top: 0.5rem; border-radius: 999px; background: var(--calm-accent);
-}
-[data-style="calm"] [data-slot="calm-greeting"]::after { width: 4rem; height: 5px; margin-top: 0.75rem; }
 [data-style="calm"] [data-slot="calm-greeting"] {
-  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; font-size: 2.4rem; line-height: 1.05;
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; font-size: 2.4rem;
+}
+/* Green underline under every line of a title, like the demo. Sizes are in em so they scale with the text, and
+ * the line height leaves room for the underline below the descenders, so it never touches the next line when
+ * a title wraps (the clash seen on phones came from the old 1.02-1.15 line height). */
+[data-style="calm"] :is([data-slot="page-title"], [data-slot="calm-greeting"]) {
+  line-height: 1.38;
+  text-decoration: underline; text-decoration-color: var(--calm-accent); text-decoration-skip-ink: none;
+  text-decoration-thickness: 0.085em; text-underline-offset: 0.2em;
 }
 [data-style="calm"] [data-slot="hero-number"] { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.03em; font-size: 2.1rem; line-height: 1.05; }
 @media (min-width: 640px) {
