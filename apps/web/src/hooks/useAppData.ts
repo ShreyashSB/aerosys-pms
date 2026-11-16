@@ -44,11 +44,25 @@ export function useAppData() {
   const reviews = useReviews();
   const bills = useBills();
 
-  const all = [projects, employees, assignments, expenses, instruments, deployments, projectCosts, settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews, bills];
+  const byName = { projects, employees, assignments, expenses, instruments, deployments, projectCosts, settings: settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews, bills };
+  const all = Object.values(byName);
   const isLoading = all.some((q) => q.isLoading);
+  // Pages that only show a few lists wait for just those (via waitingFor) instead of all 14, so e.g. Expenses
+  // appears as soon as expenses, projects, employees and assignments arrive.
+  const loadingKey = all.map((q) => (q.isLoading ? 1 : 0)).join("");
+  const waitingFor = useMemo(() => {
+    const loading = new Set(Object.entries(byName).filter(([, q]) => q.isLoading).map(([k]) => k as Resource));
+    return (...resources: Resource[]) => resources.some((r) => loading.has(r));
+  }, [loadingKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const error = all.find((q) => q.error)?.error ?? null;
 
-  const derived = useMemo(() => {
+  const inputs = [
+    projects.data, employees.data, assignments.data, expenses.data, instruments.data, deployments.data,
+    projectCosts.data, settingsQ.data, boqItems.data, boqExecutions.data, dailyLogs.data, documents.data, reviews.data, bills.data,
+  ];
+  // Shared across every component that calls this hook: the performance engine runs once per data change, not once
+  // per page or widget that mounts (which made every page switch redo the whole portfolio calculation).
+  const derived = useMemo(() => sharedDerived(inputs, () => {
     const p = projects.data ?? [];
     const e = employees.data ?? [];
     const settings = settingsQ.data ?? DEFAULT_SETTINGS;
@@ -92,13 +106,28 @@ export function useAppData() {
       projectById: new Map(p.map((x) => [x.id, x])),
       instrumentById: new Map((instruments.data ?? []).map((x) => [x.id, x])),
     };
-  }, [
-    projects.data, employees.data, assignments.data, expenses.data, instruments.data, deployments.data,
-    projectCosts.data, settingsQ.data, boqItems.data, boqExecutions.data, dailyLogs.data, documents.data, reviews.data, bills.data,
-  ]);
+  }), inputs); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { ...derived, isLoading, error };
+  return useMemo(() => ({ ...derived, isLoading, waitingFor, error }), [derived, isLoading, waitingFor, error]);
 }
+
+export type Resource =
+  | "projects" | "employees" | "assignments" | "expenses" | "instruments" | "deployments" | "projectCosts"
+  | "settings" | "boqItems" | "boqExecutions" | "dailyLogs" | "documents" | "reviews" | "bills";
+
+/** One-entry cache: returns the last result while every input is the same object as last time. */
+function oneEntryCache<T>() {
+  let lastInputs: unknown[] | null = null;
+  let lastValue: T;
+  return (inputs: unknown[], compute: () => T): T => {
+    if (lastInputs && lastInputs.length === inputs.length && lastInputs.every((v, i) => v === inputs[i])) return lastValue;
+    lastValue = compute();
+    lastInputs = inputs;
+    return lastValue;
+  };
+}
+const sharedDerived = oneEntryCache<Record<string, unknown>>() as <T>(inputs: unknown[], compute: () => T) => T;
+const sharedScoped = oneEntryCache<unknown>() as <T>(inputs: unknown[], compute: () => T) => T;
 
 export type AppData = ReturnType<typeof useAppData>;
 
@@ -106,7 +135,8 @@ export type AppData = ReturnType<typeof useAppData>;
 export function useScopedData() {
   const data = useAppData();
   const { user } = useAuth();
-  return useMemo(() => {
+  // Shared like useAppData: scoping, the portfolio summary and insights are computed once per data or user change.
+  return useMemo(() => sharedScoped([data, user], () => {
     const projects = user ? scopeProjects(user, data.projects, data.assignments) : [];
     const ids = new Set(projects.map((p) => p.id));
     const isEngineer = user?.role === "site_engineer";
@@ -129,5 +159,5 @@ export function useScopedData() {
       portfolio: summarisePortfolio(projects, data.perf),
       insights: generateInsights(projects, data.perf, data.settings),
     };
-  }, [data, user]);
+  }), [data, user]);
 }

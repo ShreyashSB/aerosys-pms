@@ -19,7 +19,18 @@ export interface WeekPoint {
  * (computeProjectPerformance "as of" each week end), so the last point matches the dashboard's tiles.
  * "In" is earned value added that week (work executed against the BOQ); "out" is cost added that week.
  */
+let cache: { key: unknown[]; value: WeekPoint[] } | null = null;
+
 export function weeklyPortfolioSeries(projects: Project[], index: PerformanceIndex, settings: AppSettings, weeks = 13): WeekPoint[] {
+  // Reuse the last result while the inputs are unchanged, so going back to the dashboard doesn't redo 14 snapshots.
+  const key = [projects, index, settings, weeks, todayISO()];
+  if (cache && cache.key.every((v, i) => v === key[i])) return cache.value;
+  const value = computeWeekly(projects, index, settings, weeks);
+  cache = { key, value };
+  return value;
+}
+
+function computeWeekly(projects: Project[], index: PerformanceIndex, settings: AppSettings, weeks: number): WeekPoint[] {
   const today = todayISO();
   const live = projects.filter((p) => p.status !== "archived");
   const ends = Array.from({ length: weeks + 1 }, (_, i) => addDays(today, -7 * (weeks - i)));

@@ -27,6 +27,8 @@ import type { Instrument, InstrumentStatus } from "@/types/models";
 export function InstrumentsPage() {
   const { user } = useCurrentUser();
   const data = useScopedData();
+  // Waits only for the lists this page shows, not all of them.
+  const loading = data.waitingFor("instruments", "projects", "employees", "assignments");
   const filters = useUrlState(["q", "status", "category", "project"] as const);
   const f = filters.values;
   const [formOpen, setFormOpen] = useState(false);
@@ -175,14 +177,14 @@ export function InstrumentsPage() {
       />
       {!isEngineer && (
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-          <StatCard label="Total instruments" value={base.length} loading={data.isLoading} hint={`${formatINRShort(sum(base, (i) => i.assetValue))} asset value`} />
-          <StatCard label="Available" value={count("available")} loading={data.isLoading} />
-          <StatCard label="Assigned" value={count("assigned")} loading={data.isLoading} />
-          <StatCard label="Maintenance" value={count("maintenance")} loading={data.isLoading} />
-          <StatCard label="Retired" value={count("retired")} loading={data.isLoading} />
+          <StatCard label="Total instruments" value={base.length} loading={loading} hint={`${formatINRShort(sum(base, (i) => i.assetValue))} asset value`} />
+          <StatCard label="Available" value={count("available")} loading={loading} />
+          <StatCard label="Assigned" value={count("assigned")} loading={loading} />
+          <StatCard label="Maintenance" value={count("maintenance")} loading={loading} />
+          <StatCard label="Retired" value={count("retired")} loading={loading} />
         </div>
       )}
-      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : base.length}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={loading ? undefined : base.length}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search name, ID, serial, engineer…" />
         <Select value={f.status} onChange={(e) => filters.set("status", e.target.value)} className="w-auto" aria-label="Filter by status">
           <option value="">All statuses</option>
@@ -203,7 +205,7 @@ export function InstrumentsPage() {
         rows={rows}
         columns={columns}
         rowKey={(i) => i.id}
-        loading={data.isLoading}
+        loading={loading}
         initialSort={{ key: "name", dir: "asc" }}
         mobileCard={(i) => {
           const engineer = data.employeeById.get(i.assignedEngineerId ?? "")?.name;

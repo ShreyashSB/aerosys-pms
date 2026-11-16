@@ -20,6 +20,8 @@ import { includesText, sum } from "@/lib/utils";
 export function ExpensesPage() {
   const { user } = useCurrentUser();
   const data = useScopedData();
+  // Waits only for the lists this page shows, not all of them.
+  const loading = data.waitingFor("expenses", "projects", "employees", "assignments");
   const filters = useUrlState(["q", "project", "employee", "category", "from", "to"] as const);
   const f = filters.values;
   const [open, setOpen] = useState(false);
@@ -89,13 +91,13 @@ export function ExpensesPage() {
       />
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Total (filtered)" value={formatINR(sum(rows, (e) => e.amount))} hint={`${rows.length} expenses`} loading={data.isLoading} />
-        <StatCard label="This month" value={formatINR(sum(monthRows, (e) => e.amount))} hint={`${monthRows.length} expenses`} loading={data.isLoading} />
-        <StatCard label="Average expense" value={formatINR(rows.length ? sum(rows, (e) => e.amount) / rows.length : 0)} loading={data.isLoading} />
-        <StatCard label="Largest category" value={byCategory[0] ? formatINR(byCategory[0][1]) : "—"} hint={byCategory[0]?.[0]} loading={data.isLoading} />
+        <StatCard label="Total (filtered)" value={formatINR(sum(rows, (e) => e.amount))} hint={`${rows.length} expenses`} loading={loading} />
+        <StatCard label="This month" value={formatINR(sum(monthRows, (e) => e.amount))} hint={`${monthRows.length} expenses`} loading={loading} />
+        <StatCard label="Average expense" value={formatINR(rows.length ? sum(rows, (e) => e.amount) / rows.length : 0)} loading={loading} />
+        <StatCard label="Largest category" value={byCategory[0] ? formatINR(byCategory[0][1]) : "—"} hint={byCategory[0]?.[0]} loading={loading} />
       </div>
 
-      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : base.length}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={loading ? undefined : base.length}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search ID, description…" />
         <Select value={f.project} onChange={(e) => filters.set("project", e.target.value)} className="w-auto max-w-56" aria-label="Filter by project">
           <option value="">All projects</option>
@@ -120,7 +122,7 @@ export function ExpensesPage() {
 
       <ExpenseTable
         expenses={rows}
-        loading={data.isLoading}
+        loading={loading}
         hideEmployee={isEngineer}
         pageSize={12}
         emptyAction={can(user.role, "expense.create") && !filters.active ? <Button variant="outline" onClick={() => setOpen(true)}><Plus /> Add expense</Button> : undefined}

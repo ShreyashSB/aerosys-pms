@@ -11,6 +11,7 @@ import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { Topbar } from "./Topbar";
 import { FirstPasswordScreen } from "@/features/auth/FirstPasswordScreen";
+import { preloadPages } from "@/pages/pageImports";
 
 const COLLAPSE_KEY = "aerosys.sidebar.collapsed";
 
@@ -23,6 +24,11 @@ export function AppShell() {
   const { resolvedView: view, style } = useAppearance();
   // Calm style has its own pill header on laptops, so the sidebar, top bar and top menu are for phones only there.
   const calm = style === "calm";
+
+  // After sign-in, download the other pages' code in the background so first visits open instantly.
+  useEffect(() => {
+    if (user) preloadPages();
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0");
@@ -58,7 +64,10 @@ export function AppShell() {
         <Topbar onOpenMobile={() => setMobileOpen(true)} view={view} />
         {view === "topnav" && !calm && <TopNav />}
         <main data-ground className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8">
-          <Suspense fallback={<PageSkeleton />}>
+          {/* Keyed by page: React Router switches pages inside a transition, which keeps the old page on screen while
+              the new one's code downloads and makes the app look stuck. A fresh boundary per page shows the loading
+              skeleton straight away instead. */}
+          <Suspense key={location.pathname} fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>
         </main>
