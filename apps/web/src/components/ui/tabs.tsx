@@ -66,12 +66,12 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
         {...props}
       />
       {edges.left && (
-        <button type="button" tabIndex={-1} aria-hidden onClick={() => nudge(-1)} className={cn(arrow, "left-0")}>
+        <button type="button" tabIndex={-1} aria-hidden data-slot="tabs-arrow" onClick={() => nudge(-1)} className={cn(arrow, "left-0")}>
           <ChevronLeft className="size-4" />
         </button>
       )}
       {edges.right && (
-        <button type="button" tabIndex={-1} aria-hidden onClick={() => nudge(1)} className={cn(arrow, "right-0")}>
+        <button type="button" tabIndex={-1} aria-hidden data-slot="tabs-arrow" onClick={() => nudge(1)} className={cn(arrow, "right-0")}>
           <ChevronRight className="size-4" />
         </button>
       )}

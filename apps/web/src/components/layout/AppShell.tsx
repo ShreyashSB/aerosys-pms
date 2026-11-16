@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageSkeleton } from "@/components/common/States";
 import { useAppearance } from "@/appearance/AppearanceContext";
 import { BottomNav } from "./BottomNav";
+import { CalmHeader } from "./CalmHeader";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { Topbar } from "./Topbar";
@@ -19,7 +20,9 @@ export function AppShell() {
   const qc = useQueryClient();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { resolvedView: view } = useAppearance();
+  const { resolvedView: view, style } = useAppearance();
+  // Calm style has its own pill header on laptops, so the sidebar, top bar and top menu are for phones only there.
+  const calm = style === "calm";
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0");
@@ -48,12 +51,13 @@ export function AppShell() {
         onToggle={() => setCollapsed((c) => !c)}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
-        hideOnDesktop={view === "topnav"}
+        hideOnDesktop={view === "topnav" || calm}
       />
       <div data-slot="canvas" className="flex min-w-0 flex-1 flex-col">
+        {calm && <CalmHeader />}
         <Topbar onOpenMobile={() => setMobileOpen(true)} view={view} />
-        {view === "topnav" && <TopNav />}
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8">
+        {view === "topnav" && !calm && <TopNav />}
+        <main data-ground className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8">
           <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>

@@ -18,8 +18,12 @@
  */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-/** "standard" is the original design; "studio" is the softer look with floating panels, rounded cards and pill buttons. */
-export type Style = "standard" | "studio";
+/**
+ * "standard" is the original design; "studio" is the softer look with floating panels, rounded cards and pill buttons;
+ * "calm" puts the page on a green ground with a pill menu across the top, cream cards and a greeting with big numbers
+ * on the dashboard. All three are look and feel only: the same pages, numbers and charts in every style.
+ */
+export type Style = "standard" | "studio" | "calm";
 export type ThemePref = "system" | "light" | "dark" | "sunlight";
 export type ResolvedTheme = Exclude<ThemePref, "system">;
 export type ViewPref = "auto" | "classic" | "topnav" | "field";
@@ -49,8 +53,9 @@ export const MOBILE_QUERY = "(max-width: 767.98px), (hover: none) and (pointer: 
 
 /** Labels and one-line descriptions, shared by the quick switcher in the top bar and the Settings page. */
 export const STYLE_OPTIONS: Array<{ value: Style; label: string; hint: string }> = [
-  { value: "standard", label: "Standard", hint: "The original design" },
-  { value: "studio", label: "Studio", hint: "Floating panels, rounded cards and pill buttons" },
+  { value: "standard", label: "Standard", hint: "The original design. Crisp and compact, best for site use" },
+  { value: "studio", label: "Studio", hint: "Same layout, softer finish: floating panels, rounded cards, pill buttons" },
+  { value: "calm", label: "Calm", hint: "Bolder: pill menu across the top on laptops, green ground, big greeting and numbers" },
 ];
 
 export const THEME_OPTIONS: Array<{ value: ThemePref; label: string; hint: string }> = [
