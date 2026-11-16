@@ -395,15 +395,20 @@
 
 /* Type: big friendly headings and numbers. */
 [data-style="calm"] [data-slot="page-title"] {
-  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; font-size: 2rem; line-height: 1.15;
-  text-decoration: underline; text-decoration-color: var(--calm-accent); text-decoration-thickness: 4px; text-underline-offset: 10px; margin-bottom: 0.6rem;
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; font-size: 1.6rem; line-height: 1.15; margin-bottom: 0.25rem;
 }
+/* Accent bar under titles: one short rounded bar under the whole heading, so it never crosses wrapped lines
+ * the way a text underline does on narrow screens. */
+[data-style="calm"] :is([data-slot="page-title"], [data-slot="calm-greeting"])::after {
+  content: ""; display: block; width: 2.75rem; height: 4px; margin-top: 0.5rem; border-radius: 999px; background: var(--calm-accent);
+}
+[data-style="calm"] [data-slot="calm-greeting"]::after { width: 4rem; height: 5px; margin-top: 0.75rem; }
 [data-style="calm"] [data-slot="calm-greeting"] {
-  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; font-size: 2.4rem; line-height: 1.02;
-  text-decoration: underline; text-decoration-color: var(--calm-accent); text-decoration-thickness: 5px; text-underline-offset: 12px;
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; font-size: 2.4rem; line-height: 1.05;
 }
 [data-style="calm"] [data-slot="hero-number"] { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.03em; font-size: 2.1rem; line-height: 1.05; }
 @media (min-width: 640px) {
+  [data-style="calm"] [data-slot="page-title"] { font-size: 2rem; }
   [data-style="calm"] [data-slot="calm-greeting"] { font-size: 3.5rem; }
   [data-style="calm"] [data-slot="hero-number"] { font-size: 2.6rem; }
 }
