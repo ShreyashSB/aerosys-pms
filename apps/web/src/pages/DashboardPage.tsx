@@ -255,6 +255,9 @@ function PortfolioDashboard() {
             "Project financial health" table below, so they no longer need cards of their own. */}
       </section>
 
+      {/* Portfolio trends: earned value over time and money in/out per week (finance roles, every style). */}
+      {showFinance && <PortfolioTrends data={data} />}
+
       {/* Attention required */}
       <Card>
         <CardHeader>
@@ -325,9 +328,6 @@ function PortfolioDashboard() {
           />
         </CardContent>
       </Card>
-
-      {/* Portfolio trends: earned value over time and money in/out per week (same in every style). */}
-      {showFinance && <PortfolioTrends data={data} />}
 
       {showFinance && (
         <div className="grid gap-6 xl:grid-cols-5">
