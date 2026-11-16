@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Progress, Skeleton } from "@/components/ui/misc";
 import { ProjectStatusBadge, InstrumentStatusBadge } from "@/components/common/StatusBadges";
 import { CostBreakdown } from "@/features/dashboard/CostBreakdown";
+import { CalmHero } from "@/features/dashboard/CalmHero";
+import { useAppearance } from "@/appearance/AppearanceContext";
 import { ExpenseTable } from "@/features/expenses/ExpenseTable";
 import { ProjectFormDialog } from "@/features/projects/ProjectFormDialog";
 import { PnlDrawer } from "@/features/projects/PnlDrawer";
@@ -53,6 +55,8 @@ function PortfolioDashboard() {
   const [showAllInsights, setShowAllInsights] = useState(false);
   const { portfolio: s, scopedProjects: projects, perf, health, isLoading, error, settings, insights } = data;
   const showFinance = can(user.role, "finance.view");
+  // Calm style shows the greeting and the financial numbers as one big header; the numbers are the same as the tiles.
+  const calm = useAppearance().style === "calm";
 
   const rows = useMemo<Row[]>(
     () => projects.filter((p) => p.status !== "archived").map((p) => ({ p, f: perf.get(p.id)!, h: health.get(p.id)! })),
@@ -178,41 +182,56 @@ function PortfolioDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`${greeting()}, ${employee.name.split(" ")[0]}`}
-        description={
-          user.role === "project_manager"
-            ? `Performance of the ${projects.length} projects you manage — are we executing efficiently, and making money?`
-            : `${ROLE_LABELS[user.role]} view · Are we executing our projects efficiently, and are we making money on them?`
-        }
-        actions={
-          <>
-            {can(user.role, "project.create") && (
-              <Button onClick={() => setCreateOpen(true)}>
-                <Plus /> New project
-              </Button>
-            )}
-          </>
-        }
-      />
-
-      {/* Financial KPIs */}
-      {showFinance && (
-        <section aria-label="Financial overview" className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          <KpiCard size="lg" label="Total contract value" value={formatINRShort(s.contractValue)} sub={`${s.projectCount} projects`} loading={isLoading} />
-          <KpiCard size="lg" label="Current earned value" value={formatINRShort(s.earnedValue)} sub={`${formatPct(s.progress * 100)} of portfolio executed`} loading={isLoading} />
-          <KpiCard size="lg" label="Actual cost to date" value={formatINRShort(s.costToDate)} health={contributionTone} loading={isLoading} />
-          <KpiCard size="lg" label="Projected final cost" value={formatINRShort(s.finalCost)} sub="Estimate" loading={isLoading} />
-          <KpiCard
-            size="lg"
-            label="Projected profit"
-            value={formatINRShort(s.finalProfit)}
-            health={profitH}
-            sub={`${formatPct(s.finalMarginPct)} margin · estimate`}
-            onClick={() => setPnlOpen(true)}
-            loading={isLoading}
+      {calm ? (
+        <CalmHero
+          data={data}
+          firstName={employee.name.split(" ")[0]}
+          showFinance={showFinance}
+          canCreate={can(user.role, "project.create")}
+          costHealth={contributionTone}
+          profitHealth={profitH}
+          onNewProject={() => setCreateOpen(true)}
+          onOpenPnl={() => setPnlOpen(true)}
+        />
+      ) : (
+        <>
+          <PageHeader
+            title={`${greeting()}, ${employee.name.split(" ")[0]}`}
+            description={
+              user.role === "project_manager"
+                ? `Performance of the ${projects.length} projects you manage — are we executing efficiently, and making money?`
+                : `${ROLE_LABELS[user.role]} view · Are we executing our projects efficiently, and are we making money on them?`
+            }
+            actions={
+              <>
+                {can(user.role, "project.create") && (
+                  <Button onClick={() => setCreateOpen(true)}>
+                    <Plus /> New project
+                  </Button>
+                )}
+              </>
+            }
           />
-        </section>
+
+          {/* Financial KPIs */}
+          {showFinance && (
+            <section aria-label="Financial overview" className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <KpiCard size="lg" label="Total contract value" value={formatINRShort(s.contractValue)} sub={`${s.projectCount} projects`} loading={isLoading} />
+              <KpiCard size="lg" label="Current earned value" value={formatINRShort(s.earnedValue)} sub={`${formatPct(s.progress * 100)} of portfolio executed`} loading={isLoading} />
+              <KpiCard size="lg" label="Actual cost to date" value={formatINRShort(s.costToDate)} health={contributionTone} loading={isLoading} />
+              <KpiCard size="lg" label="Projected final cost" value={formatINRShort(s.finalCost)} sub="Estimate" loading={isLoading} />
+              <KpiCard
+                size="lg"
+                label="Projected profit"
+                value={formatINRShort(s.finalProfit)}
+                health={profitH}
+                sub={`${formatPct(s.finalMarginPct)} margin · estimate`}
+                onClick={() => setPnlOpen(true)}
+                loading={isLoading}
+              />
+            </section>
+          )}
+        </>
       )}
 
       {/* Execution KPIs */}

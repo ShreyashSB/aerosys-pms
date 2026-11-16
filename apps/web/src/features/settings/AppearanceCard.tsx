@@ -28,6 +28,7 @@ function OptionTiles<T extends string>({
   options,
   onChange,
   preview,
+  note,
   columns = "sm:grid-cols-3",
 }: {
   name: string;
@@ -36,11 +37,13 @@ function OptionTiles<T extends string>({
   options: Array<{ value: T; label: string; hint: string }>;
   onChange: (v: T) => void;
   preview: (v: T) => ReactNode;
+  note?: string;
   columns?: string;
 }) {
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-medium">{legend}</legend>
+      <legend className={cn("text-sm font-medium", !note && "mb-2")}>{legend}</legend>
+      {note && <p className="mb-2 text-xs text-muted-foreground">{note}</p>}
       <div className={cn("grid grid-cols-2 gap-3", columns)}>
         {options.map((o) => (
           <label
@@ -131,8 +134,25 @@ function ViewPreviewParts({ laptop, phone }: { laptop: View; phone: View }) {
   );
 }
 
-/** Mini drawing of each style: flat panels with borders vs floating rounded panels on a blue ground. */
+/** Mini drawing of each style: flat panels with borders, floating rounded panels on a blue ground, or a pill menu on green. */
 function StylePreview({ style }: { style: Style }) {
+  if (style === "calm") {
+    // Pill menu across the top on a green ground, a big greeting line and cream cards.
+    return (
+      <div className="flex h-16 flex-col gap-1 rounded-md p-1" style={{ background: "#3f5638" }}>
+        <div className="flex h-2 items-center gap-0.5 rounded-full px-0.5" style={{ background: "rgb(255 255 255 / 0.14)" }}>
+          <div className="h-1.5 w-3 rounded-full" style={{ background: "#141813" }} />
+          <div className="h-1 w-2 rounded-full" style={{ background: "rgb(255 255 255 / 0.5)" }} />
+          <div className="h-1 w-2 rounded-full" style={{ background: "rgb(255 255 255 / 0.5)" }} />
+        </div>
+        <div className="h-1.5 w-1/3 rounded-full" style={{ background: "#ffffff" }} />
+        <div className="flex flex-1 gap-1">
+          <div className="flex-[3] rounded-[5px]" style={{ background: "#f7f6ef" }} />
+          <div className="flex-[2] rounded-[5px]" style={{ background: "#f7f6ef" }} />
+        </div>
+      </div>
+    );
+  }
   if (style === "studio") {
     return (
       <div className="flex h-16 gap-1 rounded-md p-1" style={{ background: "#d7e6f6" }}>
@@ -195,7 +215,7 @@ export function AppearanceCard() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <OptionTiles name="style" legend="Style" value={style} options={STYLE_OPTIONS} onChange={(v) => set({ style: v })} preview={(v) => <StylePreview style={v} />} columns="sm:grid-cols-4" />
+          <OptionTiles name="style" legend="Style" value={style} options={STYLE_OPTIONS} onChange={(v) => set({ style: v })} preview={(v) => <StylePreview style={v} />} note="Changes the look only. Every style shows the same pages, numbers and charts." />
           <OptionTiles name="theme" legend="Theme" value={theme} options={THEME_OPTIONS} onChange={(v) => set({ theme: v })} preview={(v) => <ThemePreview theme={v} />} columns="sm:grid-cols-4" />
           <OptionTiles name="view" legend="View" value={view} options={VIEW_OPTIONS} onChange={(v) => set({ view: v })} preview={(v) => <ViewPreview view={v} />} columns="sm:grid-cols-4" />
           <OptionTiles name="density" legend="Size" value={density} options={DENSITY_OPTIONS} onChange={(v) => set({ density: v })} preview={(v) => <DensityPreview density={v} />} />

@@ -208,6 +208,208 @@
   [data-style="studio"][data-theme="dark"] [data-slot="bottom-nav"] { border-width: 1px; }
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * Calm style (data-style="calm" on <html>). The page sits on a calm green ground with a pill menu across
+ * the top (CalmHeader on laptops), soft cream cards with big rounded corners, a greeting with big numbers
+ * on the dashboard and gentle motion between pages. Look and feel only: chart colours (--color-series-*,
+ * --color-seq-*) and health colours are deliberately NOT changed, so charts read the same in every style.
+ * Works with every theme: Light (green ground), Dark (deep green ground) and Sunlight (pale ground, black
+ * text, visible borders).
+ *
+ * Two palettes: the normal colour tokens are the CARD palette (dark text on cream). Anything marked
+ * data-ground (main, top bar, calm header) swaps the same tokens to the GROUND palette (light text on green),
+ * and every card, input or popover inside it switches back to the card palette. So text is always on the
+ * surface it was designed for and never ends up as grey-on-green.
+ * ---------------------------------------------------------------------------------------------- */
+[data-style="calm"] {
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* ground */
+  --calm-ground: #3f5638;
+  --calm-on: #ffffff;
+  --calm-on-muted: #dde7d3;
+  --calm-line: rgb(255 255 255 / 0.22);
+  --calm-glass: rgb(255 255 255 / 0.10);
+  --calm-ground-primary: #c9e5a0;
+  --calm-ground-primary-fg: #141813;
+  /* pills and accents */
+  --calm-pill: #141813;
+  --calm-pill-fg: #ffffff;
+  --calm-accent: #c9e5a0;
+  --calm-ring-track: rgb(255 255 255 / 0.18);
+  --calm-shadow: 0 1px 2px rgb(20 24 19 / 0.06), 0 12px 32px rgb(20 24 19 / 0.12);
+  /* card palette */
+  --calm-card: #f7f6ef;
+  --calm-card-fg: #171c15;
+  --calm-card-muted: #ecebe1;
+  --calm-card-muted-fg: #4c5546;
+  --calm-card-border: #dedccd;
+  --calm-card-primary: #141813;
+  --calm-card-primary-fg: #ffffff;
+  --calm-card-primary-soft: #e2efcd;
+
+  --color-surface: var(--calm-card);
+  --color-background: var(--calm-card);
+  --color-foreground: var(--calm-card-fg);
+  --color-muted: var(--calm-card-muted);
+  --color-muted-foreground: var(--calm-card-muted-fg);
+  --color-border: var(--calm-card-border);
+  --color-input: #c4c3b2;
+  --color-ring: #4d7a38;
+  --color-primary: var(--calm-card-primary);
+  --color-primary-hover: #2b3328;
+  --color-primary-foreground: var(--calm-card-primary-fg);
+  --color-primary-soft: var(--calm-card-primary-soft);
+  --color-sidebar: #1c2818;
+  --color-sidebar-foreground: #dde7d3;
+  --color-sidebar-active: #34472d;
+}
+[data-style="calm"][data-theme="dark"] {
+  --calm-ground: #10160e;
+  --calm-on: #eef3e8;
+  --calm-on-muted: #b7c3ae;
+  --calm-line: rgb(255 255 255 / 0.14);
+  --calm-glass: rgb(255 255 255 / 0.06);
+  --calm-pill: #c9e5a0;
+  --calm-pill-fg: #10160e;
+  --calm-ring-track: rgb(255 255 255 / 0.12);
+  --calm-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px rgb(0 0 0 / 0.3);
+  --calm-card: #1a2117;
+  --calm-card-fg: #e9eee3;
+  --calm-card-muted: #242d20;
+  --calm-card-muted-fg: #aab6a1;
+  --calm-card-border: #2f3a2a;
+  --calm-card-primary: #c9e5a0;
+  --calm-card-primary-fg: #10160e;
+  --calm-card-primary-soft: #2c3b22;
+  --color-input: #3c4836;
+  --color-ring: #9cc87c;
+  --color-primary-hover: #b6d88a;
+  --color-sidebar: #0b1009;
+  --color-sidebar-active: #243020;
+}
+/* Sunlight: a pale ground with black text, white cards with visible borders, black pills. No light-on-green anywhere. */
+[data-style="calm"][data-theme="sunlight"] {
+  --calm-ground: #e9efe3;
+  --calm-on: #000000;
+  --calm-on-muted: #1f261b;
+  --calm-line: #7d8875;
+  --calm-glass: rgb(0 0 0 / 0.04);
+  --calm-ground-primary: #000000;
+  --calm-ground-primary-fg: #ffffff;
+  --calm-pill: #000000;
+  --calm-pill-fg: #ffffff;
+  --calm-accent: #2f5323;
+  --calm-ring-track: #c3ccbb;
+  --calm-card: #ffffff;
+  --calm-card-fg: #000000;
+  --calm-card-muted: #eef1ea;
+  --calm-card-muted-fg: #262d22;
+  --calm-card-border: #8e9886;
+  --calm-card-primary: #000000;
+  --calm-card-primary-soft: #d6e8bf;
+  --color-input: #5b6455;
+  --color-ring: #2f5323;
+}
+[data-style="calm"] body { background: var(--calm-ground); }
+
+/* Ground palette for everything that sits straight on the green. */
+[data-style="calm"] [data-ground] {
+  --color-foreground: var(--calm-on);
+  --color-muted-foreground: var(--calm-on-muted);
+  --color-border: var(--calm-line);
+  --color-muted: var(--calm-glass);
+  --color-primary: var(--calm-ground-primary);
+  --color-primary-hover: color-mix(in srgb, var(--calm-ground-primary) 88%, white);
+  --color-primary-foreground: var(--calm-ground-primary-fg);
+  --color-primary-soft: var(--calm-glass);
+  color: var(--color-foreground);
+}
+/* ...and back to the card palette inside cards, fields, outline buttons and anything drawn on a surface. */
+[data-style="calm"] [data-ground] :is([data-slot="card"], [data-slot="search"], .bg-surface, input, select, textarea, [role="dialog"], [role="menu"], [role="listbox"], [data-slot="button"][data-variant="outline"]:not([data-ground-outline])) {
+  --color-foreground: var(--calm-card-fg);
+  --color-muted-foreground: var(--calm-card-muted-fg);
+  --color-border: var(--calm-card-border);
+  --color-muted: var(--calm-card-muted);
+  --color-primary: var(--calm-card-primary);
+  --color-primary-hover: color-mix(in srgb, var(--calm-card-primary) 85%, white);
+  --color-primary-foreground: var(--calm-card-primary-fg);
+  --color-primary-soft: var(--calm-card-primary-soft);
+  color: var(--color-foreground);
+}
+
+/* Fields that sit straight on the ground get a solid cream fill so their text stays dark on light. */
+[data-style="calm"] [data-ground] :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"])) { background-color: var(--calm-card); border-color: transparent; }
+[data-style="calm"][data-theme="sunlight"] [data-ground] :is(select, textarea, input) { border-color: var(--calm-card-border); }
+
+/* Laptops: the calm header replaces the top bar. Phones keep the top bar, drawn on the ground. */
+@media (min-width: 1024px) { [data-style="calm"] [data-slot="topbar"] { display: none; } }
+[data-style="calm"] [data-slot="topbar"] { background: var(--calm-ground); border-bottom-color: transparent; backdrop-filter: none; }
+[data-style="calm"] [data-slot="calm-header"] { background: var(--calm-ground); }
+[data-style="calm"] [data-slot="calm-header"] [data-slot="button"][data-variant="ghost"],
+[data-style="calm"] [data-slot="topbar"] [data-slot="button"][data-variant="ghost"] { border-radius: 999px; border: 1px solid var(--calm-line); }
+[data-style="calm"] [data-slot="calm-header"] [data-slot="button"][data-variant="ghost"] { width: 2.75rem; height: 2.75rem; }
+[data-style="calm"] [data-slot="profile"] { border-radius: 999px; }
+/* Smaller laptops: the pill menu needs the room, so the profile shows just the avatar (name and role are in its menu). */
+@media (max-width: 1535.98px) {
+  [data-style="calm"] [data-slot="calm-header"] [data-slot="profile"] > :not([data-slot="avatar"]):not(:first-child) { display: none; }
+  [data-style="calm"] [data-slot="calm-header"] [data-slot="profile"] { padding-right: 0.25rem; }
+}
+
+/* Cards: soft, borderless (except Sunlight), big corners. */
+[data-style="calm"] [data-slot="card"] { border-radius: 22px; box-shadow: var(--calm-shadow); }
+[data-style="calm"]:not([data-theme="sunlight"]) [data-slot="card"] { border-width: 0; }
+[data-style="calm"] [data-slot="card"] [data-slot="card"] { box-shadow: none; }
+
+/* Pills everywhere. */
+[data-style="calm"] [data-slot="button"] { border-radius: 999px; }
+[data-style="calm"] [data-slot="button"][data-variant="outline"] { border-color: var(--color-border); }
+[data-style="calm"] [data-ground] [data-ground-outline][data-slot="button"][data-variant="outline"] { --color-foreground: var(--calm-on); background: transparent; border-color: var(--calm-line); color: var(--calm-on); }
+[data-style="calm"] [data-ground-outline]:hover { background: var(--calm-glass); }
+[data-style="calm"] [data-slot="search"] { border-radius: 999px; background: var(--calm-card); border-color: transparent; }
+[data-style="calm"][data-theme="sunlight"] [data-slot="search"] { border-color: var(--calm-card-border); }
+[data-style="calm"] [data-slot="tabs-list"] { border-bottom-width: 0; gap: 0.375rem; padding-bottom: 2px; }
+[data-style="calm"] [data-slot="tab"] { margin-bottom: 0; border-bottom-width: 0; border-radius: 999px; padding: 0.5rem 0.95rem; color: var(--color-foreground); }
+[data-style="calm"] [data-ground] [data-slot="tabs-arrow"] { background: var(--calm-ground); border-radius: 999px; }
+[data-style="calm"] [data-slot="tab"][data-state="active"] { background: var(--calm-pill); color: var(--calm-pill-fg); }
+
+/* Type: big friendly headings and numbers. */
+[data-style="calm"] [data-slot="page-title"] {
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; font-size: 2rem; line-height: 1.15;
+  text-decoration: underline; text-decoration-color: var(--calm-accent); text-decoration-thickness: 4px; text-underline-offset: 10px; margin-bottom: 0.6rem;
+}
+[data-style="calm"] [data-slot="calm-greeting"] {
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; font-size: 2.4rem; line-height: 1.02;
+  text-decoration: underline; text-decoration-color: var(--calm-accent); text-decoration-thickness: 5px; text-underline-offset: 12px;
+}
+[data-style="calm"] [data-slot="hero-number"] { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.03em; font-size: 2.1rem; line-height: 1.05; }
+@media (min-width: 640px) {
+  [data-style="calm"] [data-slot="calm-greeting"] { font-size: 3.5rem; }
+  [data-style="calm"] [data-slot="hero-number"] { font-size: 2.6rem; }
+}
+@media (min-width: 1280px) { [data-style="calm"] [data-slot="hero-number"] { font-size: 3.1rem; } }
+[data-style="calm"] [data-slot="metric"] { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; }
+
+/* Field view tab bar: a dark floating pill, like a phone dock. */
+@media (max-width: 1023.98px) {
+  [data-style="calm"] [data-slot="bottom-nav"] {
+    left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 4px 6px; border-radius: 999px; border-top-width: 0; backdrop-filter: none;
+    background: #141813; box-shadow: 0 10px 30px rgb(0 0 0 / 0.28);
+    --color-primary: #c9e5a0; --color-primary-soft: rgb(201 229 160 / 0.2); --color-muted-foreground: #d3dccb; --color-foreground: #ffffff;
+  }
+  [data-style="calm"][data-theme="sunlight"] [data-slot="bottom-nav"] { background: #000000; --color-muted-foreground: #ffffff; --color-primary: #c9e5a0; }
+  [data-style="calm"][data-theme="dark"] [data-slot="bottom-nav"] { background: #232d1f; border: 1px solid rgb(255 255 255 / 0.1); }
+}
+
+/* Gentle motion: each page rises in softly when you switch pages. Off for people who ask for less motion. */
+@keyframes calm-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-style="calm"] main > * { animation: calm-rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+}
+
 /* Density. Tailwind sizes are in rem, so changing the root font size scales text, spacing and
  * control heights together. "comfortable" makes the default button about 40px tall for gloved/large thumbs. */
 html[data-density="compact"] { font-size: 15px; }

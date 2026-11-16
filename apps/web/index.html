@@ -13,7 +13,7 @@
         var theme = a.theme || "light";
         if (theme === "system") theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         var root = document.documentElement;
-        root.dataset.style = a.style === "studio" ? "studio" : "standard";
+        root.dataset.style = a.style === "studio" || a.style === "calm" ? a.style : "standard";
         root.dataset.theme = theme;
         var view = a.view || "auto";
         if (a.v !== 2 && view === "classic") view = "auto";
@@ -22,7 +22,7 @@
         root.dataset.density = a.density || "default";
       })();
     </script>
-    <!-- Inter Tight is only used by the Studio style (numbers and headings); the standard style doesn't reference it. -->
+    <!-- Inter Tight is only used by the Studio and Calm styles (numbers and headings); the standard style doesn't reference it. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" />
