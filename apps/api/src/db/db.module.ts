@@ -31,8 +31,8 @@ class SqlShutdown implements OnApplicationShutdown {
     {
       provide: SQL_CLIENT,
       inject: [ENV],
-      // A small pool is plenty for ~60 users and stays inside free-tier connection limits.
-      useFactory: (env: Env) => postgres(env.DATABASE_URL, { max: 5 }),
+      // 10 lets a page's parallel list requests run together instead of queueing, and stays well inside Neon's free-tier limits.
+      useFactory: (env: Env) => postgres(env.DATABASE_URL, { max: 10 }),
     },
     {
       provide: DB,

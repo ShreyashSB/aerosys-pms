@@ -26,6 +26,8 @@ import type { Employee } from "@/types/models";
 export function EngineersPage() {
   const { user } = useCurrentUser();
   const data = useAppData();
+  // Waits only for the lists this page shows, not all of them.
+  const loading = data.waitingFor("employees", "assignments", "projects");
   const navigate = useNavigate();
   const filters = useUrlState(["q", "availability", "project"] as const);
   const { q, availability, project } = filters.values;
@@ -125,10 +127,10 @@ export function EngineersPage() {
         actions={canManage && <Button onClick={() => { setEditing(undefined); setFormOpen(true); }}><Plus /> Add engineer</Button>}
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Engineers & technicians" value={all.length} loading={data.isLoading} />
-        <StatCard label="Deployed" value={deployed} loading={data.isLoading} />
-        <StatCard label="Idle" value={all.filter((e) => e.status === "active" && engineerLoad(e.id, data.assignments).allocation === 0).length} loading={data.isLoading} />
-        <StatCard label="On leave" value={all.filter((e) => e.status === "on_leave").length} loading={data.isLoading} />
+        <StatCard label="Engineers & technicians" value={all.length} loading={loading} />
+        <StatCard label="Deployed" value={deployed} loading={loading} />
+        <StatCard label="Idle" value={all.filter((e) => e.status === "active" && engineerLoad(e.id, data.assignments).allocation === 0).length} loading={loading} />
+        <StatCard label="On leave" value={all.filter((e) => e.status === "on_leave").length} loading={loading} />
       </div>
       <FilterBar onReset={filters.reset} showReset={filters.active}>
         <SearchInput value={q} onChange={(v) => filters.set("q", v)} placeholder="Search name, ID, designation…" />
@@ -148,7 +150,7 @@ export function EngineersPage() {
         rows={rows}
         columns={columns}
         rowKey={(r) => r.e.id}
-        loading={data.isLoading}
+        loading={loading}
         onRowClick={(r) => navigate(`/engineers/${r.e.id}`)}
         initialSort={{ key: "name", dir: "asc" }}
         empty={<EmptyState icon={<HardHat />} title="No engineers found" description="Try changing the filters." />}

@@ -28,6 +28,8 @@ export function EmployeesPage() {
   const { user } = useCurrentUser();
   const { users } = useAuth();
   const data = useAppData();
+  // Waits only for the lists this page shows, not all of them.
+  const loading = data.waitingFor("employees");
   const navigate = useNavigate();
   const filters = useUrlState(["q", "department", "status"] as const);
   const f = filters.values;
@@ -114,19 +116,19 @@ export function EmployeesPage() {
         }
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Employees in system" value={data.employees.length} loading={data.isLoading} />
-        <StatCard label="Active" value={active.length} loading={data.isLoading} />
-        <StatCard label="Site engineers & technicians" value={data.employees.filter((e) => e.isSiteEngineer).length} loading={data.isLoading} />
+        <StatCard label="Employees in system" value={data.employees.length} loading={loading} />
+        <StatCard label="Active" value={active.length} loading={loading} />
+        <StatCard label="Site engineers & technicians" value={data.employees.filter((e) => e.isSiteEngineer).length} loading={loading} />
         {showRates && (
           <StatCard
             label="Avg. daily cost – site staff"
             value={formatINR(avg(active.filter((e) => e.isSiteEngineer).map((e) => e.dailyCost)))}
             hint="Internal costing rate per man-day"
-            loading={data.isLoading}
+            loading={loading}
           />
         )}
       </div>
-      <FilterBar onReset={filters.reset} showReset={filters.active} total={data.isLoading ? undefined : data.employees.length}>
+      <FilterBar onReset={filters.reset} showReset={filters.active} total={loading ? undefined : data.employees.length}>
         <SearchInput value={f.q} onChange={(v) => filters.set("q", v)} placeholder="Search name, ID, email…" />
         <Select value={f.department} onChange={(e) => filters.set("department", e.target.value)} className="w-auto" aria-label="Filter by department">
           <option value="">All departments</option>
@@ -154,7 +156,7 @@ export function EmployeesPage() {
             </div>
           </div>
         )}
-        loading={data.isLoading}
+        loading={loading}
         pageSize={12}
         initialSort={{ key: "code", dir: "asc" }}
         onRowClick={(e) => (e.isSiteEngineer && can(user.role, "engineer.view") ? navigate(`/engineers/${e.id}`) : canManage && (setEditing(e), setOpen(true)))}

@@ -44,8 +44,16 @@ export function useAppData() {
   const reviews = useReviews();
   const bills = useBills();
 
-  const all = [projects, employees, assignments, expenses, instruments, deployments, projectCosts, settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews, bills];
+  const byName = { projects, employees, assignments, expenses, instruments, deployments, projectCosts, settings: settingsQ, boqItems, boqExecutions, dailyLogs, documents, reviews, bills };
+  const all = Object.values(byName);
   const isLoading = all.some((q) => q.isLoading);
+  // Pages that only show a few lists wait for just those (via waitingFor) instead of all 14, so e.g. Expenses
+  // appears as soon as expenses, projects, employees and assignments arrive.
+  const loadingKey = all.map((q) => (q.isLoading ? 1 : 0)).join("");
+  const waitingFor = useMemo(() => {
+    const loading = new Set(Object.entries(byName).filter(([, q]) => q.isLoading).map(([k]) => k as Resource));
+    return (...resources: Resource[]) => resources.some((r) => loading.has(r));
+  }, [loadingKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const error = all.find((q) => q.error)?.error ?? null;
 
   const inputs = [
@@ -100,8 +108,12 @@ export function useAppData() {
     };
   }), inputs); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return useMemo(() => ({ ...derived, isLoading, error }), [derived, isLoading, error]);
+  return useMemo(() => ({ ...derived, isLoading, waitingFor, error }), [derived, isLoading, waitingFor, error]);
 }
+
+export type Resource =
+  | "projects" | "employees" | "assignments" | "expenses" | "instruments" | "deployments" | "projectCosts"
+  | "settings" | "boqItems" | "boqExecutions" | "dailyLogs" | "documents" | "reviews" | "bills";
 
 /** One-entry cache: returns the last result while every input is the same object as last time. */
 function oneEntryCache<T>() {
