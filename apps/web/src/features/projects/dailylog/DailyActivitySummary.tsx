@@ -24,10 +24,17 @@ export function DailyActivitySummary({
   const all = useMemo(() => {
     const logs = data.dailyLogs.filter((l) => l.projectId === projectId).sort((a, b) => b.date.localeCompare(a.date));
     const itemById = new Map(data.boqItems.map((b) => [b.id, b]));
+    // Work lines grouped by log once, instead of scanning every BOQ line in the system for each log.
+    const workByLog = new Map<string, typeof data.boqExecutions>();
+    for (const x of data.boqExecutions) {
+      if (x.projectId !== projectId || !x.dailyLogId) continue;
+      const list = workByLog.get(x.dailyLogId) ?? [];
+      list.push(x);
+      workByLog.set(x.dailyLogId, list);
+    }
     return logs.map((log) => {
       const s = summariseLog(log.attendance, data.settings.hoursPerManDay, (id) => data.employeeById.get(id)?.dailyCost ?? 0);
-      const work = data.boqExecutions
-        .filter((x) => x.dailyLogId === log.id)
+      const work = (workByLog.get(log.id) ?? [])
         .map((x) => {
           const it = itemById.get(x.boqItemId);
           return it ? `${it.description.split(/[–(]/)[0]!.trim()} — ${formatNumber(x.qty, 2)} ${it.uom}` : "";

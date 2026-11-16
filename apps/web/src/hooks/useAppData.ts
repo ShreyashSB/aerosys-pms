@@ -55,6 +55,15 @@ export function useAppData() {
     return (...resources: Resource[]) => resources.some((r) => loading.has(r));
   }, [loadingKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const error = all.find((q) => q.error)?.error ?? null;
+  // Like waitingFor: a page shows an error only when a list it actually uses failed, and can retry just the failed ones.
+  const errorKey = all.map((q) => (q.error ? 1 : 0)).join("");
+  const { errorFor, retry } = useMemo(() => {
+    const failed = Object.entries(byName).filter(([, q]) => q.error);
+    return {
+      errorFor: (...resources: Resource[]) => failed.find(([k]) => resources.includes(k as Resource))?.[1].error ?? null,
+      retry: () => failed.forEach(([, q]) => void q.refetch()),
+    };
+  }, [errorKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const inputs = [
     projects.data, employees.data, assignments.data, expenses.data, instruments.data, deployments.data,
@@ -108,7 +117,7 @@ export function useAppData() {
     };
   }), inputs); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return useMemo(() => ({ ...derived, isLoading, waitingFor, error }), [derived, isLoading, waitingFor, error]);
+  return useMemo(() => ({ ...derived, isLoading, waitingFor, error, errorFor, retry }), [derived, isLoading, waitingFor, error, errorFor, retry]);
 }
 
 export type Resource =

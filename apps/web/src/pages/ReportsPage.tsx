@@ -158,7 +158,7 @@ export function ReportsPage() {
     ]),
   };
 
-  if (data.error) return <ErrorState error={data.error} />;
+  if (data.error) return <ErrorState error={data.error} onRetry={data.retry} />;
 
   const totals = { value: sum(projectRows, (r) => r.value), cost: sum(projectRows, (r) => r.cost), finalCost: sum(projectRows, (r) => r.finalCost) };
   const projectFilters = (

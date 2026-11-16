@@ -159,7 +159,8 @@ export function InstrumentsPage() {
       : []),
   ];
 
-  if (data.error) return <ErrorState error={data.error} />;
+  const error = data.errorFor("instruments", "projects", "employees", "assignments");
+  if (error) return <ErrorState error={error} onRetry={data.retry} />;
   const count = (s: InstrumentStatus) => base.filter((i) => i.status === s).length;
   const statusCopy = {
     available: { title: "Mark instrument available?", label: "Mark available", desc: "The instrument will be returned to the store and can be assigned again." },

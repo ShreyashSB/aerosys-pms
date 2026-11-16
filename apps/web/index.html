@@ -22,10 +22,13 @@
         root.dataset.density = a.density || "default";
       })();
     </script>
-    <!-- Inter Tight is only used by the Studio and Calm styles (numbers and headings); the standard style doesn't reference it. -->
+    <!-- Inter Tight is only used by the Studio and Calm styles (numbers and headings); the standard style doesn't reference it.
+         Loaded without blocking the first paint (media="print" until it arrives), so a slow connection to Google never
+         holds up the app; the text shows in the fallback font for a moment instead. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" /></noscript>
     <title>Aerosys HVAC · Project & Operations</title>
   </head>
   <body>
