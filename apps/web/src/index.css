@@ -39,6 +39,10 @@
   --color-series-1: #2a78d6;
   --color-series-2: #eb6834;
   --color-series-3: #1baf7a;
+  /* Dashboard trend charts. Each style colours them in its own palette (Calm overrides these with its greens).
+   * "Earned value across N projects": earned area + cost line. "In and out, week by week": earned in, cost out, net line. */
+  --color-trend-earned: #2a78d6; --color-trend-cost: #eb6834;
+  --color-inout-in: #a9cbf2; --color-inout-out: #1f5fae; --color-inout-net: #0f1729;
 
   /* parts of a whole ("What we are spending on"): one blue, strongest first */
   --color-seq-1: #1f5fae; --color-seq-2: #3d82d6; --color-seq-3: #79aeea; --color-seq-4: #a9cbf2; --color-seq-5: #c9def6; --color-seq-6: #e1ecf9;
@@ -87,6 +91,10 @@
   --color-series-1: #4f94e6;
   --color-series-2: #f07c4e;
   --color-series-3: #2cc28c;
+  /* Dashboard trend charts. Each style colours them in its own palette (Calm overrides these with its greens).
+   * "Earned value across N projects": earned area + cost line. "In and out, week by week": earned in, cost out, net line. */
+  --color-trend-earned: #4f94e6; --color-trend-cost: #f07c4e;
+  --color-inout-in: #2c5f9c; --color-inout-out: #8cbcf2; --color-inout-net: #e6ebf2;
   --color-seq-1: #8cbcf2; --color-seq-2: #5c9ee8; --color-seq-3: #3a78c2; --color-seq-4: #2c5f9c; --color-seq-5: #244d7e; --color-seq-6: #1d3d63;
 }
 
@@ -121,6 +129,10 @@
   --color-series-1: #1f5fb0;
   --color-series-2: #c4501f;
   --color-series-3: #0d7f56;
+  /* Dashboard trend charts. Each style colours them in its own palette (Calm overrides these with its greens).
+   * "Earned value across N projects": earned area + cost line. "In and out, week by week": earned in, cost out, net line. */
+  --color-trend-earned: #1f5fb0; --color-trend-cost: #c4501f;
+  --color-inout-in: #86ade0; --color-inout-out: #0b3d7a; --color-inout-net: #000000;
   --color-seq-1: #0b3d7a; --color-seq-2: #1f5fb0; --color-seq-3: #4f86cc; --color-seq-4: #86ade0; --color-seq-5: #b3cdee; --color-seq-6: #d6e4f6;
 }
 [data-theme="sunlight"] body { font-weight: 500; }
@@ -222,6 +234,9 @@
  * surface it was designed for and never ends up as grey-on-green.
  * ---------------------------------------------------------------------------------------------- */
 [data-style="calm"] {
+  /* Dashboard trend charts in Calm's greens. */
+  --color-trend-earned: #4d7a38; --color-trend-cost: #b9772a;
+  --color-inout-in: #a9c690; --color-inout-out: #4d7a38; --color-inout-net: #171c15;
   --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   /* ground */
   --calm-ground: #3f5638;
@@ -264,6 +279,9 @@
   --color-sidebar-active: #34472d;
 }
 [data-style="calm"][data-theme="dark"] {
+  /* Dashboard trend charts in Calm's greens. */
+  --color-trend-earned: #9cc87c; --color-trend-cost: #e0a656;
+  --color-inout-in: #5f8a4a; --color-inout-out: #b9dc94; --color-inout-net: #f2f5ee;
   --calm-ground: #10160e;
   --calm-on: #eef3e8;
   --calm-on-muted: #b7c3ae;
@@ -289,6 +307,9 @@
 }
 /* Sunlight: a pale ground with black text, white cards with visible borders, black pills. No light-on-green anywhere. */
 [data-style="calm"][data-theme="sunlight"] {
+  /* Dashboard trend charts in Calm's greens. */
+  --color-trend-earned: #2f5323; --color-trend-cost: #8a4d00;
+  --color-inout-in: #7fa565; --color-inout-out: #2f5323; --color-inout-net: #000000;
   --calm-ground: #e9efe3;
   --calm-on: #000000;
   --calm-on-muted: #1f261b;

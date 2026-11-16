@@ -2,8 +2,8 @@
  * Two portfolio trend charts on the dashboard, shown in every style to roles that can see finance:
  * - "Earned value across N projects": cumulative earned value vs cost to date over the last 13 weeks.
  * - "In and out, week by week": earned value added (up) and cost added (down) per week, with the net as a line.
- * Colours come from the shared chart tokens (series-1 = earned, series-2 = cost), the same as the
- * "Earned value vs cost to date" bar chart, so the charts look the same in Standard, Studio and Calm.
+ * Colours follow the active style and theme (--color-trend-*, --color-inout-* in index.css): blues in Standard
+ * and Studio, the Calm demo's greens in Calm, each tuned for Light, Dark and Sunlight.
  */
 import { useMemo, useState } from "react";
 import { Area, AreaChart, Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -119,8 +119,8 @@ export function PortfolioTrends({ data }: { data: Scoped }) {
               <AreaChart data={series} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="trend-earned" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-series-1)" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="var(--color-series-1)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--color-trend-earned)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="var(--color-trend-earned)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 4" />
@@ -131,12 +131,12 @@ export function PortfolioTrends({ data }: { data: Scoped }) {
                   labelFormatter={(l) => `Week ending ${fmtShort(String(l))}`}
                   contentStyle={tooltipStyle}
                 />
-                <Area type="monotone" dataKey="earned" stroke="var(--color-series-1)" strokeWidth={2.5} fill="url(#trend-earned)" />
-                <Area type="monotone" dataKey="cost" stroke="var(--color-series-2)" strokeWidth={2} strokeDasharray="5 4" fill="none" />
+                <Area type="monotone" dataKey="earned" stroke="var(--color-trend-earned)" strokeWidth={2.5} fill="url(#trend-earned)" />
+                <Area type="monotone" dataKey="cost" stroke="var(--color-trend-cost)" strokeWidth={2} strokeDasharray="5 4" fill="none" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <ChartLegend items={[{ label: "Earned value", color: "var(--color-series-1)" }, { label: "Cost to date", color: "var(--color-series-2)", dashed: true }]} />
+          <ChartLegend items={[{ label: "Earned value", color: "var(--color-trend-earned)" }, { label: "Cost to date", color: "var(--color-trend-cost)", dashed: true }]} />
         </CardContent>
       </Card>
 
@@ -162,13 +162,13 @@ export function PortfolioTrends({ data }: { data: Scoped }) {
                   labelFormatter={(l) => `Week ending ${fmtShort(String(l))}`}
                   contentStyle={tooltipStyle}
                 />
-                <Bar dataKey="in" stackId="w" fill="var(--color-series-1)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="outNeg" stackId="w" fill="var(--color-series-2)" radius={[4, 4, 0, 0]} />
-                <Line type="monotone" dataKey="net" stroke="var(--color-foreground)" strokeWidth={2} dot={false} />
+                <Bar dataKey="in" stackId="w" fill="var(--color-inout-in)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="outNeg" stackId="w" fill="var(--color-inout-out)" radius={[4, 4, 0, 0]} />
+                <Line type="monotone" dataKey="net" stroke="var(--color-inout-net)" strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <ChartLegend items={[{ label: "Earned (in)", color: "var(--color-series-1)", box: true }, { label: "Cost (out)", color: "var(--color-series-2)", box: true }, { label: "Net", color: "var(--color-foreground)" }]} />
+          <ChartLegend items={[{ label: "Earned (in)", color: "var(--color-inout-in)", box: true }, { label: "Cost (out)", color: "var(--color-inout-out)", box: true }, { label: "Net", color: "var(--color-inout-net)" }]} />
         </CardContent>
       </Card>
     </div>
