@@ -18,6 +18,7 @@ import { Progress, Skeleton } from "@/components/ui/misc";
 import { ProjectStatusBadge, InstrumentStatusBadge } from "@/components/common/StatusBadges";
 import { CostBreakdown } from "@/features/dashboard/CostBreakdown";
 import { CalmHero } from "@/features/dashboard/CalmHero";
+import { PortfolioTrends } from "@/features/dashboard/PortfolioTrends";
 import { useAppearance } from "@/appearance/AppearanceContext";
 import { ExpenseTable } from "@/features/expenses/ExpenseTable";
 import { ProjectFormDialog } from "@/features/projects/ProjectFormDialog";
@@ -324,6 +325,9 @@ function PortfolioDashboard() {
           />
         </CardContent>
       </Card>
+
+      {/* Portfolio trends: earned value over time and money in/out per week (same in every style). */}
+      {showFinance && <PortfolioTrends data={data} />}
 
       {showFinance && (
         <div className="grid gap-6 xl:grid-cols-5">
