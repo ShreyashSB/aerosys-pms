@@ -4,18 +4,20 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/auth/AuthContext";
 import { PageSkeleton } from "@/components/common/States";
 import type { Permission } from "@/auth/permissions";
-const LoginPage = lazy(() => import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })));
-const DashboardPage = lazy(() => import("@/pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
-const ProjectsPage = lazy(() => import("@/pages/ProjectsPage").then((m) => ({ default: m.ProjectsPage })));
-const ProjectDetailPage = lazy(() => import("@/pages/ProjectDetailPage").then((m) => ({ default: m.ProjectDetailPage })));
-const EngineersPage = lazy(() => import("@/pages/EngineersPage").then((m) => ({ default: m.EngineersPage })));
-const EngineerDetailPage = lazy(() => import("@/pages/EngineerDetailPage").then((m) => ({ default: m.EngineerDetailPage })));
-const ExpensesPage = lazy(() => import("@/pages/ExpensesPage").then((m) => ({ default: m.ExpensesPage })));
-const InstrumentsPage = lazy(() => import("@/pages/InstrumentsPage").then((m) => ({ default: m.InstrumentsPage })));
-const EmployeesPage = lazy(() => import("@/pages/EmployeesPage").then((m) => ({ default: m.EmployeesPage })));
-const ReportsPage = lazy(() => import("@/pages/ReportsPage").then((m) => ({ default: m.ReportsPage })));
-const HistoryPage = lazy(() => import("@/pages/HistoryPage").then((m) => ({ default: m.HistoryPage })));
-const SettingsPage = lazy(() => import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+import { pageImports } from "@/pages/pageImports";
+const LoginPage = lazy(() => pageImports.login().then((m) => ({ default: m.LoginPage })));
+const DashboardPage = lazy(() => pageImports.dashboard().then((m) => ({ default: m.DashboardPage })));
+const ProjectsPage = lazy(() => pageImports.projects().then((m) => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => pageImports.projectDetail().then((m) => ({ default: m.ProjectDetailPage })));
+const EngineersPage = lazy(() => pageImports.engineers().then((m) => ({ default: m.EngineersPage })));
+const EngineerDetailPage = lazy(() => pageImports.engineerDetail().then((m) => ({ default: m.EngineerDetailPage })));
+const ExpensesPage = lazy(() => pageImports.expenses().then((m) => ({ default: m.ExpensesPage })));
+const InstrumentsPage = lazy(() => pageImports.instruments().then((m) => ({ default: m.InstrumentsPage })));
+const EmployeesPage = lazy(() => pageImports.employees().then((m) => ({ default: m.EmployeesPage })));
+const ReportsPage = lazy(() => pageImports.reports().then((m) => ({ default: m.ReportsPage })));
+const HistoryPage = lazy(() => pageImports.history().then((m) => ({ default: m.HistoryPage })));
+const SettingsPage = lazy(() => pageImports.settings().then((m) => ({ default: m.SettingsPage })));
+
 import { ForbiddenPage, NotFoundPage } from "@/pages/StatusPages";
 
 function Guard({ permission, children }: { permission: Permission; children: ReactNode }) {
