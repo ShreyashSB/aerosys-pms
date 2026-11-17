@@ -46,4 +46,28 @@ describe('API (e2e)', () => {
   it('POST /api/clients rejects a too-short name with 400', async () => {
     await api().post('/api/clients').send({ name: 'A' }).expect(400);
   });
+
+  it('POST /api/employees takes the ID and status from the form, and refuses a used ID', async () => {
+    const tag = Date.now().toString(36);
+    const base = { name: 'E2E Person', department: 'Engineering', designation: 'Site Engineer', dailyCost: 2500, joiningDate: '2026-01-01' };
+    const made = await api()
+      .post('/api/employees')
+      .send({ ...base, code: `E2E-${tag}`, status: 'on_leave', email: `a.${tag}@test.aerosyshvac.in` })
+      .expect(201);
+    expect(made.body).toMatchObject({ code: `E2E-${tag}`, status: 'on_leave' });
+
+    const dup = await api()
+      .post('/api/employees')
+      .send({ ...base, code: `e2e-${tag}`, email: `b.${tag}@test.aerosyshvac.in` })
+      .expect(409);
+    expect(dup.body.message).toContain(`E2E-${tag} is already used`);
+
+    // Older clients that send no ID still get the next number.
+    const auto = await api()
+      .post('/api/employees')
+      .send({ ...base, email: `c.${tag}@test.aerosyshvac.in` })
+      .expect(201);
+    expect(auto.body.code).toMatch(/\d+$/);
+    expect(auto.body.status).toBe('active');
+  });
 });

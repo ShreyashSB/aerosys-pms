@@ -1,5 +1,5 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { isUniqueViolation } from '../common/pg-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { employees, type Employee } from '../db/schema.js';
@@ -21,6 +21,7 @@ export class EmployeesService {
 
   async create(input: EmployeeInput): Promise<Employee> {
     const code = input.code ?? (await this.nextCode());
+    await this.assertCodeFree(code);
     try {
       const [row] = await this.db.insert(employees).values({ ...input, code }).returning();
       return row;
@@ -30,6 +31,7 @@ export class EmployeesService {
   }
 
   async update(id: string, input: EmployeeInput): Promise<Employee> {
+    if (input.code) await this.assertCodeFree(input.code, id);
     try {
       const [row] = await this.db
         .update(employees)
@@ -44,7 +46,18 @@ export class EmployeesService {
     }
   }
 
-  /** EMP-001, EMP-002, … one more than the highest number in use. */
+  /** Employee IDs are unique regardless of case, so EMP-004 and emp-004 count as the same. */
+  private async assertCodeFree(code: string, exceptId?: string): Promise<void> {
+    const same = sql`lower(${employees.code}) = lower(${code})`;
+    const [taken] = await this.db
+      .select({ code: employees.code, name: employees.name })
+      .from(employees)
+      .where(exceptId ? and(same, ne(employees.id, exceptId)) : same)
+      .limit(1);
+    if (taken) throw new ConflictException(`Employee ID ${taken.code} is already used by ${taken.name}`);
+  }
+
+  /** EMP-001, EMP-002, … one more than the highest number in use. The web form prefills the same. */
   private async nextCode(): Promise<string> {
     const rows = await this.db.select({ code: employees.code }).from(employees);
     const max = Math.max(0, ...rows.map((r) => Number(r.code.split('-').pop()) || 0));
@@ -52,7 +65,7 @@ export class EmployeesService {
   }
 
   private friendly(err: unknown) {
-    if (isUniqueViolation(err)) return new ConflictException('An employee with this email or employee code already exists');
+    if (isUniqueViolation(err)) return new ConflictException('An employee with this email or employee ID already exists');
     return err;
   }
 }

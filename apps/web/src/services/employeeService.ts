@@ -14,6 +14,12 @@ function validate(input: EmployeeInput) {
   if (!(input.dailyCost >= 0)) throw new ApiError("Daily cost cannot be negative");
 }
 
+function assertCodeFree(employees: Employee[], code: string | undefined, exceptId?: string) {
+  const c = code?.trim().toLowerCase();
+  const taken = c && employees.find((e) => e.id !== exceptId && e.code.toLowerCase() === c);
+  if (taken) throw new ApiError(`Employee ID ${taken.code} is already used by ${taken.name}`, 409);
+}
+
 function syncUser(users: User[], emp: Employee, role: Role | null) {
   const existing = users.find((u) => u.employeeId === emp.id);
   if (!role) {
@@ -45,6 +51,7 @@ export const employeeService = {
     return db.write((data) => {
       if (data.employees.some((e) => e.email.toLowerCase() === input.email.toLowerCase()))
         throw new ApiError("An employee with this email already exists");
+      assertCodeFree(data.employees, input.code);
       const { appRole, code, password: _password, ...rest } = input;
       const nextNo = Math.max(100, ...data.employees.map((e) => Number(e.code.split("-")[1]) || 0)) + 1;
       const emp: Employee = { ...rest, id: uid("emp"), code: code?.trim() || `AHV-${nextNo}` };
@@ -60,6 +67,7 @@ export const employeeService = {
     return db.write((data) => {
       const emp = data.employees.find((e) => e.id === id);
       if (!emp) throw new ApiError("Employee not found", 404);
+      assertCodeFree(data.employees, input.code, id);
       const { appRole, code, password: _password, ...rest } = input;
       Object.assign(emp, rest);
       if (code?.trim()) emp.code = code.trim();
