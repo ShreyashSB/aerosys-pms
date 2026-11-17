@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/input";
 import { useForm, type Errors } from "@/hooks/useForm";
 import { useCreateEmployee, useUpdateEmployee } from "@/hooks/mutations";
+import { useEmployees } from "@/hooks/queries";
 import { useAuth } from "@/auth/AuthContext";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/auth/permissions";
 import { EMPLOYEE_STATUS } from "@/components/common/StatusBadges";
@@ -55,9 +56,30 @@ type Values = {
   password: string;
 };
 
+/**
+ * The ID a new employee gets unless someone types another: one more than the
+ * highest number in use, keeping the existing prefix and width (EMP-007 → EMP-008).
+ * The server works it out the same way when no ID is sent.
+ */
+export function nextEmployeeCode(list: Pick<Employee, "code">[]): string {
+  let best = { prefix: "EMP-", n: 0, width: 3 };
+  for (const { code } of list) {
+    const m = /^(.*?)(\d+)$/.exec(code.trim());
+    if (m && Number(m[2]) > best.n) best = { prefix: m[1], n: Number(m[2]), width: m[2].length };
+  }
+  return `${best.prefix}${String(best.n + 1).padStart(best.width, "0")}`;
+}
+
 /** `hasLogin`: the employee already has an active login (so the password field is optional). */
-const validate = (v: Values, hasLogin: boolean): Errors<Values> => {
+const validate = (v: Values, hasLogin: boolean, others: Employee[]): Errors<Values> => {
   const e: Errors<Values> = {};
+  const code = v.code.trim();
+  if (!code) e.code = "Employee ID is required";
+  else if (code.length > 20) e.code = "At most 20 characters";
+  else {
+    const taken = others.find((o) => o.code.toLowerCase() === code.toLowerCase());
+    if (taken) e.code = `Already used by ${taken.name}`;
+  }
   if (USE_API && v.appRole) {
     if (!hasLogin && !v.password) e.password = "Set a starting password for the new login";
     else if (v.password && v.password.length < MIN_PASSWORD) e.password = `At least ${MIN_PASSWORD} characters`;
@@ -82,10 +104,11 @@ export function EmployeeFormDialog({
   defaults?: Partial<Values>;
 }) {
   const { users } = useAuth();
+  const { data: allEmployees } = useEmployees();
   const create = useCreateEmployee();
   const update = useUpdateEmployee();
   const toValues = (e?: Employee): Values => ({
-    code: e?.code ?? "",
+    code: e?.code ?? nextEmployeeCode(allEmployees ?? []),
     name: e?.name ?? "",
     email: e?.email ?? "",
     phone: e?.phone ?? "",
@@ -101,7 +124,8 @@ export function EmployeeFormDialog({
     ...(!e ? defaults : {}),
   });
   const hasLogin = !!employee && users.some((u) => u.employeeId === employee.id);
-  const form = useForm<Values>(toValues(employee), useCallback((v: Values) => validate(v, hasLogin), [hasLogin]));
+  const others = useMemo(() => (allEmployees ?? []).filter((o) => o.id !== employee?.id), [allEmployees, employee?.id]);
+  const form = useForm<Values>(toValues(employee), useCallback((v: Values) => validate(v, hasLogin, others), [hasLogin, others]));
   const { values: v, errors, set } = form;
 
   // Once someone picks access or site work by hand, a later department change leaves them alone.
@@ -113,6 +137,11 @@ export function EmployeeFormDialog({
     }
   }, [open, employee?.id]);
 
+  // Opened before the employee list arrived: fill in the next ID once it does.
+  useEffect(() => {
+    if (open && !employee && allEmployees && !v.code) set("code", nextEmployeeCode(allEmployees));
+  }, [open, employee, allEmployees]);
+
   const setDepartment = (d: Department) => {
     set("department", d);
     if (!chosen.current.appRole) set("appRole", DEPARTMENT_DEFAULTS[d].appRole);
@@ -122,6 +151,7 @@ export function EmployeeFormDialog({
   const submit = form.handleSubmit((vals) => {
     const input = {
       ...vals,
+      code: vals.code.trim(),
       name: vals.name.trim(),
       designation: vals.designation.trim(),
       dailyCost: Number(vals.dailyCost),
@@ -193,22 +223,18 @@ export function EmployeeFormDialog({
             <Field label="Joining date" htmlFor="e-join" required error={errors.joiningDate}>
               <Input id="e-join" type="date" value={v.joiningDate} onChange={(e) => set("joiningDate", e.target.value)} />
             </Field>
-            {employee && (
-              <>
-                <Field label="Employee ID" htmlFor="e-code">
-                  <Input id="e-code" value={v.code} onChange={(e) => set("code", e.target.value)} />
-                </Field>
-                <Field label="Status" htmlFor="e-status">
-                  <Select id="e-status" value={v.status} onChange={(e) => set("status", e.target.value as EmployeeStatus)}>
-                    {(Object.keys(EMPLOYEE_STATUS) as EmployeeStatus[]).map((s) => (
-                      <option key={s} value={s}>
-                        {EMPLOYEE_STATUS[s].label}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </>
-            )}
+            <Field label="Employee ID" htmlFor="e-code" required error={errors.code} hint={employee ? undefined : "Next free number. Change it if you use your own."}>
+              <Input id="e-code" value={v.code} onChange={(e) => set("code", e.target.value)} aria-invalid={!!errors.code} maxLength={20} autoComplete="off" />
+            </Field>
+            <Field label="Status" htmlFor="e-status">
+              <Select id="e-status" value={v.status} onChange={(e) => set("status", e.target.value as EmployeeStatus)}>
+                {(Object.keys(EMPLOYEE_STATUS) as EmployeeStatus[]).map((s) => (
+                  <option key={s} value={s}>
+                    {EMPLOYEE_STATUS[s].label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <label className="col-span-full flex items-start gap-2 text-sm">
               <input
                 type="checkbox"
