@@ -57,18 +57,11 @@ export class EmployeesService {
     if (taken) throw new ConflictException(`Employee ID ${taken.code} is already used by ${taken.name}`);
   }
 
-  /**
-   * One more than the highest number in use, keeping that ID's prefix and width
-   * (EMP-007 → EMP-008); EMP-001 when there are none. The web form prefills the same.
-   */
+  /** EMP-001, EMP-002, … one more than the highest number in use. The web form prefills the same. */
   private async nextCode(): Promise<string> {
     const rows = await this.db.select({ code: employees.code }).from(employees);
-    let best = { prefix: 'EMP-', n: 0, width: 3 };
-    for (const { code } of rows) {
-      const m = /^(.*?)(\d+)$/.exec(code.trim());
-      if (m && Number(m[2]) > best.n) best = { prefix: m[1], n: Number(m[2]), width: m[2].length };
-    }
-    return `${best.prefix}${String(best.n + 1).padStart(best.width, '0')}`;
+    const max = Math.max(0, ...rows.map((r) => Number(r.code.split('-').pop()) || 0));
+    return `EMP-${String(max + 1).padStart(3, '0')}`;
   }
 
   private friendly(err: unknown) {

@@ -57,17 +57,12 @@ type Values = {
 };
 
 /**
- * The ID a new employee gets unless someone types another: one more than the
- * highest number in use, keeping the existing prefix and width (EMP-007 → EMP-008).
- * The server works it out the same way when no ID is sent.
+ * The ID a new employee gets unless someone types another: EMP- and one more than
+ * the highest number after the last dash in use. Same rule as the server's when no ID is sent.
  */
 export function nextEmployeeCode(list: Pick<Employee, "code">[]): string {
-  let best = { prefix: "EMP-", n: 0, width: 3 };
-  for (const { code } of list) {
-    const m = /^(.*?)(\d+)$/.exec(code.trim());
-    if (m && Number(m[2]) > best.n) best = { prefix: m[1], n: Number(m[2]), width: m[2].length };
-  }
-  return `${best.prefix}${String(best.n + 1).padStart(best.width, "0")}`;
+  const max = Math.max(0, ...list.map((e) => Number(e.code.split("-").pop()) || 0));
+  return `EMP-${String(max + 1).padStart(3, "0")}`;
 }
 
 /** `hasLogin`: the employee already has an active login (so the password field is optional). */
