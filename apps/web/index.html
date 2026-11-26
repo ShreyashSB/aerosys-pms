@@ -34,6 +34,34 @@
         root.dataset.density = a.density || "default";
       })();
     </script>
+    <!-- Start-up screen. Painted straight from this file, so the app is never a blank white page while its code
+         downloads (slow phone data, or the first open from the home screen). React replaces it when ready, and
+         src/components/common/StartupScreen.tsx shows the same screen while sign-in is checked. Colours follow the
+         saved style and theme, which the script above has already put on <html>. -->
+    <style>
+      html { --boot-bg: #f6f7f9; --boot-fg: #0f1729; --boot-muted: #5b6474; --boot-track: rgb(15 23 41 / 0.12); }
+      html[data-theme="dark"] { --boot-bg: #0b1220; --boot-fg: #e6ebf2; --boot-muted: #9aa7ba; --boot-track: rgb(255 255 255 / 0.14); }
+      html[data-theme="sunlight"] { --boot-bg: #ffffff; --boot-fg: #000000; --boot-muted: #2c3440; }
+      html[data-style="calm"] { --boot-bg: #3f5638; --boot-fg: #ffffff; --boot-muted: #dde7d3; --boot-track: rgb(255 255 255 / 0.2); }
+      html[data-style="calm"][data-theme="dark"] { --boot-bg: #10160e; --boot-fg: #eef3e8; --boot-muted: #b7c3ae; }
+      html[data-style="calm"][data-theme="sunlight"] { --boot-bg: #e9efe3; --boot-fg: #000000; --boot-muted: #1f261b; --boot-track: rgb(0 0 0 / 0.15); }
+      html { background: var(--boot-bg); }
+      .boot {
+        position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 20px; padding: 24px; text-align: center; background: var(--boot-bg); color: var(--boot-fg); z-index: 60;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .boot-logo { width: 64px; height: 64px; }
+      .boot-name { margin: -4px 0 0; font-size: 15px; font-weight: 600; letter-spacing: 0.08em; }
+      .boot-spin {
+        width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--boot-track); border-top-color: #0b5cab;
+        animation: boot-spin 0.8s linear infinite;
+      }
+      html[data-theme="dark"] .boot-spin, html[data-style="calm"]:not([data-theme="sunlight"]) .boot-spin { border-top-color: currentColor; }
+      .boot-msg { margin: 0; max-width: 20rem; min-height: 3em; font-size: 14px; line-height: 1.5; color: var(--boot-muted); }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .boot-spin { animation-duration: 2.4s; } }
+    </style>
     <!-- Inter Tight is only used by the Studio and Calm styles (numbers and headings); the standard style doesn't reference it.
          Loaded without blocking the first paint (media="print" until it arrives), so a slow connection to Google never
          holds up the app; the text shows in the fallback font for a moment instead. -->
@@ -44,7 +72,21 @@
     <title>Aerosys HVAC · Project & Operations</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-live="polite" data-boot>
+        <svg class="boot-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0b5cab"/><path d="M16 7c2.5 0 3.2 3.4 1.6 5.6 3.1-.8 7.4.6 7.4 3.4 0 2.5-3.4 3.2-5.6 1.6.8 3.1-.6 7.4-3.4 7.4-2.5 0-3.2-3.4-1.6-5.6-3.1.8-7.4-.6-7.4-3.4 0-2.5 3.4-3.2 5.6-1.6C11.8 11.3 13.2 7 16 7z" fill="#fff"/><circle cx="16" cy="16" r="2" fill="#0b5cab"/></svg>
+        <p class="boot-name">AEROSYS</p>
+        <div class="boot-spin"></div>
+        <p class="boot-msg" id="boot-msg">Opening the app…</p>
+      </div>
+    </div>
+    <script>
+      // If the app's code is still downloading after 8 seconds, say why instead of leaving a spinner on its own.
+      setTimeout(function () {
+        var m = document.getElementById("boot-msg");
+        if (m) m.textContent = "Still loading. A slow mobile connection can make this take a little longer.";
+      }, 8000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
