@@ -487,3 +487,22 @@ html[data-density="comfortable"] { font-size: 17.5px; }
   * { border-color: var(--color-border); }
   .tabular { font-variant-numeric: tabular-nums; }
 }
+
+/* Phone notches and rounded corners (the page is allowed under them by viewport-fit=cover in index.html).
+ * When the app runs from the home screen, keep the header, the slide-out menu and the page content clear of the
+ * notch, including when the phone is turned sideways. Everywhere else these insets are 0, so nothing moves. */
+@supports (padding: env(safe-area-inset-top)) {
+  [data-slot="topbar"] {
+    height: calc(4rem + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+  }
+  [data-slot="topnav"] { top: calc(4rem + env(safe-area-inset-top)); }
+  [data-slot="sidebar"] { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  /* A phone on its side: the notch moves to the left or right edge. */
+  @media (orientation: landscape) and (max-height: 540px) {
+    [data-slot="topbar"], main {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+}
