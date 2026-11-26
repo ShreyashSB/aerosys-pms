@@ -54,7 +54,7 @@ async function errorFrom(res: Response): Promise<ApiError> {
  * waiting longer than SLOW_AFTER_MS, `serverSlow` is true, and the app shows a "waking up" note (ServerWakeNotice)
  * on every screen, not just sign-in, so a long wait never looks like a hung app.
  */
-const SLOW_AFTER_MS = 4000;
+const SLOW_AFTER_MS = 2500;
 let slowCount = 0;
 const slowListeners = new Set<() => void>();
 function setSlow(delta: number) {

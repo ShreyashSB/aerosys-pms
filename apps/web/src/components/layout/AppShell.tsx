@@ -13,6 +13,7 @@ import { Topbar } from "./Topbar";
 import { FirstPasswordScreen } from "@/features/auth/FirstPasswordScreen";
 import { preloadPages } from "@/pages/pageImports";
 import { AppErrorBoundary } from "@/components/common/ErrorBoundary";
+import { StartupScreen } from "@/components/common/StartupScreen";
 
 const COLLAPSE_KEY = "aerosys.sidebar.collapsed";
 
@@ -41,13 +42,7 @@ export function AppShell() {
   }, [qc]);
 
   if (mustChangePassword) return <FirstPasswordScreen />;
-  if (loading) {
-    return (
-      <div className="p-8">
-        <PageSkeleton />
-      </div>
-    );
-  }
+  if (loading) return <StartupScreen message="Signing you in…" />;
   if (!user || !employee) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 
   return (

@@ -2,7 +2,7 @@ import { lazy, Suspense, type ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/auth/AuthContext";
-import { PageSkeleton } from "@/components/common/States";
+import { StartupScreen } from "@/components/common/StartupScreen";
 import type { Permission } from "@/auth/permissions";
 import { pageImports } from "@/pages/pageImports";
 const LoginPage = lazy(() => pageImports.login().then((m) => ({ default: m.LoginPage })));
@@ -27,7 +27,7 @@ function Guard({ permission, children }: { permission: Permission; children: Rea
 
 export function App() {
   return (
-    <Suspense fallback={<div className="p-8"><PageSkeleton /></div>}>
+    <Suspense fallback={<StartupScreen />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<AppShell />}>

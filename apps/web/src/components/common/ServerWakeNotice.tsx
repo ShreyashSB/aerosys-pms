@@ -8,7 +8,8 @@ import { serverSlow } from "@/api/http";
  */
 export function ServerWakeNotice() {
   const slow = useSyncExternalStore(serverSlow.subscribe, serverSlow.get);
-  if (!slow) return null;
+  // The start-up screen says this itself, in the middle of the screen.
+  if (!slow || document.querySelector("[data-boot]")) return null;
   return (
     <div
       role="status"
