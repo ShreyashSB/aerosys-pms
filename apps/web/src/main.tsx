@@ -21,6 +21,14 @@ window.addEventListener("vite:preloadError", (event) => {
   if (reloadForUpdate()) event.preventDefault();
 });
 
+// Shows a "You're offline" page instead of the phone's own error page when the app is opened with no signal.
+// It caches nothing else (see public/sw.js), so new deploys and live data are never held back.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
+
 // Lists stay fresh for 2 minutes, so moving between pages doesn't re-download all of them in the background each time.
 // Saves still refresh what they change straight away, and notifications poll on their own.
 const queryClient = new QueryClient({

@@ -3,6 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Home-screen install (iPhone and Android): app name, icons and status-bar colour. See public/manifest.webmanifest. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Aerosys" />
+    <meta name="application-name" content="Aerosys" />
+    <!-- "default" keeps the iPhone status bar above the app instead of on top of the header. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Updated to the chosen style and theme by AppearanceContext once the app loads. -->
+    <meta name="theme-color" content="#ffffff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Apply the saved theme/view/density before React loads so the page never flashes the wrong theme.
          Mirrors src/appearance/AppearanceContext.tsx (same storage key and defaults). -->
@@ -15,6 +26,7 @@
         var root = document.documentElement;
         root.dataset.style = a.style === "studio" || a.style === "calm" ? a.style : "standard";
         root.dataset.theme = theme;
+        if (theme === "dark") document.querySelector('meta[name="theme-color"]').setAttribute("content", "#121b2c");
         var view = a.view || "auto";
         if (a.v !== 2 && view === "classic") view = "auto";
         if (view === "auto") view = matchMedia("(max-width: 767.98px), (hover: none) and (pointer: coarse)").matches ? "field" : "classic";

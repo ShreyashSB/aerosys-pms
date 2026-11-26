@@ -140,6 +140,11 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     root.dataset.theme = resolvedTheme;
     root.dataset.view = resolvedView;
     root.dataset.density = appearance.density;
+    // The phone's status bar (and Android's app switcher) takes this colour, so match the header of the chosen look.
+    // Use the colour the top bar has in each style (see the [data-slot="topbar"] rules in index.css).
+    const token = { calm: "--calm-ground", studio: "--color-background", standard: "--color-surface" }[appearance.style];
+    const surface = getComputedStyle(root).getPropertyValue(token).trim();
+    if (surface) document.querySelector('meta[name="theme-color"]')?.setAttribute("content", surface);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...appearance, v: STORAGE_VERSION }));
     } catch {
